@@ -1,20 +1,22 @@
-import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Login from './components/Login';
 import Signup from './components/Signup';
 import Homepage from './pages/HomePage';
-// import './App.css';
+import ScrollToTop from './components/ScrollToTop';
+import ServiceTechniciansPage from "./pages/ServiceTechniciansPage";
 
-function App() {
+const App = () => {
   return (
-    <div className="App">
+      <><ScrollToTop />
       <Routes>
-        <Route path="/" element={<Login />} />
+        <Route path="/" element={<Homepage />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/homepage" element={<Homepage />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/services/:serviceName" element={<ServiceTechniciansPage />} />
       </Routes>
-    </div>
+  </>
   );
-}
+};
 
 export default App;

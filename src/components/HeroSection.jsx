@@ -1,8 +1,16 @@
-import React from "react";
+import React, { useState } from "react";
 import { FaSearch } from "react-icons/fa";
 import "../styles/HeroSection.css";
 
-const HeroSection = () => {
+const HeroSection = ({ setSearchQuery }) => {
+  const [searchQuery, setSearchTerm] = useState("");
+
+  const handleSearchChange = (event) => {
+    const newQuery = event.target.value;
+    setSearchTerm(newQuery);
+    setSearchQuery(newQuery);
+  };
+
   return (
     <section className="hero">
       <div className="hero-content">
@@ -17,8 +25,10 @@ const HeroSection = () => {
             type="text"
             placeholder="What service do you need?"
             className="search-input"
+            value={searchQuery}
+            onChange={handleSearchChange}
           />
-          <button className="search-btn">Search</button>
+          {/* <button className="search-btn">Search</button> */}
         </div>
       </div>
     </section>

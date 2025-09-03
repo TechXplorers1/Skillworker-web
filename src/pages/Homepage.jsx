@@ -1,14 +1,24 @@
-// src/pages/Homepage/Homepage.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import Header from '../components/Header';
 import HeroSection from '../components/HeroSection';
 import Footer from '../components/Footer';
 import { FaStar } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
 import plumberImg from '../assets/plumber.png';
 import electricianImg from '../assets/electrician.png';
 import acMechanicImg from '../assets/ac mechanic.png';
 import carpenterImg from '../assets/carpenter.png';
 import packersImg from '../assets/packers&movers.png';
+import housecleanersImg from '../assets/House cleaners.png';
+import camerafittingsImg from '../assets/camera fittings.png';
+import privateinvestigatorsImg from '../assets/private investigators.png';
+import welderImg from '../assets/welder.png';
+import surveyorsImg from '../assets/surveyors.png';
+import developersImg from '../assets/SoftwareDeveloper.png';
+import bodymassageImg from '../assets/BodyMassage.png';
+import constructioncleanersImg from '../assets/Construction cleaners.png';
+import laundryImg from '../assets/laundry.png';
+import deliveryImg from '../assets/delivery.png';
 
 import '../styles/Homepage.css';
 
@@ -18,8 +28,8 @@ const services = [
     description: 'Professional plumbing services for leak repairs, pipe fittings, installations, and maintenance.',
     rating: '4.8',
     reviews: '152',
-    image: plumberImg, // Replace with real image path
-    link: '#plumber-technicians'
+    image: plumberImg,
+    link: 'plumber'
   },
   {
     title: 'Electrician',
@@ -27,7 +37,7 @@ const services = [
     rating: '4.9',
     reviews: '203',
     image: electricianImg,
-    link: '#electrician-technicians'
+    link: 'electrician'
   },
   {
     title: 'Ac Mechanic',
@@ -35,51 +45,146 @@ const services = [
     rating: '4.7',
     reviews: '98',
     image: acMechanicImg,
-    link: '#ac-technicians'
+    link: 'ac-mechanic'
   },
   {
     title: 'Carpenter',
-    description: 'Quality carpentry services for furniture, custom woodwork, and home improvements.',
-    rating: '4.8',
-    reviews: '87',
+    description: 'Custom carpentry, furniture repair, and installation services.',
+    rating: '4.5',
+    reviews: '120',
     image: carpenterImg,
-    link: '#carpenter-technicians'
+    link: 'carpenter'
   },
   {
-    title: 'Packers And Movers',
-    description: 'Professional moving services with careful packing and safe transportation.',
+    title: 'Packers & Movers',
+    description: 'Reliable and efficient packing and moving services for home and office relocations.',
     rating: '4.6',
-    reviews: '134',
+    reviews: '85',
     image: packersImg,
-    link: '#movers-technicians'
-  }
+    link: 'packers-movers'
+  },
+  {
+    title: 'House cleaners',
+    description: 'Professional cleaning services for residential properties, including deep cleaning and routine maintenance.',
+    rating: '4.7',
+    reviews: '130',
+    image: housecleanersImg,
+    link: 'house-cleaners'
+  },
+  {
+    title: 'laundry',
+    description: 'Expert laundry and dry-cleaning services with pick-up and delivery options.',
+    rating: '4.5',
+    reviews: '90',
+    image: laundryImg,
+    link: 'laundry'
+  },
+  {
+    title: 'Construction cleaners',
+    description: 'Post-construction cleaning services to prepare new or renovated buildings for occupancy.',
+    rating: '4.8',
+    reviews: '75',
+    image: constructioncleanersImg,
+    link: 'contruction-cleaners'
+  },
+  {
+    title: 'surveyors',
+    description: 'Precise land and property surveying services for various purposes.',
+    rating: '4.6',
+    reviews: '60',
+    image: surveyorsImg,
+    link: 'surveyors'
+  },
+  {
+    title: 'camera fiitings',
+    description: 'Installation and maintenance of security cameras and surveillance systems.',
+    rating: '4.9',
+    reviews: '110',
+    image: camerafittingsImg,
+    link: 'camera-fittings'
+  },
+  {
+    title: 'developers',
+    description: 'Software and web development services for custom applications and websites.',
+    rating: '4.9',
+    reviews: '250',
+    image: developersImg,
+    link: 'developers'
+  },
+  {
+    title: 'delivery',
+    description: 'Fast and reliable courier and delivery services for packages and documents.',
+    rating: '4.7',
+    reviews: '300',
+    image: deliveryImg,
+    link: 'delivery'
+  },
+  {
+    title: 'welders',
+    description: 'Skilled welding services for metal fabrication, repair, and construction.',
+    rating: '4.5',
+    reviews: '55',
+    image: welderImg,
+    link: 'welders'
+  },
+  {
+    title: 'private investigators',
+    description: 'Confidential and professional investigative services for personal and corporate needs.',
+    rating: '4.8',
+    reviews: '40',
+    image: privateinvestigatorsImg,
+    link: 'private-investigators'
+  },
+  {
+    title: 'Body Massage',
+    description: 'Relaxing and therapeutic body massage services from certified professionals.',
+    rating: '4.9',
+    reviews: '200',
+    image: bodymassageImg,
+    link: 'body-massage'
+  },
 ];
 
 const Homepage = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredServices = services.filter(service =>
+    service.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="homepage">
       <Header />
-      <HeroSection />
-
       <main>
+        <HeroSection setSearchQuery={setSearchQuery} />
         {/* Services Section */}
         <section className="services">
-          <h2 className="section-title">Our Services</h2>
+          <h2 className="section-title">Explore our Services</h2>
           <div className="services-grid">
-            {services.map((service, index) => (
+            {filteredServices.map((service, index) => (
               <div className="service-card" key={index}>
-                <div className="service-image">
-                  <img src={service.image} alt={service.title} />
-                  <h3>{service.title}</h3>
-                </div>
-                <div className="service-content">
-                  <p>{service.description}</p>
-                  <div className="rating">
-                    <FaStar className="star-icon" />
-                    <span>{service.rating} ({service.reviews} reviews)</span>
+                {service.image ? (
+                  <img
+                    src={service.image}
+                    alt={service.title}
+                    className="card-image"
+                  />
+                ) : (
+                  <div className="card-image-placeholder">
+                    {/* Your image here */}
                   </div>
-                  <div className="status">Available</div>
-                  <a href={service.link} className="btn">View Technicians</a>
+                )}
+                <div className="card-content">
+                  <h3 className="card-title">{service.title}</h3>
+                  <p className="card-description">{service.description}</p>
+                  <div className="card-info">
+                    <div className="rating">
+                      <FaStar className="star-icon" />
+                      <span>{service.rating} ({service.reviews})</span>
+                    </div>
+                    <div className="status">Available</div>
+                  </div>
+                  <Link to={`/services/${service.link}`} className="btn">View Technicians</Link>
                 </div>
               </div>
             ))}

@@ -13,13 +13,69 @@ const Signup = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [errors, setErrors] = useState({});
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const handleSignIn = () => {
-    navigate("/");
+    navigate("/login");
   };
 
   const handleBack = () => {
-    navigate("/homepage");
+    navigate("/");
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Name validation
+    if (!fullName) {
+      newErrors.fullName = "Full name is required.";
+    } else if (!/^[a-zA-Z\s]+$/.test(fullName)) {
+      newErrors.fullName = "Full name should only contain alphabets and spaces.";
+    }
+
+    // Email validation
+    if (!email) {
+      newErrors.email = "Email is required.";
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = "Email address is invalid.";
+    }
+
+    // Password validation
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!password) {
+      newErrors.password = "Password is required.";
+    } else if (!passwordRegex.test(password)) {
+      newErrors.password =
+        "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.";
+    }
+
+    // Confirm password validation
+    if (!confirmPassword) {
+      newErrors.confirmPassword = "Confirm password is required.";
+    } else if (password !== confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match.";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (validateForm()) {
+      // Simulate account creation
+      console.log("Account created!", { fullName, email, password });
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+        navigate("/");
+      }, 2000); // Wait for the pop-up to be seen, then navigate to login
+    }
   };
 
   return (
@@ -31,31 +87,51 @@ const Signup = () => {
         </div>
 
         <div className="logo-section">
-          <div className="logo-icon">🔧</div>
-          <h1 className="brand-name">SkillWorkers</h1>
+          {/* Logo Path */}
+          <div className="logo-icon-path"></div>
           <p className="create-account-text">Create your account</p>
           <p className="join-text">Join SkillWorkers to book services</p>
         </div>
 
-        <form className="signup-form">
-          <label>Full Name</label>
+        <form className="signup-form" onSubmit={handleSubmit}>
+          <label htmlFor="fullName">Full Name</label>
           <div className="input-with-icon">
             <AiOutlineUser className="field-icon" />
-            <input type="text" placeholder="Enter your full name" />
+            <input
+              type="text"
+              id="fullName"
+              placeholder="Enter your full name"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className={errors.fullName ? "input-error" : ""}
+            />
           </div>
+          {errors.fullName && <p className="error-message">{errors.fullName}</p>}
 
-          <label>Email Address</label>
+          <label htmlFor="email">Email Address</label>
           <div className="input-with-icon">
             <AiOutlineMail className="field-icon" />
-            <input type="email" placeholder="Enter your email" />
+            <input
+              type="text"
+              id="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className={errors.email ? "input-error" : ""}
+            />
           </div>
+          {errors.email && <p className="error-message">{errors.email}</p>}
 
-          <label>Password</label>
+          <label htmlFor="password">Password</label>
           <div className="input-with-icon">
             <AiOutlineLock className="field-icon" />
             <input
               type={showPassword ? "text" : "password"}
+              id="password"
               placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={errors.password ? "input-error" : ""}
             />
             <span
               className="eye-icon"
@@ -64,32 +140,41 @@ const Signup = () => {
               {showPassword ? <AiOutlineEyeInvisible /> : <AiOutlineEye />}
             </span>
           </div>
+          {errors.password && <p className="error-message">{errors.password}</p>}
 
-          <label>Confirm Password</label>
+          <label htmlFor="confirmPassword">Confirm Password</label>
           <div className="input-with-icon">
             <AiOutlineLock className="field-icon" />
             <input
               type={showConfirmPassword ? "text" : "password"}
+              id="confirmPassword"
               placeholder="Confirm your password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className={errors.confirmPassword ? "input-error" : ""}
             />
             <span
               className="eye-icon"
-              onClick={() =>
-                setShowConfirmPassword(!showConfirmPassword)
-              }
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
             >
-              {showConfirmPassword ? (
-                <AiOutlineEyeInvisible />
-              ) : (
-                <AiOutlineEye />
-              )}
+              {showConfirmPassword ? <AiOutlineEyeInvisible /> : <AiOutlineEye />}
             </span>
           </div>
+          {errors.confirmPassword && <p className="error-message">{errors.confirmPassword}</p>}
 
           <button type="submit" className="create-btn">
             Create Account
           </button>
         </form>
+        
+        {showSuccess && (
+          <div className="success-popup">
+            <div className="popup-content">
+              <span className="popup-icon">&#10003;</span>
+              <p>Account created successfully!</p>
+            </div>
+          </div>
+        )}
 
         <div className="divider"></div>
 

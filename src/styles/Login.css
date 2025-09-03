@@ -13,6 +13,7 @@ body {
   min-height: 100vh;
   background: linear-gradient(135deg, #f0f7ff, #faf5ff);
   font-family: 'Segoe UI', Tahoma, sans-serif;
+  overflow: hidden; /* Removed scrolling */
 }
 
 /* Box */
@@ -20,11 +21,13 @@ body {
   background: #fff;
   padding: 30px 40px;
   border-radius: 15px;
-  width: 400px;
+  width: 500px; /* Increased width */
+  height: auto;
   max-width: 90%;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
   text-align: center;
   position: relative;
+  box-sizing: border-box;
 }
 
 /* Back Arrow */
@@ -40,23 +43,12 @@ body {
 
 /* Logo & Titles */
 .logo-section {
-  margin-top: 40px;
+  margin-top: 20px;
 }
 
-.logo-icon {
-  font-size: 40px;
-  background: linear-gradient(135deg, #6a6fff, #b66fff);
-  color: white;
-  border-radius: 12px;
-  padding: 12px;
-  display: inline-block;
-}
-
-.brand-name {
-  margin-top: 15px;
-  font-size: 26px;
-  font-weight: 700;
-  color: #1a1a1a;
+.logo-icon-path {
+  /* This is a placeholder for your logo path */
+  height: 40px;
 }
 
 .welcome-text {
@@ -88,6 +80,7 @@ body {
   position: relative;
   display: flex;
   align-items: center;
+  margin-bottom: 18px; /* Move margin here for consistent spacing */
 }
 
 .field-icon {
@@ -99,8 +92,7 @@ body {
 
 .input-with-icon input {
   width: 100%;
-  padding: 12px 40px 12px 36px; /* padding-left for icon */
-  margin-bottom: 18px;
+  padding: 12px 40px 12px 36px;
   border: 1px solid #ccc;
   border-radius: 8px;
   font-size: 14px;
@@ -115,6 +107,54 @@ body {
   display: flex;
   align-items: center;
 }
+
+/* Error Message */
+.error-message {
+  color: #e74c3c;
+  font-size: 12px;
+  margin-top: -10px;
+  margin-bottom: 10px;
+  text-align: left;
+}
+
+/* Success Popup */
+.success-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(46, 204, 113, 0.95);
+  color: white;
+  padding: 20px 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  animation: fadeIn 0.5s ease-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.popup-content {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.popup-icon {
+  font-size: 28px;
+}
+
+.success-popup p {
+  margin: 0;
+  font-size: 16px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translate(-50%, -60%); }
+  to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
 
 /* Links & Buttons */
 .forgot-link {

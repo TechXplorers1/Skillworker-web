@@ -1,0 +1,335 @@
+/* Page container */
+.technicians-page-container {
+  background: #fafafa;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Main content container with left/right spacing */
+.tech-main-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  width: 100%;
+}
+
+/* Hero Banner */
+.service-hero-banner {
+  position: relative; /* Added for overlay positioning */
+  height: 240px;
+  background-size: cover;
+  background-position: center;
+  border-radius: 12px;
+  margin: 2.5rem 0 1.5rem;
+  display: flex;
+  align-items: flex-end;
+  padding: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden; /* Ensures overlay stays within bounds */
+}
+
+/* New overlay for masking the image */
+.hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.7));
+  border-radius: 12px; /* Match parent's border-radius */
+}
+
+.hero-content {
+  position: relative; /* Ensures content is on top of the overlay */
+  z-index: 1;
+  max-width: 600px;
+  color: #fff;
+}
+
+.banner-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.banner-description {
+  margin-top: 0.5rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+/* Filter bar */
+.filter-bar-container {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.filter-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.filter-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.back-arrow-icon {
+  font-size: 1rem;
+  cursor: pointer;
+  color: #333;
+}
+
+.filter-icon {
+  font-size: 1rem;
+  color: #444;
+}
+
+.filter-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.filter-controls {
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+}
+
+.filter-select {
+  padding: 0.5rem 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: #444;
+  background-color: #fff;
+  cursor: pointer;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+
+.apply-filter-btn {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.apply-filter-btn:hover {
+  background: #1d4ed8;
+}
+
+/* Technicians */
+.section-header {
+  margin-bottom: 1rem;
+}
+
+.section-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.section-subtitle {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.technicians-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 1.5rem;
+}
+
+.technician-card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  padding: 1.25rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.technician-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
+}
+
+.card-header {
+  display: flex;
+  align-items: flex-start;
+}
+
+.tech-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 1rem;
+  border: 2px solid #e5e7eb;
+}
+
+.tech-info {
+  flex: 1;
+}
+
+.tech-name {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 0.3rem 0;
+  color: #111;
+}
+
+.tech-rating {
+  font-size: 0.85rem;
+  color: #666;
+  margin: 0.2rem 0;
+  display: flex;
+  align-items: center;
+}
+
+.star-icon {
+  color: #fbbf24;
+  margin-right: 0.3rem;
+}
+
+.tech-details p {
+  font-size: 0.85rem;
+  color: #444;
+  margin: 0.2rem 0;
+  display: flex;
+  align-items: center;
+}
+
+.tech-details svg {
+  margin-right: 0.4rem;
+  color: #6b7280;
+}
+
+.tech-status.available {
+  color: #22c55e;
+  font-weight: 600;
+}
+
+.tech-status.busy {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.tech-price {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #111;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Buttons */
+.tech-actions {
+  display: flex;
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.tech-contact-btn {
+  flex: 1;
+  padding: 0.6rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+}
+
+.chat-btn {
+  background: #2563eb;
+  color: #fff;
+}
+
+.chat-btn:hover {
+  background: #1d4ed8;
+}
+
+.book-btn {
+  background: #22c55e;
+  color: #fff;
+}
+
+.book-btn:hover {
+  background: #16a34a;
+}
+
+/* No results message */
+.no-results-message {
+  text-align: center;
+  padding: 3rem;
+  background: #fff;
+  border-radius: 10px;
+  margin-top: 2rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.no-results-message p {
+  margin: 0.5rem 0;
+  color: #666;
+}
+
+.no-results-message p:first-child {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #444;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .filter-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .filter-controls {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  
+  .filter-select {
+    flex: 1;
+    min-width: 120px;
+  }
+  
+  .technicians-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .service-hero-banner {
+    height: 200px;
+    padding: 1.5rem;
+  }
+  
+  .banner-title {
+    font-size: 1.5rem;
+  }
+  
+  .banner-description {
+    font-size: 0.9rem;
+  }
+}

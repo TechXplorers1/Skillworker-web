@@ -39,113 +39,124 @@ main {
 
 .services-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 20px;
+}
+
+/* Ensure 3 columns on larger screens */
+@media (min-width: 1200px) {
+  .services-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 .service-card {
   background: #fff;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .service-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.1);
 }
 
-.service-image {
-  position: relative;
-  height: 160px;
-  overflow: hidden;
-}
-
-.service-image img {
+.card-image-placeholder {
   width: 100%;
-  height: 100%;
+  height: 120px;
+  background-color: #f0f0f0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.2rem;
+  color: #888;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.card-image {
+  width: 100%;
+  height: 120px; /* Reduced image height */
   object-fit: cover;
 }
 
-.service-image::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0) 100%);
-}
-
-.service-image h3 {
-  position: absolute;
-  bottom: 10px;
-  left: 15px;
-  color: white;
-  font-size: 1.1rem;
-  font-weight: 700;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
-  z-index: 1;
-}
-
-.service-content {
+.card-content {
   padding: 15px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
-.service-content p {
+.card-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #1e293b;
+}
+
+.card-description {
   font-size: 0.9rem;
-  color: #555;
-  margin-bottom: 10px;
+  color: #64748b;
+  margin-bottom: 15px;
+  flex-grow: 1;
+}
+
+.card-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-bottom: 15px;
 }
 
 .rating {
   display: flex;
   align-items: center;
-  font-size: 0.85rem;
-  color: #333;
-  margin-bottom: 8px;
+  gap: 5px;
 }
 
 .star-icon {
-  color: #f59e0b;
-  margin-right: 6px;
-  font-size: 0.9rem;
+  color: #ffc107;
 }
 
 .status {
-  color: #16a34a;
-  font-size: 0.85rem;
-  font-weight: 500;
-  margin-bottom: 12px;
+  background: #28a745;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
 }
 
 .btn {
   display: block;
   width: 100%;
-  padding: 10px 0;
-  background: #2563eb;
-  color: white;
+  padding: 10px;
+  background: #007bff;
+  color: #fff;
   text-align: center;
-  text-decoration: none;
   border-radius: 8px;
+  text-decoration: none;
   font-weight: 600;
-  font-size: 0.9rem;
   transition: background 0.3s ease;
 }
 
 .btn:hover {
-  background: #1d4ed8;
+  background: #0056b3;
 }
 
 /* Why Choose Us Section */
 .why-choose {
   background: #f8f9fa;
-  padding: 50px 5%;
+  padding: 50px 20px;
 }
 
 .why-container {
-  max-width: 1300px;
+  width: 100%;
   margin: 0 auto;
   background: #fff;
   border-radius: 16px;
@@ -169,7 +180,7 @@ main {
 
 .why-features {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   gap: 30px;
   flex-wrap: wrap;
 }
@@ -177,54 +188,41 @@ main {
 .why-card {
   flex: 1;
   min-width: 220px;
+  max-width: 300px;
   text-align: center;
 }
 
 .icon-container {
-  width: 50px;
-  height: 50px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   margin: 0 auto 15px;
-  font-size: 1.5rem;
+  color: white;
+  font-size: 24px;
 }
 
 .icon-container.blue {
-  background-color: #e0edff;
-  color: #2563eb;
+  background: #007bff;
 }
 
 .icon-container.green {
-  background-color: #e6f8ec;
-  color: #16a34a;
+  background: #28a745;
 }
 
 .icon-container.purple {
-  background-color: #f3e8ff;
-  color: #9333ea;
+  background: #6f42c1;
 }
 
 .why-card h3 {
-  font-size: 1.2rem;
-  margin-bottom: 8px;
-  color: #1e293b;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 10px;
 }
 
 .why-card p {
-  color: #64748b;
   font-size: 0.9rem;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .services-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .why-features {
-    flex-direction: column;
-    align-items: center;
-  }
+  color: #64748b;
 }

@@ -56,7 +56,7 @@ const Login = () => {
       setShowSuccess(true);
       setTimeout(() => {
         setShowSuccess(false);
-        navigate("/homepage");
+        navigate("/");
       }, 1500); // Navigate after a short delay
     }
   };

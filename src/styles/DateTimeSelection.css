@@ -1,0 +1,204 @@
+.datetime-selection-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.datetime-main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 1rem;
+}
+
+.datetime-content {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.datetime-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.datetime-header h1 {
+  margin: 0;
+  color: #333;
+  font-size: 1.8rem;
+}
+
+.dates-section, .times-section, .instructions-section {
+  margin-bottom: 2rem;
+}
+
+.dates-section h3, .times-section h3, .instructions-section h3 {
+  margin: 0 0 1rem 0;
+  color: #333;
+}
+
+.dates-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.8rem;
+}
+
+.date-card {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.date-card:hover {
+  border-color: #007bff;
+}
+
+.date-card.selected {
+  background: #007bff;
+  color: white;
+}
+
+.date-label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 0.3rem;
+}
+
+.date-full {
+  font-size: 0.9rem;
+}
+
+.times-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.8rem;
+}
+
+.time-card {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.time-card:hover {
+  border-color: #007bff;
+}
+
+.time-card.selected {
+  background: #007bff;
+  color: white;
+}
+
+.instructions-input {
+  width: 100%;
+  min-height: 100px;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.instructions-input:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+.customer-info-review {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+
+.info-card h4 {
+  margin: 0 0 1rem 0;
+  color: #333;
+}
+
+.info-card p {
+  margin: 0.5rem 0;
+  color: #666;
+}
+
+.datetime-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.support-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.guarantee-badge {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #fcd34d;
+  text-align: center;
+}
+
+.guarantee-badge h4 {
+  margin: 0 0 0.5rem 0;
+}
+
+.guarantee-badge p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.support-info {
+  text-align: center;
+}
+
+.support-info h4 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+}
+
+.support-info p {
+  margin: 0.3rem 0;
+  color: #666;
+}
+
+@media (max-width: 768px) {
+  .datetime-content {
+    padding: 1rem;
+  }
+  
+  .dates-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .times-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .datetime-actions {
+    flex-direction: column;
+  }
+  
+  .confirm-btn, .cancel-btn {
+    width: 100%;
+  }
+}

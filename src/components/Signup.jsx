@@ -69,12 +69,25 @@ const Signup = () => {
     e.preventDefault();
     if (validateForm()) {
       // Simulate account creation
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("userEmail", email);
+      localStorage.setItem("userName", fullName);
+      
       console.log("Account created!", { fullName, email, password });
       setShowSuccess(true);
+      
       setTimeout(() => {
         setShowSuccess(false);
-        navigate("/");
-      }, 2000); // Wait for the pop-up to be seen, then navigate to login
+        
+        // Check if there's a redirect URL stored
+        const redirectUrl = localStorage.getItem("redirectAfterLogin");
+        if (redirectUrl) {
+          localStorage.removeItem("redirectAfterLogin");
+          navigate(redirectUrl);
+        } else {
+          navigate("/");
+        }
+      }, 2000);
     }
   };
 

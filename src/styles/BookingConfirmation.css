@@ -1,0 +1,295 @@
+.booking-confirmation-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.booking-main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 1rem;
+}
+
+.back-nav {
+  margin-bottom: 1rem;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.5rem 0;
+}
+
+.booking-content {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.booking-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.booking-header h1 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+  font-size: 1.8rem;
+}
+
+.booking-header p {
+  margin: 0;
+  color: #666;
+}
+
+.booking-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.technician-card {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+}
+
+.tech-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.tech-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #e0e0e0;
+}
+
+.tech-info h3 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+}
+
+.tech-rating {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  color: #666;
+}
+
+.star-icon {
+  color: #fbbf24;
+}
+
+.tech-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.tech-meta span {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.included-services {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+}
+
+.included-services h3 {
+  margin: 0 0 1rem 0;
+  color: #333;
+}
+
+.included-services > p {
+  margin: 0 0 1rem 0;
+  font-weight: 500;
+}
+
+.included-services ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.included-services li {
+  padding: 0.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #555;
+}
+
+.booking-summary {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+}
+
+.booking-summary h3 {
+  margin: 0 0 1rem 0;
+  color: #333;
+}
+
+.summary-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.summary-row.total {
+  border-bottom: none;
+  font-weight: bold;
+  font-size: 1.1rem;
+  padding-top: 0.5rem;
+  border-top: 2px solid #ddd;
+}
+
+.price-disclaimer {
+  font-size: 0.8rem;
+  color: #666;
+  text-align: center;
+}
+
+.selected-datetime, .customer-info {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+}
+
+.selected-datetime h3, .customer-info h3 {
+  margin: 0 0 1rem 0;
+  color: #333;
+}
+
+.datetime-card, .customer-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  padding: 1rem;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+
+.change-btn {
+  background: none;
+  border: 1px solid #007bff;
+  color: #007bff;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.change-btn:hover {
+  background: #007bff;
+  color: white;
+}
+
+.booking-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.confirm-btn {
+  background: #22c55e;
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.confirm-btn:hover {
+  background: #16a34a;
+}
+
+.cancel-btn {
+  background: #f8f9fa;
+  color: #666;
+  border: 1px solid #ddd;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.cancel-btn:hover {
+  background: #e9ecef;
+}
+
+.guarantee-section {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.guarantee-badge {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #fcd34d;
+}
+
+.guarantee-badge h4 {
+  margin: 0 0 0.5rem 0;
+}
+
+.guarantee-badge p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .booking-content {
+    padding: 1rem;
+  }
+  
+  .tech-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .booking-actions {
+    flex-direction: column;
+  }
+  
+  .confirm-btn, .cancel-btn {
+    width: 100%;
+  }
+}

@@ -1,11 +1,8 @@
-// ServiceTechniciansPage.jsx
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import {
-    FaArrowLeft,
     FaStar,
     FaCommentDots,
     FaClock,
@@ -34,52 +31,52 @@ import deliveryHeroImg from '../assets/delivery.png';
 // Technician data (placeholder examples)
 const technicianData = {
     plumber: [
-        { name: 'TECHY 1', rating: '4.8', reviews: '127', experience: '5+ years', distance: '2.3 km', available: true, image: '/profile1.png', price: 45 },
-        { name: 'TECHY 2', rating: '4.9', reviews: '89', experience: '3+ years', distance: '1.8 km', available: true, image: '/profile2.png', price: 55 },
-        { name: 'TECHY 3', rating: '4.7', reviews: '156', experience: '7+ years', distance: '3.1 km', available: false, image: '/profile3.png', price: 65 }
+        { id: 'tech1', name: 'TECHY 1', rating: '4.8', reviews: '127', experience: '5+ years', distance: '2.3 km', available: true, image: '/profile1.png', price: 45 },
+        { id: 'tech2', name: 'TECHY 2', rating: '4.9', reviews: '89', experience: '3+ years', distance: '1.8 km', available: true, image: '/profile2.png', price: 55 },
+        { id: 'tech3', name: 'TECHY 3', rating: '4.7', reviews: '156', experience: '7+ years', distance: '3.1 km', available: false, image: '/profile3.png', price: 65 }
     ],
     electrician: [
-        { name: 'ELECTRO 1', rating: '4.8', reviews: '102', experience: '6+ years', distance: '1.6 km', available: true, image: '/profile1.png', price: 50 },
-        { name: 'ELECTRO 2', rating: '4.7', reviews: '85', experience: '4+ years', distance: '2.1 km', available: true, image: '/profile2.png', price: 60 }
+        { id: 'electro1', name: 'ELECTRO 1', rating: '4.8', reviews: '102', experience: '6+ years', distance: '1.6 km', available: true, image: '/profile1.png', price: 50 },
+        { id: 'electro2', name: 'ELECTRO 2', rating: '4.7', reviews: '85', experience: '4+ years', distance: '2.1 km', available: true, image: '/profile2.png', price: 60 }
     ],
     'ac-mechanic': [
-        { name: 'COOLFIX 1', rating: '4.7', reviews: '75', experience: '5+ years', distance: '2.0 km', available: true, image: '/profile1.png', price: 70 }
+        { id: 'coolfix1', name: 'COOLFIX 1', rating: '4.7', reviews: '75', experience: '5+ years', distance: '2.0 km', available: true, image: '/profile1.png', price: 70 }
     ],
     carpenter: [
-        { name: 'WOODSMITH 1', rating: '4.9', reviews: '95', experience: '8+ years', distance: '2.0 km', available: true, image: '/profile1.png', price: 70 }
+        { id: 'woodsmith1', name: 'WOODSMITH 1', rating: '4.9', reviews: '95', experience: '8+ years', distance: '2.0 km', available: true, image: '/profile1.png', price: 70 }
     ],
     'packers-movers': [
-        { name: 'SHIFTIT 1', rating: '4.6', reviews: '60', experience: '4+ years', distance: '3.5 km', available: true, image: '/profile1.png', price: 80 }
+        { id: 'shiftit1', name: 'SHIFTIT 1', rating: '4.6', reviews: '60', experience: '4+ years', distance: '3.5 km', available: true, image: '/profile1.png', price: 80 }
     ],
     'house-cleaners': [
-        { name: 'CLEANPRO 1', rating: '4.7', reviews: '88', experience: '3+ years', distance: '2.2 km', available: true, image: '/profile1.png', price: 45 }
+        { id: 'cleanpro1', name: 'CLEANPRO 1', rating: '4.7', reviews: '88', experience: '3+ years', distance: '2.2 km', available: true, image: '/profile1.png', price: 45 }
     ],
     laundry: [
-        { name: 'WASHME 1', rating: '4.5', reviews: '66', experience: '2+ years', distance: '1.9 km', available: true, image: '/profile1.png', price: 30 }
+        { id: 'washme1', name: 'WASHME 1', rating: '4.5', reviews: '66', experience: '2+ years', distance: '1.9 km', available: true, image: '/profile1.png', price: 30 }
     ],
     'contruction-cleaners': [
-        { name: 'POSTBUILD 1', rating: '4.8', reviews: '55', experience: '4+ years', distance: '3.1 km', available: true, image: '/profile1.png', price: 90 }
+        { id: 'postbuild1', name: 'POSTBUILD 1', rating: '4.8', reviews: '55', experience: '4+ years', distance: '3.1 km', available: true, image: '/profile1.png', price: 90 }
     ],
     surveyors: [
-        { name: 'LANDCHECK 1', rating: '4.6', reviews: '48', experience: '6+ years', distance: '5.0 km', available: true, image: '/profile1.png', price: 120 }
+        { id: 'landcheck1', name: 'LANDCHECK 1', rating: '4.6', reviews: '48', experience: '6+ years', distance: '5.0 km', available: true, image: '/profile1.png', price: 120 }
     ],
     'camera-fittings': [
-        { name: 'SECURECAM 1', rating: '4.9', reviews: '77', experience: '5+ years', distance: '2.7 km', available: true, image: '/profile1.png', price: 100 }
+        { id: 'securecam1', name: 'SECURECAM 1', rating: '4.9', reviews: '77', experience: '5+ years', distance: '2.7 km', available: true, image: '/profile1.png', price: 100 }
     ],
     developers: [
-        { name: 'CODEPRO 1', rating: '4.9', reviews: '200', experience: '7+ years', distance: 'Remote', available: true, image: '/profile1.png', price: 50 }
+        { id: 'codepro1', name: 'CODEPRO 1', rating: '4.9', reviews: '200', experience: '7+ years', distance: 'Remote', available: true, image: '/profile1.png', price: 50 }
     ],
     delivery: [
-        { name: 'FASTDEL 1', rating: '4.7', reviews: '300', experience: '4+ years', distance: '1.0 km', available: true, image: '/profile1.png', price: 20 }
+        { id: 'fastdel1', name: 'FASTDEL 1', rating: '4.7', reviews: '300', experience: '4+ years', distance: '1.0 km', available: true, image: '/profile1.png', price: 20 }
     ],
     welders: [
-        { name: 'IRONFIX 1', rating: '4.5', reviews: '44', experience: '5+ years', distance: '2.8 km', available: true, image: '/profile1.png', price: 75 }
+        { id: 'ironfix1', name: 'IRONFIX 1', rating: '4.5', reviews: '44', experience: '5+ years', distance: '2.8 km', available: true, image: '/profile1.png', price: 75 }
     ],
     'private-investigators': [
-        { name: 'SLEUTH 1', rating: '4.8', reviews: '35', experience: '10+ years', distance: 'Varies', available: true, image: '/profile1.png', price: 150 }
+        { id: 'sleuth1', name: 'SLEUTH 1', rating: '4.8', reviews: '35', experience: '10+ years', distance: 'Varies', available: true, image: '/profile1.png', price: 150 }
     ],
     'body-massage': [
-        { name: 'RELAXPRO 1', rating: '4.9', reviews: '120', experience: '6+ years', distance: '2.0 km', available: true, image: '/profile1.png', price: 60 }
+        { id: 'relaxpro1', name: 'RELAXPRO 1', rating: '4.9', reviews: '120', experience: '6+ years', distance: '2.0 km', available: true, image: '/profile1.png', price: 60 }
     ]
 };
 
@@ -205,6 +202,29 @@ const ServiceTechniciansPage = () => {
         setFilteredTechnicians(newFilteredList);
     };
 
+    const handleChatClick = (technicianId) => {
+        const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+        
+        if (isLoggedIn) {
+            navigate(`/chat/${serviceName}/${technicianId}`);
+        } else {
+            // Store the intended destination for after login
+            localStorage.setItem("redirectAfterLogin", `/chat/${serviceName}/${technicianId}`);
+            navigate("/login");
+        }
+    };
+const handleBookClick = (technicianId) => {
+  const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+  
+  if (isLoggedIn) {
+    navigate(`/booking/${serviceName}/${technicianId}`);
+  } else {
+    // Store the intended destination for after login
+    localStorage.setItem("redirectAfterLogin", `/booking/${serviceName}/${technicianId}`);
+    navigate("/login");
+  }
+};
+
     return (
         <div className="technicians-page-container">
             <Header />
@@ -231,12 +251,14 @@ const ServiceTechniciansPage = () => {
                                 <option>4.5+ Stars</option>
                                 <option>4.0+ Stars</option>
                             </select>
-                            <select className="filter-select" value={selectedPrice} onChange={(e) => setSelectedPrice(e.target.value)}>
-                                <option>All Prices</option>
-                                <option>$20-50/hour</option>
-                                <option>$50-100/hour</option>
-                                <option>$100+/hour</option>
-                            </select>
+                           <select className="filter-select" value={selectedPrice} onChange={(e) => setSelectedPrice(e.target.value)}>
+    <option>All Prices</option>
+    <option>$20-50/hour</option>
+    <option>$50-100/hour</option>
+    <option>$100+/hour</option>
+    <option>$200-400/day</option>
+    <option>$400+/day</option>
+</select>
                             <select className="filter-select" value={selectedAvailability} onChange={(e) => setSelectedAvailability(e.target.value)}>
                                 <option>All Availability</option>
                                 <option>Available Now</option>
@@ -279,10 +301,10 @@ const ServiceTechniciansPage = () => {
                                         </div>
                                     </div>
                                     <div className="tech-actions">
-                                        <button className="tech-contact-btn chat-btn" onClick={() => navigate('/login')}>
+                                        <button className="tech-contact-btn chat-btn" onClick={() => handleChatClick(tech.id)}>
                                             <FaCommentDots /> Chat
                                         </button>
-                                        <button className="tech-contact-btn book-btn" onClick={() => navigate('/login')}>
+                                        <button className="tech-contact-btn book-btn" onClick={() => handleBookClick(tech.id)}>
                                             Book Now
                                         </button>
                                     </div>

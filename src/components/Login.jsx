@@ -52,12 +52,25 @@ const Login = () => {
     e.preventDefault();
     if (validateForm()) {
       // Simulate successful login
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("userEmail", email);
+      localStorage.setItem("userName", email.split('@')[0]); // Simple username from email
+      
       console.log("Login successful!", { email, password });
       setShowSuccess(true);
+      
       setTimeout(() => {
         setShowSuccess(false);
-        navigate("/");
-      }, 1500); // Navigate after a short delay
+        
+        // Check if there's a redirect URL stored
+        const redirectUrl = localStorage.getItem("redirectAfterLogin");
+        if (redirectUrl) {
+          localStorage.removeItem("redirectAfterLogin");
+          navigate(redirectUrl);
+        } else {
+          navigate("/");
+        }
+      }, 1500);
     }
   };
 

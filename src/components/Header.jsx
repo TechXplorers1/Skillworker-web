@@ -6,19 +6,31 @@ import "../styles/Header.css";
 const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+  const userName = localStorage.getItem("userName") || "";
 
   const handleSignIn = () => {
-    navigate("/signup"); // Navigates to signup.jsx
+    navigate("/login");
   };
 
   const handleLogoClick = () => {
     if (location.pathname === "/") {
-      // Already on homepage → scroll to top
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
-      // Navigate to homepage
       navigate("/");
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("userName");
+    localStorage.removeItem("userEmail");
+    navigate("/");
+    window.location.reload();
+  };
+
+  const handleProfile = () => {
+    navigate("/profile");
   };
 
   return (
@@ -32,9 +44,21 @@ const Header = () => {
         <h2 className="header-logo">SkillWorkers</h2>
       </div>
       <div className="header-right">
-        <button className="signin-btn" onClick={handleSignIn}>
-          Sign In
-        </button>
+        {isLoggedIn ? (
+          <div className="user-menu">
+            <span className="welcome-text">Welcome, {userName}</span>
+            <button className="profile-btn" onClick={handleProfile}>
+              Profile
+            </button>
+            <button className="signout-btn" onClick={handleLogout}>
+              Sign Out
+            </button>
+          </div>
+        ) : (
+          <button className="signin-btn" onClick={handleSignIn}>
+            Sign In
+          </button>
+        )}
       </div>
     </header>
   );

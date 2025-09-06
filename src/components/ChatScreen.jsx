@@ -153,16 +153,6 @@ const ChatScreen = () => {
     navigate(`/booking/${serviceName}/${technicianId}`);
   };
 
-  const handleRequestQuote = () => {
-    const newMsg = {
-      id: messages.length + 1,
-      sender: 'system',
-      text: 'Quote request has been sent to the technician.',
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-    setMessages([...messages, newMsg]);
-  };
-
   // Show loading/redirect message if no booking
   if (!hasBooking) {
     return (
@@ -269,22 +259,6 @@ const ChatScreen = () => {
                   <li>{technician.experience} Experience</li>
                 </ul>
               </div>
-              
-              <div className="quick-actions">
-                <button className="quote-btn" onClick={handleRequestQuote}>Request Quote</button>
-                <button className="book-btn" onClick={handleBookNow}>Confirm Appointment</button>
-              </div>
-            </div>
-
-            <div className="search-section">
-              <div className="search-input">
-                <FaSearch className="search-icon" />
-                <input type="text" placeholder="Search" />
-              </div>
-            </div>
-
-            <div className="date-display">
-              <span>01/09/6</span>
             </div>
           </div>
         </div>

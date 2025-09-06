@@ -31,56 +31,56 @@ import deliveryHeroImg from '../assets/delivery.png';
 // Technician data (placeholder examples)
 const technicianData = {
     plumber: [
-        { id: 'tech1', name: 'TECHY 1', rating: '4.8', reviews: '127', experience: '5+ years', distance: '2.3 km', available: true, image: '/profile1.png', price: 45 },
-        { id: 'tech2', name: 'TECHY 2', rating: '4.9', reviews: '89', experience: '3+ years', distance: '1.8 km', available: true, image: '/profile2.png', price: 55 },
-        { id: 'tech3', name: 'TECHY 3', rating: '4.7', reviews: '156', experience: '7+ years', distance: '3.1 km', available: false, image: '/profile3.png', price: 65 }
+        { id: 'tech1', name: 'TECHY 1', rating: '4.8', reviews: '127', experience: '5+ years', distance: '2.3 km', available: true, image: '/profile1.png', price: { type: 'hourly', amount: 45 }, service: 'Plumber' },
+        { id: 'tech2', name: 'TECHY 2', rating: '4.9', reviews: '89', experience: '3+ years', distance: '1.8 km', available: true, image: '/profile2.png', price: { type: 'hourly', amount: 55 }, service: 'Plumber' },
+        { id: 'tech3', name: 'TECHY 3', rating: '4.7', reviews: '156', experience: '7+ years', distance: '3.1 km', available: false, image: '/profile3.png', price: { type: 'dayly', amount: 350 }, service: 'Plumber' }
     ],
     electrician: [
-        { id: 'electro1', name: 'ELECTRO 1', rating: '4.8', reviews: '102', experience: '6+ years', distance: '1.6 km', available: true, image: '/profile1.png', price: 50 },
-        { id: 'electro2', name: 'ELECTRO 2', rating: '4.7', reviews: '85', experience: '4+ years', distance: '2.1 km', available: true, image: '/profile2.png', price: 60 }
+        { id: 'electro1', name: 'ELECTRO 1', rating: '4.8', reviews: '102', experience: '6+ years', distance: '1.6 km', available: true, image: '/profile1.png', price: { type: 'hourly', amount: 50 }, service: 'Electrician' },
+        { id: 'electro2', name: 'ELECTRO 2', rating: '4.7', reviews: '85', experience: '4+ years', distance: '2.1 km', available: true, image: '/profile2.png', price: { type: 'dayly', amount: 450 }, service: 'Electrician' }
     ],
     'ac-mechanic': [
-        { id: 'coolfix1', name: 'COOLFIX 1', rating: '4.7', reviews: '75', experience: '5+ years', distance: '2.0 km', available: true, image: '/profile1.png', price: 70 }
+        { id: 'coolfix1', name: 'COOLFIX 1', rating: '4.7', reviews: '75', experience: '5+ years', distance: '2.0 km', available: true, image: '/profile1.png', price: { type: 'hourly', amount: 70 }, service: 'AC Mechanic' }
     ],
     carpenter: [
-        { id: 'woodsmith1', name: 'WOODSMITH 1', rating: '4.9', reviews: '95', experience: '8+ years', distance: '2.0 km', available: true, image: '/profile1.png', price: 70 }
+        { id: 'woodsmith1', name: 'WOODSMITH 1', rating: '4.9', reviews: '95', experience: '8+ years', distance: '2.0 km', available: true, image: '/profile1.png', price: { type: 'dayly', amount: 400 }, service: 'Carpenter' }
     ],
     'packers-movers': [
-        { id: 'shiftit1', name: 'SHIFTIT 1', rating: '4.6', reviews: '60', experience: '4+ years', distance: '3.5 km', available: true, image: '/profile1.png', price: 80 }
+        { id: 'shiftit1', name: 'SHIFTIT 1', rating: '4.6', reviews: '60', experience: '4+ years', distance: '3.5 km', available: true, image: '/profile1.png', price: { type: 'hourly', amount: 80 }, service: 'Packers & Movers' }
     ],
     'house-cleaners': [
-        { id: 'cleanpro1', name: 'CLEANPRO 1', rating: '4.7', reviews: '88', experience: '3+ years', distance: '2.2 km', available: true, image: '/profile1.png', price: 45 }
+        { id: 'cleanpro1', name: 'CLEANPRO 1', rating: '4.7', reviews: '88', experience: '3+ years', distance: '2.2 km', available: true, image: '/profile1.png', price: { type: 'hourly', amount: 45 }, service: 'House Cleaners' }
     ],
     laundry: [
-        { id: 'washme1', name: 'WASHME 1', rating: '4.5', reviews: '66', experience: '2+ years', distance: '1.9 km', available: true, image: '/profile1.png', price: 30 }
+        { id: 'washme1', name: 'WASHME 1', rating: '4.5', reviews: '66', experience: '2+ years', distance: '1.9 km', available: true, image: '/profile1.png', price: { type: 'hourly', amount: 30 }, service: 'Laundry' }
     ],
     'contruction-cleaners': [
-        { id: 'postbuild1', name: 'POSTBUILD 1', rating: '4.8', reviews: '55', experience: '4+ years', distance: '3.1 km', available: true, image: '/profile1.png', price: 90 }
+        { id: 'postbuild1', name: 'POSTBUILD 1', rating: '4.8', reviews: '55', experience: '4+ years', distance: '3.1 km', available: true, image: '/profile1.png', price: { type: 'dayly', amount: 500 }, service: 'Construction Cleaners' }
     ],
     surveyors: [
-        { id: 'landcheck1', name: 'LANDCHECK 1', rating: '4.6', reviews: '48', experience: '6+ years', distance: '5.0 km', available: true, image: '/profile1.png', price: 120 }
+        { id: 'landcheck1', name: 'LANDCHECK 1', rating: '4.6', reviews: '48', experience: '6+ years', distance: '5.0 km', available: true, image: '/profile1.png', price: { type: 'dayly', amount: 600 }, service: 'Surveyors' }
     ],
     'camera-fittings': [
-        { id: 'securecam1', name: 'SECURECAM 1', rating: '4.9', reviews: '77', experience: '5+ years', distance: '2.7 km', available: true, image: '/profile1.png', price: 100 }
+        { id: 'securecam1', name: 'SECURECAM 1', rating: '4.9', reviews: '77', experience: '5+ years', distance: '2.7 km', available: true, image: '/profile1.png', price: { type: 'hourly', amount: 100 }, service: 'Camera Fittings' }
     ],
     developers: [
-        { id: 'codepro1', name: 'CODEPRO 1', rating: '4.9', reviews: '200', experience: '7+ years', distance: 'Remote', available: true, image: '/profile1.png', price: 50 }
+        { id: 'codepro1', name: 'CODEPRO 1', rating: '4.9', reviews: '200', experience: '7+ years', distance: 'Remote', available: true, image: '/profile1.png', price: { type: 'hourly', amount: 50 }, service: 'Software Developer' }
     ],
     delivery: [
-        { id: 'fastdel1', name: 'FASTDEL 1', rating: '4.7', reviews: '300', experience: '4+ years', distance: '1.0 km', available: true, image: '/profile1.png', price: 20 }
+        { id: 'fastdel1', name: 'FASTDEL 1', rating: '4.7', reviews: '300', experience: '4+ years', distance: '1.0 km', available: true, image: '/profile1.png', price: { type: 'hourly', amount: 20 }, service: 'Delivery' }
     ],
     welders: [
-        { id: 'ironfix1', name: 'IRONFIX 1', rating: '4.5', reviews: '44', experience: '5+ years', distance: '2.8 km', available: true, image: '/profile1.png', price: 75 }
+        { id: 'ironfix1', name: 'IRONFIX 1', rating: '4.5', reviews: '44', experience: '5+ years', distance: '2.8 km', available: true, image: '/profile1.png', price: { type: 'dayly', amount: 380 }, service: 'Welder' }
     ],
     'private-investigators': [
-        { id: 'sleuth1', name: 'SLEUTH 1', rating: '4.8', reviews: '35', experience: '10+ years', distance: 'Varies', available: true, image: '/profile1.png', price: 150 }
+        { id: 'sleuth1', name: 'SLEUTH 1', rating: '4.8', reviews: '35', experience: '10+ years', distance: 'Varies', available: true, image: '/profile1.png', price: { type: 'dayly', amount: 750 }, service: 'Private Investigator' }
     ],
     'body-massage': [
-        { id: 'relaxpro1', name: 'RELAXPRO 1', rating: '4.9', reviews: '120', experience: '6+ years', distance: '2.0 km', available: true, image: '/profile1.png', price: 60 }
+        { id: 'relaxpro1', name: 'RELAXPRO 1', rating: '4.9', reviews: '120', experience: '6+ years', distance: '2.0 km', available: true, image: '/profile1.png', price: { type: 'hourly', amount: 60 }, service: 'Body Massage' }
     ]
 };
 
-// Hero banner data (fixed for all services)
+// Hero banner data
 const serviceHeroData = {
     plumber: {
         title: 'Plumber Services',
@@ -164,9 +164,12 @@ const ServiceTechniciansPage = () => {
     const navigate = useNavigate();
 
     const [selectedRating, setSelectedRating] = useState('All Ratings');
-    const [selectedPrice, setSelectedPrice] = useState('All Prices');
+    const [selectedHourlyPrice, setSelectedHourlyPrice] = useState('All');
+    const [selecteddaylyPrice, setSelecteddaylyPrice] = useState('All');
     const [selectedAvailability, setSelectedAvailability] = useState('All Availability');
     const [filteredTechnicians, setFilteredTechnicians] = useState([]);
+    const [showPopup, setShowPopup] = useState(false);
+    const [selectedTechnicianId, setSelectedTechnicianId] = useState(null);
 
     const allTechnicians = technicianData[serviceName] || [];
     const heroData = serviceHeroData[serviceName];
@@ -178,19 +181,39 @@ const ServiceTechniciansPage = () => {
     const handleApplyFilters = () => {
         let newFilteredList = [...allTechnicians];
 
+        // Filter by rating
         if (selectedRating !== 'All Ratings') {
             const minRating = parseFloat(selectedRating.replace('+ Stars', ''));
             newFilteredList = newFilteredList.filter((tech) => parseFloat(tech.rating) >= minRating);
         }
 
-        if (selectedPrice !== 'All Prices') {
-            if (selectedPrice === '$20-50/hour') {
-                newFilteredList = newFilteredList.filter((tech) => tech.price >= 20 && tech.price <= 50);
-            } else if (selectedPrice === '$50-100/hour') {
-                newFilteredList = newFilteredList.filter((tech) => tech.price >= 50 && tech.price <= 100);
-            } else if (selectedPrice === '$100+/hour') {
-                newFilteredList = newFilteredList.filter((tech) => tech.price >= 100);
-            }
+        // Filter by hourly price
+        if (selectedHourlyPrice !== 'All') {
+            const hourlyPriceRange = selectedHourlyPrice.split('-');
+            const minPrice = parseInt(hourlyPriceRange[0].replace('$', ''), 10);
+            const maxPrice = hourlyPriceRange[1] ? parseInt(hourlyPriceRange[1].replace('$/hour', ''), 10) : Infinity;
+
+            newFilteredList = newFilteredList.filter((tech) =>
+                tech.price.type === 'hourly' && tech.price.amount >= minPrice && tech.price.amount <= maxPrice
+            );
+        }
+
+        // Filter by dayly price
+        if (selecteddaylyPrice !== 'All') {
+            const daylyPriceRange = selecteddaylyPrice.split('-');
+            const minPrice = parseInt(daylyPriceRange[0].replace('$', ''), 10);
+            const maxPrice = daylyPriceRange[1] ? parseInt(daylyPriceRange[1].replace('$/day', ''), 10) : Infinity;
+
+            newFilteredList = newFilteredList.filter((tech) =>
+                tech.price.type === 'dayly' && tech.price.amount >= minPrice && tech.price.amount <= maxPrice
+            );
+        }
+        
+        if (selecteddaylyPrice !== 'All' && selectedHourlyPrice === 'All') {
+          newFilteredList = newFilteredList.filter((tech) => tech.price.type === 'dayly');
+        }
+        if (selectedHourlyPrice !== 'All' && selecteddaylyPrice === 'All') {
+          newFilteredList = newFilteredList.filter((tech) => tech.price.type === 'hourly');
         }
 
         if (selectedAvailability !== 'All Availability') {
@@ -203,27 +226,23 @@ const ServiceTechniciansPage = () => {
     };
 
     const handleChatClick = (technicianId) => {
+        setSelectedTechnicianId(technicianId);
+        setShowPopup(true);
+    };
+
+    const handleBookClick = (technician) => {
         const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
         
+        // Store technician data in session storage
+        sessionStorage.setItem('selectedTechnician', JSON.stringify(technician));
+
         if (isLoggedIn) {
-            navigate(`/chat/${serviceName}/${technicianId}`);
+            navigate(`/booking/${serviceName}/${technician.id}`);
         } else {
-            // Store the intended destination for after login
-            localStorage.setItem("redirectAfterLogin", `/chat/${serviceName}/${technicianId}`);
+            localStorage.setItem("redirectAfterLogin", `/booking/${serviceName}/${technician.id}`);
             navigate("/login");
         }
     };
-const handleBookClick = (technicianId) => {
-  const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-  
-  if (isLoggedIn) {
-    navigate(`/booking/${serviceName}/${technicianId}`);
-  } else {
-    // Store the intended destination for after login
-    localStorage.setItem("redirectAfterLogin", `/booking/${serviceName}/${technicianId}`);
-    navigate("/login");
-  }
-};
 
     return (
         <div className="technicians-page-container">
@@ -251,14 +270,18 @@ const handleBookClick = (technicianId) => {
                                 <option>4.5+ Stars</option>
                                 <option>4.0+ Stars</option>
                             </select>
-                           <select className="filter-select" value={selectedPrice} onChange={(e) => setSelectedPrice(e.target.value)}>
-    <option>All Prices</option>
-    <option>$20-50/hour</option>
-    <option>$50-100/hour</option>
-    <option>$100+/hour</option>
-    <option>$200-400/day</option>
-    <option>$400+/day</option>
-</select>
+                            <select className="filter-select" value={selectedHourlyPrice} onChange={(e) => { setSelectedHourlyPrice(e.target.value); setSelecteddaylyPrice('All'); }}>
+                                <option>Hourly prices</option>
+                                <option>$20-50/hour</option>
+                                <option>$50-100/hour</option>
+                                <option>$100+/hour</option>
+                            </select>
+                            <select className="filter-select" value={selecteddaylyPrice} onChange={(e) => { setSelecteddaylyPrice(e.target.value); setSelectedHourlyPrice('All'); }}>
+                                <option>Day prices</option>
+                                <option>$200-400/day</option>
+                                <option>$400-600/day</option>
+                                <option>$600+/day</option>
+                            </select>
                             <select className="filter-select" value={selectedAvailability} onChange={(e) => setSelectedAvailability(e.target.value)}>
                                 <option>All Availability</option>
                                 <option>Available Now</option>
@@ -295,16 +318,16 @@ const handleBookClick = (technicianId) => {
                                             </div>
                                         </div>
                                         <div className="tech-price">
-                                            ${tech.price}
+                                            ${tech.price.amount}
                                             <br />
-                                            per hour
+                                            per {tech.price.type === 'hourly' ? 'hour' : 'day'}
                                         </div>
                                     </div>
                                     <div className="tech-actions">
                                         <button className="tech-contact-btn chat-btn" onClick={() => handleChatClick(tech.id)}>
                                             <FaCommentDots /> Chat
                                         </button>
-                                        <button className="tech-contact-btn book-btn" onClick={() => handleBookClick(tech.id)}>
+                                        <button className="tech-contact-btn book-btn" onClick={() => handleBookClick(tech)}>
                                             Book Now
                                         </button>
                                     </div>
@@ -320,6 +343,36 @@ const handleBookClick = (technicianId) => {
                 </section>
             </main>
             <Footer />
+
+            {showPopup && (
+                <div className="popup-overlay">
+                    <div className="popup-card">
+                        <h3 className="popup-title">Booking Required</h3>
+                        <p className="popup-message">
+                            You need to book this technician before you can chat. Once they accept your booking, you can start chatting.
+                        </p>
+                        <div className="popup-actions">
+                            <button
+                                className="popup-btn book-btn"
+                                onClick={() => {
+                                    setShowPopup(false);
+                                    // You would need to find the full tech object here to pass it to handleBookClick
+                                    const techToBook = filteredTechnicians.find(t => t.id === selectedTechnicianId);
+                                    if(techToBook) handleBookClick(techToBook);
+                                }}
+                            >
+                                Book Now
+                            </button>
+                            <button
+                                className="popup-btn back-btn"
+                                onClick={() => setShowPopup(false)}
+                            >
+                                Go Back
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

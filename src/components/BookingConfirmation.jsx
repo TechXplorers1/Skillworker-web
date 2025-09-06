@@ -1,173 +1,79 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
-import { FaStar, FaCheck, FaClock, FaMapMarkerAlt } from 'react-icons/fa';
-import '../styles/BookingConfirmation.css';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import "../styles/BookingPage.css"; // adjust path
 
-// Mock technician data
-const technicianData = {
-  tech1: {
-    id: 'tech1',
-    name: 'TECHY 1',
-    service: 'Plumbing',
-    rating: '4.8',
-    reviews: '127',
-    experience: '5+ years',
-    distance: '2.3 km',
-    price: 45,
-    image: '/profile1.png'
-  },
-  // Add more technicians as needed
-};
-
-const BookingConfirmation = () => {
-  const { serviceName, technicianId } = useParams();
+const BookingConfirmation = ({ isOpen, onClose, booking }) => {
   const navigate = useNavigate();
-  const [selectedDate, setSelectedDate] = useState('Today, 2:00 PM');
-  
-  const technician = technicianData[technicianId] || {
-    id: technicianId,
-    name: 'Professional Technician',
-    service: serviceName,
-    rating: '4.5',
-    reviews: '50',
-    experience: '5+ years',
-    distance: '2.0 km',
-    price: 45,
-    image: '/profile1.png'
-  };
 
-  const handleConfirmBooking = () => {
-  // Set booking flag in localStorage
-  localStorage.setItem(`booking_${technicianId}`, 'true');
-  
-  // In a real app, this would process the booking
-  // For now, redirect to chat screen
-  navigate(`/chat/${serviceName}/${technicianId}`);
-};
-
-  const handleBack = () => {
-    navigate(-1);
-  };
+  if (!isOpen) return null;
 
   return (
-    <div className="booking-confirmation-container">
-      <Header />
-      
-      <div className="booking-main-content">
-        <div className="back-nav">
-          <button className="back-button" onClick={handleBack}>
-            &#8592; Back
-          </button>
+    <div className="popup-overlay">
+      <div className="popup-card">
+        <div className="popup-header">
+          <div className="popup-icon">🎉</div>
         </div>
+        <div className="popup-content">
+          <h2 className="popup-title">Booking Confirmed!</h2>
+          <p className="popup-message">
+            Your service has been successfully booked. You'll receive a
+            confirmation message shortly.
+          </p>
 
-        <div className="booking-content">
-          <div className="booking-header">
-            <h1>Confirm Your Booking</h1>
-            <p>Review the details and confirm your service booking</p>
-          </div>
-
-          <div className="booking-details">
-            <div className="technician-card">
-              <div className="tech-header">
-                <img src={technician.image} alt={technician.name} className="tech-avatar" />
-                <div className="tech-info">
-                  <h3>{technician.name}</h3>
-                  <div className="tech-rating">
-                    <FaStar className="star-icon" />
-                    <span>{technician.rating} ({technician.reviews} reviews)</span>
-                  </div>
-                  <div className="tech-meta">
-                    <span><FaClock /> {technician.experience}</span>
-                    <span><FaMapMarkerAlt /> {technician.distance}</span>
-                  </div>
-                </div>
-              </div>
+          {/* Booking Details */}
+          <div className="booking-details-card">
+            <div className="booking-details-header">
+              <h3>Booking Details</h3>
+              <span className="booking-status">Confirmed</span>
             </div>
-
-            <div className="included-services">
-              <h3>What's included:</h3>
-              <p>Professional {technician.service.toLowerCase()} repair and maintenance service</p>
-              <ul>
-                <li><FaCheck /> Professional consultation and assessment</li>
-                <li><FaCheck /> All necessary tools and basic materials</li>
-                <li><FaCheck /> Quality guarantee on work performed</li>
-                <li><FaCheck /> Clean-up after service completion</li>
-              </ul>
+            <div className="details-row">
+              <span>Booking ID:</span>
+              <span>{booking.id}</span>
             </div>
-
-            <div className="booking-summary">
-              <h3>Booking Summary</h3>
-              <div className="summary-table">
-                <div className="summary-row">
-                  <span className="label">Service Rate</span>
-                  <span className="value">${technician.price}/hour</span>
-                </div>
-                <div className="summary-row">
-                  <span className="label">Estimated Duration</span>
-                  <span className="value">2 hours</span>
-                </div>
-                <div className="summary-row">
-                  <span className="label">Subtotal</span>
-                  <span className="value">${technician.price * 2}</span>
-                </div>
-                <div className="summary-row">
-                  <span className="label">Service Fee</span>
-                  <span className="value">$5</span>
-                </div>
-                <div className="summary-row total">
-                  <span className="label">Total Estimate</span>
-                  <span className="value">${technician.price * 2 + 5}</span>
-                </div>
-              </div>
-
-              <div className="price-disclaimer">
-                <p>Final price may vary based on actual work completed and materials used</p>
-              </div>
+            <div className="details-row">
+              <span>Service:</span>
+              <span>{booking.service}</span>
             </div>
-
-            <div className="selected-datetime">
-              <h3>Selected Date & Time</h3>
-              <div className="datetime-card">
-                <span>{selectedDate}</span>
-                <button 
-                  className="change-btn"
-                  onClick={() => navigate(`/booking/${serviceName}/${technicianId}/datetime`)}
-                >
-                  Change
-                </button>
-              </div>
+            <div className="details-row">
+              <span>Technician:</span>
+              <span>{booking.technician}</span>
             </div>
-
-            <div className="customer-info">
-              <h3>Customer Information</h3>
-              <div className="customer-card">
-                <span>John Customer</span>
-                <button className="change-btn">Change</button>
-              </div>
+            <div className="details-row">
+              <span>Date & Time:</span>
+              <span>{booking.dateTime}</span>
             </div>
-
-            <div className="booking-actions">
-              <button className="confirm-btn" onClick={handleConfirmBooking}>
-                Confirm Booking
-              </button>
-              <button className="cancel-btn" onClick={handleBack}>
-                Cancel
-              </button>
-            </div>
-
-            <div className="guarantee-section">
-              <div className="guarantee-badge">
-                <h4>100% Satisfaction Guarantee</h4>
-                <p>Your service is protected by our quality guarantee</p>
-              </div>
+            <div className="details-row">
+              <span>Estimated Cost:</span>
+              <span style={{ color: "#16a34a" }}>{booking.cost}</span>
             </div>
           </div>
+
+          {/* What happens next */}
+          <div className="what-happens-next-card">
+            <h3>What happens next?</h3>
+            <ul>
+              <li>Your technician will contact you shortly</li>
+              <li>You'll receive SMS/email confirmation</li>
+              <li>Track your service in real-time</li>
+              <li>View booking anytime</li>
+            </ul>
+          </div>
+
+          <button
+            className="btn primary full-width"
+            onClick={() => {
+              onClose();
+              navigate("/mybookings");
+            }}
+          >
+            View Booking
+          </button>
+
+          <span className="popup-caption" onClick={onClose}>
+            Close
+          </span>
         </div>
       </div>
-      
-      <Footer />
     </div>
   );
 };

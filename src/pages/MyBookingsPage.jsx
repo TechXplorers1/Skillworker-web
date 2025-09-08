@@ -3,12 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import {
-  FaUserCircle,
   FaSearch,
   FaFilter,
   FaMapMarkerAlt,
   FaRegClock,
-  FaDollarSign,
+  FaRupeeSign,
   FaEllipsisV,
   FaStar,
 } from 'react-icons/fa';
@@ -24,46 +23,49 @@ const MyBookingsPage = () => {
   const allBookings = [
     {
       id: 'bkg1',
-      service: 'Electrician',
-      technicianName: 'TECHY 1',
-      technicianRating: '4.8',
-      technicianAvatar: '/path/to/techy1-avatar.png',
-      status: 'Canceled',
-      date: '9/6/2025',
-      time: '1:25 PM',
-      duration: '1-3 hours',
-      location: 'Wuse II, Abuja',
-      price: 120,
-      description: 'electrician booking',
-    },
-    {
-      id: 'bkg2',
       service: 'Plumbing Repair',
       technicianName: 'Alex Thompson',
       technicianRating: '4.8',
-      technicianAvatar: '/path/to/alex-avatar.png',
+      technicianAvatar: '/path/to/techy1-avatar.png',
       status: 'Active',
       date: 'Today',
       time: '2:00 PM',
       duration: '2-3 hours',
-      location: 'Wuse II, Abuja',
-      price: 135,
-      description: 'kitchen sink leak repair',
+      location: 'Bengaluru',
+      price: 1350,
+      description: 'Kitchen sink leak repair',
       estimatedArrival: '15 minutes',
+      bookingId: '#48'
+    },
+    {
+      id: 'bkg2',
+      service: 'Electrical Work',
+      technicianName: 'Sarah Johnson',
+      technicianRating: '4.9',
+      technicianAvatar: '/path/to/alex-avatar.png',
+      status: 'Upcoming',
+      date: 'Tomorrow',
+      time: '10:00 AM',
+      duration: '1-2 hours',
+      location: 'Mumbai',
+      price: 850,
+      description: 'Install ceiling fan in bedroom',
+      bookingId: '#49'
     },
     {
       id: 'bkg3',
-      service: 'AC Mechanic',
-      technicianName: 'COOLFIX 1',
+      service: 'AC Repair',
+      technicianName: 'Mike Wilson',
       technicianRating: '4.7',
       technicianAvatar: '/path/to/coolfix1-avatar.png',
-      status: 'Pending',
-      date: '9/7/2025',
-      time: '10:00 AM',
-      duration: '1 hour',
-      location: 'Wuse II, Abuja',
-      price: 70,
-      description: 'AC check-up and service',
+      status: 'Completed',
+      date: 'Dec 10, 2024',
+      time: '3:00 PM',
+      duration: '2 hours',
+      location: 'Delhi',
+      price: 1200,
+      description: 'AC not cooling properly',
+      bookingId: '#47'
     },
     {
       id: 'bkg4',
@@ -75,9 +77,10 @@ const MyBookingsPage = () => {
       date: '9/8/2025',
       time: '9:30 AM',
       duration: '4 hours',
-      location: 'Wuse II, Abuja',
-      price: 380,
+      location: 'Bengaluru',
+      price: 3800,
       description: 'Gate welding repair',
+      bookingId: '#46'
     },
     {
       id: 'bkg5',
@@ -85,13 +88,14 @@ const MyBookingsPage = () => {
       technicianName: 'ELECTRO 2',
       technicianRating: '4.7',
       technicianAvatar: '/path/to/electro2-avatar.png',
-      status: 'Completed',
+      status: 'Canceled',
       date: '9/4/2025',
       time: '11:00 AM',
       duration: '1-2 hours',
-      location: 'Wuse II, Abuja',
-      price: 450,
+      location: 'Mumbai',
+      price: 4500,
       description: 'house wiring',
+      bookingId: '#45'
     },
   ];
 
@@ -104,28 +108,18 @@ const MyBookingsPage = () => {
   });
 
   const handleBookingClick = (bookingId) => {
-    // Navigate to a specific booking details page
-    // The path here is a placeholder, you'd need to create a BookingDetailsPage component
     navigate(`/booking-details/${bookingId}`);
-  };
-
-  const handleLoginClick = () => {
-    navigate('/login');
-  };
-  const handleBecomeTechnicianClick = () => {
-    // Placeholder for technician sign-up page
-    navigate('/become-a-technician');
   };
 
   return (
     <div className="my-bookings-page-container">
-      <Header /> {/* Replaced static header with imported component */}
+      <Header />
       <main className="my-bookings-main-content">
         <div className="bookings-header">
-          <button className="back-btn" onClick={() => navigate(-1)}>
+          {/* <button className="back-btn" onClick={() => navigate(-1)}>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H109.2l105.4-105.4c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg>
             My Bookings
-          </button>
+          </button> */}
           <div className="filter-search-bar">
             <div className="search-container">
               <FaSearch className="search-icon" />
@@ -143,37 +137,34 @@ const MyBookingsPage = () => {
           </div>
         </div>
 
-        <div className="bookings-summary">
-          <span>{allBookings.length} total bookings</span>
-          <span>•</span>
-          <span className="completed-services-cost">${allBookings.filter(b => b.status === 'Completed').reduce((sum, b) => sum + b.price, 0)} spent on completed services</span>
-        </div>
-
         <div className="booking-filters-tabs">
           <button className={`filter-tab ${activeFilter === 'All' ? 'active' : ''}`} onClick={() => setActiveFilter('All')}>All</button>
-          <button className={`filter-tab ${activeFilter === 'Pending' ? 'active' : ''}`} onClick={() => setActiveFilter('Pending')}>Pending</button>
-          <button className={`filter-tab ${activeFilter === 'Accepted' ? 'active' : ''}`} onClick={() => setActiveFilter('Accepted')}>Accepted</button>
-          <button className={`filter-tab ${activeFilter === 'Canceled' ? 'active' : ''}`} onClick={() => setActiveFilter('Canceled')}>Canceled</button>
+          <button className={`filter-tab ${activeFilter === 'Active' ? 'active' : ''}`} onClick={() => setActiveFilter('Active')}>Active</button>
+          <button className={`filter-tab ${activeFilter === 'Upcoming' ? 'active' : ''}`} onClick={() => setActiveFilter('Upcoming')}>Upcoming</button>
           <button className={`filter-tab ${activeFilter === 'Completed' ? 'active' : ''}`} onClick={() => setActiveFilter('Completed')}>Completed</button>
+          <button className={`filter-tab ${activeFilter === 'Canceled' ? 'active' : ''}`} onClick={() => setActiveFilter('Canceled')}>Canceled</button>
         </div>
 
         <div className="bookings-list">
           {filteredBookings.length > 0 ? (
             filteredBookings.map((booking) => (
-              <div key={booking.id} className={`booking-card ${booking.status.toLowerCase()}`} onClick={() => handleBookingClick(booking.id)}>
+              <div key={booking.id} className={`booking-card ${booking.status.toLowerCase()}`}>
                 <div className="booking-card-header">
                   <div className="service-info">
                     <span className="service-title">{booking.service}</span>
-                    <span className={`status-badge ${booking.status.toLowerCase()}`}>{booking.status}</span>
                   </div>
-                  <FaEllipsisV className="card-options" />
+                  <div className="header-right-section">
+                    <span className={`status-badge ${booking.status.toLowerCase()}`}>{booking.status}</span>
+                    <FaEllipsisV className="card-options" />
+                  </div>
                 </div>
+
                 <div className="technician-info-row">
-                  <div className="tech-avatar-container">
-                    {/* Placeholder avatar or icon */}
-                    <div className="tech-initials">T</div>
-                    {/* If using an image, uncomment and provide the path */}
-                    {/* <img src={booking.technicianAvatar} alt={booking.technicianName} className="tech-avatar" /> */}
+                  <div className="tech-avatar-wrapper">
+                      {/* You would use an img tag here with a source */}
+                      <span className="tech-avatar-placeholder">
+                        {booking.technicianName.charAt(0)}
+                      </span>
                   </div>
                   <div className="tech-name-rating">
                     <span className="tech-name">{booking.technicianName}</span>
@@ -183,19 +174,36 @@ const MyBookingsPage = () => {
                     </div>
                   </div>
                 </div>
-                <div className="booking-details">
-                  <p><FaRegClock /> {booking.date} at {booking.time}</p>
-                  <p><FaRegClock /> {booking.duration}</p>
-                  <p><FaMapMarkerAlt /> {booking.location}</p>
-                  <p><FaDollarSign /> ${booking.price}</p>
-                  {booking.estimatedArrival && (
-                    <p className="eta">Estimated arrival: {booking.estimatedArrival}</p>
-                  )}
-                  <p className="booking-description">"{booking.description}"</p>
+                
+                <div className="booking-details-grid">
+                  <div className="detail-row">
+                    <FaRegClock className="detail-icon" />
+                    <span>{booking.date} at {booking.time}</span>
+                  </div>
+                  <div className="detail-row">
+                    <FaRegClock className="detail-icon" />
+                    <span>{booking.duration}</span>
+                  </div>
+                  <div className="detail-row">
+                    <FaMapMarkerAlt className="detail-icon" />
+                    <span>{booking.location}</span>
+                  </div>
+                  <div className="detail-row">
+                    <FaRupeeSign className="detail-icon rupee-icon" />
+                    <span>{booking.price}</span>
+                  </div>
                 </div>
-                {booking.status === 'Canceled' && (
-                  <button className="book-similar-btn">Book Similar Service</button>
+                  
+                {booking.estimatedArrival && (
+                  <div className="eta-row">
+                    <span className="eta-label">Estimated arrival:</span>
+                    <span className="eta-value">{booking.estimatedArrival}</span>
+                  </div>
                 )}
+                  
+                <div className="description-row">
+                  <span className="booking-description">"{booking.description}"</span>
+                </div>
               </div>
             ))
           ) : (

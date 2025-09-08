@@ -1,0 +1,84 @@
+.technician-prompt-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f0f7ff, #faf5ff);
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  padding: 20px;
+}
+
+.technician-prompt-box {
+  background: #fff;
+  padding: 40px;
+  border-radius: 15px;
+  width: 500px;
+  max-width: 90%;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+  text-align: center;
+}
+
+.prompt-header h2 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 24px;
+}
+
+.prompt-header p {
+  color: #666;
+  margin-bottom: 25px;
+  line-height: 1.5;
+}
+
+.benefits-list {
+  text-align: left;
+  margin-bottom: 30px;
+}
+
+.benefits-list h3 {
+  margin-bottom: 15px;
+  color: #333;
+  font-size: 18px;
+}
+
+.benefits-list ul {
+  padding-left: 20px;
+}
+
+.benefits-list li {
+  margin-bottom: 10px;
+  color: #555;
+  line-height: 1.5;
+}
+
+.prompt-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.complete-btn {
+  padding: 14px;
+  background: linear-gradient(135deg, #6a6fff, #b66fff);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.later-btn {
+  padding: 14px;
+  background: transparent;
+  color: #666;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.later-btn:hover {
+  background: #f5f5f5;
+}

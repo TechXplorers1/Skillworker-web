@@ -1,11 +1,3 @@
-/* Reset */
-body {
-  margin: 0;
-  font-family: "Inter", sans-serif;
-  background: linear-gradient(135deg, #f5f8ff, #fafbfc);
-}
-
-/* Container */
 .signup-container {
   display: flex;
   justify-content: center;
@@ -13,15 +5,15 @@ body {
   min-height: 100vh;
   background: linear-gradient(135deg, #f0f7ff, #faf5ff);
   font-family: 'Segoe UI', Tahoma, sans-serif;
-  overflow: hidden; /* Removed scrolling */
+  overflow: hidden;
+  margin: 0;
 }
 
-/* Box */
 .signup-box {
   background: #fff;
   padding: 30px 40px;
   border-radius: 15px;
-  width: 500px; /* Increased width */
+  width: 500px;
   height: auto;
   max-width: 90%;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
@@ -30,7 +22,6 @@ body {
   box-sizing: border-box;
 }
 
-/* Back Arrow */
 .back-arrow {
   position: absolute;
   top: 15px;
@@ -41,13 +32,11 @@ body {
   color: #333;
 }
 
-/* Logo & Titles */
 .logo-section {
   margin-top: 20px;
 }
 
 .logo-icon-path {
-  /* This is a placeholder for your logo path */
   height: 40px;
 }
 
@@ -63,7 +52,6 @@ body {
   margin-bottom: 25px;
 }
 
-/* Form */
 .signup-form {
   text-align: left;
 }
@@ -75,12 +63,11 @@ body {
   margin-bottom: 6px;
 }
 
-/* Input with icon */
 .input-with-icon {
   position: relative;
   display: flex;
   align-items: center;
-  margin-bottom: 18px; /* Move margin here for consistent spacing */
+  margin-bottom: 18px;
 }
 
 .field-icon {
@@ -108,7 +95,6 @@ body {
   align-items: center;
 }
 
-/* Error Message */
 .error-message {
   color: #e74c3c;
   font-size: 12px;
@@ -117,7 +103,22 @@ body {
   text-align: left;
 }
 
-/* Success Popup */
+.role-selection {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.role-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.role-option input[type="radio"] {
+  margin: 0;
+}
+
 .success-popup {
   position: fixed;
   top: 50%;
@@ -155,7 +156,6 @@ body {
   to { opacity: 1; transform: translate(-50%, -50%); }
 }
 
-/* Buttons */
 .create-btn {
   width: 100%;
   padding: 14px;
@@ -175,7 +175,6 @@ body {
   margin-bottom: 20px;
 }
 
-/* Sign In Inline */
 .signin-inline {
   display: flex;
   justify-content: center;

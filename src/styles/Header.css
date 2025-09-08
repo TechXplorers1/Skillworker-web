@@ -5,23 +5,37 @@
   padding: 12px 5%;
   background: #fff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  position: fixed; /* Make header fixed */
+  position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 60px;
-  z-index: 1000; /* Stay on top */
+  z-index: 1000;
 }
 
 .header-left {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex: 1;
+}
+
+.header-center {
+  display: flex;
+  justify-content: center;
+  flex: 1;
+}
+
+.header-right {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex: 1;
 }
 
 .header-icon {
-  font-size: 20px;
-  color: #000;
+  font-size: 18px;
+  color: #666; /* Lighter gray color */
 }
 
 .header-logo {
@@ -30,18 +44,164 @@
   color: #000;
 }
 
-.header-right .signin-btn {
+.become-technician-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  color: #000;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.become-technician-btn:hover {
+  background: #f5f5f5;
+  border-color: #ccc;
+}
+
+.technician-icon {
+  font-size: 16px;
+  color: #666; /* Lighter gray color */
+}
+
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.icon-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666; /* Lighter gray color */
+  transition: background-color 0.2s ease;
+}
+
+.icon-btn:hover {
+  background-color: #f5f5f5;
+}
+
+.icon-btn svg {
+  fill: #666; /* SVG icon color - lighter gray */
+  width: 16px;
+  height: 16px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #f0f0f0; /* Light gray background */
+  color: #666; /* Gray icon color */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 1px solid #ddd; /* Light gray border */
+}
+
+.user-icon {
+  font-size: 14px;
+}
+
+.user-name {
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+}
+
+.logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: 1px solid #ddd;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  transition: all 0.2s ease;
+}
+
+.logout-btn:hover {
+  background: #f5f5f5;
+  border-color: #ccc;
+}
+
+.logout-icon {
+  font-size: 14px;
+  color: #666; /* Lighter gray color */
+}
+
+.signin-btn {
+  width: 80px;
   background: #000;
   color: #fff;
-  padding: 6px 16px;
+  padding: 8px 16px;
+  margin-bottom: 4px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  margin-top: 25px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
-.header-right .signin-btn:hover {
+.signin-btn:hover {
   background: #333;
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: 12px 3%;
+  }
+  
+  .user-menu {
+    gap: 10px;
+  }
+  
+  .user-name {
+    display: none;
+  }
+  
+  .become-technician-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  
+  .become-technician-btn span {
+    display: none;
+  }
+  
+  .become-technician-btn .technician-icon {
+    margin-right: 0;
+  }
+  
+  .signin-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+    height: 32px;
+  }
 }

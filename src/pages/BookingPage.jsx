@@ -56,7 +56,7 @@ const BookingPage = () => {
 
   const selectedDate = dates.find(d => d.id === selectedDateId);
   // Calculate subtotal and total dynamically based on technician data
-  const subtotal = (technician.price.type === 'hourly' ? technician.price.amount * 2 : technician.price.amount);
+  const subtotal = (technician.price.type === 'hourly' ? technician.price.amount * 1 : technician.price.amount);
   const serviceFee = 5;
   const total = subtotal + serviceFee;
 
@@ -112,7 +112,7 @@ const BookingPage = () => {
               </div>
               <div className="details-row">
                 <span>Estimated Cost:</span>
-                <span>${total}</span>
+                <span>₹{total}</span>
               </div>
             </div>
 
@@ -157,20 +157,6 @@ const BookingPage = () => {
           width: 100%;
           padding: 16px;
         }
-
-        .back-nav { margin-bottom: 8px; }
-
-        .back-button {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          background: transparent;
-          border: none;
-          color: #0d6efd;
-          font-size: 14px;
-          cursor: pointer;
-        }
-        .back-button:hover { color: #0b5ed7; }
 
         /* Title */
         .page-title {
@@ -289,6 +275,9 @@ const BookingPage = () => {
         .pro-meta span { display: inline-flex; align-items: center; gap: 6px; }
 
         /* --- Included --- */
+        .included {
+          min-height: auto;
+        }
         .included h3 {
           margin: 0 0 6px;
           font-size: 16px;
@@ -377,6 +366,7 @@ const BookingPage = () => {
           border-radius: 10px;
           resize: vertical;
           font-size: 14px;
+          font-family: inherit;
         }
         .instructions-input:focus {
           outline: none;
@@ -645,12 +635,6 @@ const BookingPage = () => {
 
 
       <div className="booking-main-content">
-        <div className="back-nav">
-          <button className="back-button" onClick={handleBack}>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H109.2l105.4-105.4c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg> Back
-          </button>
-        </div>
-
         <div className="page-title">
           <h1>Confirm Your Booking</h1>
           <p>Review the details and confirm your service booking</p>
@@ -665,7 +649,7 @@ const BookingPage = () => {
                   <span className="service-badge">{technician.service}</span>
                 </div>
                 <div className="rate-box">
-                  <div className="rate">${technician.price.amount}/{technician.price.type === 'hourly' ? 'hr' : 'day'}</div>
+                  <div className="rate">₹{technician.price.amount}/{technician.price.type === 'hourly' ? 'hr' : 'day'}</div>
                   <button className="avail-link" type="button">
                     {technician.available ? 'Available' : 'Unavailable'}
                   </button>
@@ -755,25 +739,25 @@ const BookingPage = () => {
               <div className="summary-rows">
                 <div className="row">
                   <span>{technician.price.type === 'hourly' ? 'Hourly Rate' : 'Daily Rate'}</span>
-                  <span>${technician.price.amount}/{technician.price.type === 'hourly' ? 'hr' : 'day'}</span>
+                  <span>₹{technician.price.amount}/{technician.price.type === 'hourly' ? 'hr' : 'day'}</span>
                 </div>
                 {technician.price.type === 'hourly' && (
                   <div className="row">
                     <span>Estimated Hours</span>
-                    <span>2 hours</span>
+                    <span>1 hour</span>
                   </div>
                 )}
                 <div className="row">
                   <span>Subtotal</span>
-                  <span>${subtotal}</span>
+                  <span>₹{subtotal}</span>
                 </div>
                 <div className="row">
                   <span>Service Fee</span>
-                  <span>${serviceFee}</span>
+                  <span>₹{serviceFee}</span>
                 </div>
                 <div className="row total">
                   <span>Total</span>
-                  <span>${total}</span>
+                  <span>₹{total}</span>
                 </div>
               </div>
               <div className="hint">
@@ -781,7 +765,7 @@ const BookingPage = () => {
               </div>
               <div className="appt-mini">
                 <div className="mini">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M152 24c0-13.3-10.7-24-24-24s-24 10.7-24 24V64H64C28.7 64 0 92.7 0 128v16 48V448c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V192 144 128c0-35.3-28.7-64-64-64H344V24c0-13.3-10.7-24-24-24s-24 10.7-24 24V64H152V24zM48 192h352V448c0 8.8-7.2 16-16 16H64c-8.8 0-16-7.2-16-16V192z"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M152 24c0-13.3-10.7-24-24-24s-24 10.7-24 24V64H64C28.7 64 0 92.7 0 128v16 48V448c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V192 144 128c0-35.3-28.7-64-64-64H344V24c0-13.3-10.7-24-24-24s-24 10.7-24 24V64H152V24zM48 192H400V448c0 8.8-7.2 16-16 16H64c-8.8 0-16-7.2-16-16V192z"/></svg>
                   <span>{selectedDate.label}, {selectedDate.sub}</span>
                 </div>
                 <div className="mini">
@@ -795,18 +779,18 @@ const BookingPage = () => {
                   Confirm Booking
                 </button>
                 <div className="rowed">
-                  <button className="btn outline">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM216 336h24V272H216c-13.3 0-24-10.7-24-24s10.7-24 24-24h48c13.3 0 24 10.7 24 24v88h8c13.3 0 24 10.7 24 24s-10.7 24-24 24H216c-13.3 0-24-10.7-24-24s10.7-24 24-24zm40-208a32 32 0 1 1 0 64 32 32 0 1 1 0-64z"/></svg>
-                    Help
+                  <button className="btn outline" onClick={handleBack}>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M48.5 224H40c-13.3 0-24-10.7-24-24V72c0-9.7 5.8-18.5 14.8-22.2s19.3-1.7 26.2 5.2L98.6 96.6c87.6-86.5 228.7-86.2 315.8 1c87.5 87.5 87.5 229.3 0 316.8s-229.3 87.5-316.8 0c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0c62.5 62.5 163.8 62.5 226.3 0s62.5-163.8 0-226.3c-62.2-62.2-162.7-62.5-225.3-1L185 183c6.9 6.9 8.9 17.2 5.2 26.2s-12.5 14.8-22.2 14.8H48.5z"/></svg>
+                    Back
                   </button>
-                  <button className="btn ghost">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" fill="currentColor"><path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/></svg>
-                    Cancel
+                  <button className="btn ghost" onClick={() => navigate('/')}>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" fill="currentColor"><path d="M575.8 255.5c0 18-15 32.1-32 32.1h-32l.7 160.2c0 2.7-.2 5.4-.5 8.1V472c0 22.1-17.9 40-40 40H456c-1.1 0-2.2 0-3.3-.1c-1.4 .1-2.8 .1-4.2 .1H416 392c-22.1 0-40-17.9-40-40V448 384c0-17.7-14.3-32-32-32H256c-17.7 0-32 14.3-32 32v64 24c0 22.1-17.9 40-40 40H160 128.1c-1.5 0-3-.1-4.5-.2c-1.2 .1-2.4 .2-3.6 .2H104c-22.1 0-40-17.9-40-40V360c0-.9 0-1.9 .1-2.8V287.6H32c-18 0-32-14-32-32.1c0-9 3-17 10-24L266.4 8c7-7 15-8 22-8s15 2 21 7L564.8 231.5c8 7 12 15 11 24z"/></svg>
+                    Home
                   </button>
                 </div>
               </div>
               <div className="guarantee">
-                <h4>Happiness Guaranteed</h4>
+                <h4>Service Guarantee</h4>
                 <p>If you're not satisfied with the service, we'll work to make it right or provide a refund.</p>
               </div>
             </div>
@@ -814,19 +798,21 @@ const BookingPage = () => {
             <div className="card help">
               <h3>Need Help?</h3>
               <div className="help-line">
-                <strong>Call us:</strong> 1-800-123-4567
+                <strong>Call us:</strong> +91 98{Math.floor(Math.random() * 100000000).toString().padStart(8, '0').substring(0, 8)}
               </div>
               <div className="help-line">
-                <strong>Email:</strong> support@fixit.com
+                <strong>Email:</strong> support@skillworkers.in
               </div>
               <div className="help-line">
-                <strong>Hours:</strong> Mon-Fri 8am-8pm, Sat-Sun 9am-5pm
+                <strong>Hours:</strong> 8 AM - 10 PM, 7 days a week
               </div>
             </div>
           </div>
         </div>
       </div>
-   <Footer />
+
+      <Footer />
+
       <BookingConfirmationPopup />
     </div>
   );

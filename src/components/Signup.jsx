@@ -17,6 +17,7 @@ const Signup = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [userRole, setUserRole] = useState("user");
   const [errors, setErrors] = useState({});
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -72,8 +73,9 @@ const Signup = () => {
       localStorage.setItem("isLoggedIn", "true");
       localStorage.setItem("userEmail", email);
       localStorage.setItem("userName", fullName);
+      localStorage.setItem("userRole", userRole);
       
-      console.log("Account created!", { fullName, email, password });
+      console.log("Account created!", { fullName, email, password, role: userRole });
       setShowSuccess(true);
       
       setTimeout(() => {
@@ -85,7 +87,12 @@ const Signup = () => {
           localStorage.removeItem("redirectAfterLogin");
           navigate(redirectUrl);
         } else {
-          navigate("/");
+          // If technician, show registration prompt
+          if (userRole === "technician") {
+            navigate("/technician-registration-prompt");
+          } else {
+            navigate("/");
+          }
         }
       }, 2000);
     }
@@ -174,6 +181,32 @@ const Signup = () => {
             </span>
           </div>
           {errors.confirmPassword && <p className="error-message">{errors.confirmPassword}</p>}
+
+          <label>Account Type</label>
+          <div className="role-selection">
+            <div className="role-option">
+              <input
+                type="radio"
+                id="user-role"
+                name="userRole"
+                value="user"
+                checked={userRole === "user"}
+                onChange={() => setUserRole("user")}
+              />
+              <label htmlFor="user-role">User</label>
+            </div>
+            <div className="role-option">
+              <input
+                type="radio"
+                id="technician-role"
+                name="userRole"
+                value="technician"
+                checked={userRole === "technician"}
+                onChange={() => setUserRole("technician")}
+              />
+              <label htmlFor="technician-role">Technician</label>
+            </div>
+          </div>
 
           <button type="submit" className="create-btn">
             Create Account

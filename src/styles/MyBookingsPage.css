@@ -3,137 +3,49 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background-color: #f5f7fb;
+  background-color: #f8fafc;
 }
 
 .my-bookings-main-content {
   flex: 1;
   padding: 24px;
-  max-width: 1180px;
-  margin: 0 auto;
+  max-width: 900px; /* Increased width */
+  margin: 80px auto 0;
   width: 100%;
 }
 
 /* Header */
-.main-header {
-  background-color: #fff;
-  border-bottom: 1px solid #eef0f4;
-  padding: 16px 24px;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  max-width: 1180px;
-  margin: 0 auto;
-}
-
-.logo {
-  font-size: 24px;
-  font-weight: 700;
-  color: #111827;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.header-btn {
-  background: none;
-  border: none;
-  font-size: 14px;
-  color: #0d6efd;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.notifications,
-.messages {
-  position: relative;
-  font-size: 20px;
-  color: #6b7280;
-}
-
-.notification-badge,
-.message-badge {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  background-color: #ef4444;
-  color: #fff;
-  border-radius: 50%;
-  padding: 2px 6px;
-  font-size: 10px;
-  font-weight: bold;
-}
-
-.user-profile {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  position: relative;
-}
-
-.user-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  color: #6b7280;
-}
-
-.user-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: #111827;
-}
-
-.logout-btn {
-  background-color: #f3f4f6;
-  color: #111827;
-  border: 1px solid #e5e7eb;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-/* Back Button & Search/Filter */
 .bookings-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
+  padding: 20px 0;
 }
 
 .back-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   font-size: 24px;
   font-weight: 700;
-  color: #111827;
+  color: #1f2937;
   background: none;
   border: none;
   cursor: pointer;
+  padding: 8px 0;
 }
 
 .back-btn svg {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   color: #6b7280;
 }
 
 .filter-search-bar {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .search-container {
@@ -146,176 +58,202 @@
   position: absolute;
   left: 12px;
   color: #9ca3af;
+  z-index: 1;
 }
 
 .search-input {
-  width: 300px;
+  width: 280px;
   padding: 10px 12px 10px 40px;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   font-size: 14px;
+  background: white;
 }
 
 .filter-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   padding: 10px 16px;
-  background: #fff;
+  background: white;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   font-size: 14px;
-  font-weight: 600;
-  color: #111827;
+  font-weight: 500;
+  color: #4b5563;
   cursor: pointer;
 }
 
-/* Bookings Summary */
-.bookings-summary {
-  font-size: 14px;
-  color: #6b7280;
-  margin-bottom: 24px;
-}
-
-.completed-services-cost {
-  font-weight: 600;
-  color: #111827;
+.filter-btn:hover {
+  background: #f9fafb;
 }
 
 /* Filter Tabs */
 .booking-filters-tabs {
   display: flex;
   gap: 8px;
-  margin-bottom: 24px;
-  border-bottom: 1px solid #eef0f4;
-  padding-bottom: 8px;
+  margin-bottom: 32px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .filter-tab {
-  background: #fff;
+  background: white;
   border: 1px solid #e5e7eb;
   border-radius: 20px;
-  padding: 8px 16px;
+  padding: 8px 20px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   color: #6b7280;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .filter-tab.active {
-  background-color: #0d6efd;
-  color: #fff;
-  border-color: #0d6efd;
+  background-color: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.filter-tab:hover {
+  background-color: #f9fafb;
 }
 
 /* Bookings List & Cards */
 .bookings-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
 .booking-card {
-  background: #fff;
-  border: 1px solid #eef0f4;
+  background: white;
+  border: 1px solid #e5e7eb;
   border-radius: 12px;
-  padding: 16px;
+  padding: 20px; /* Reduced padding for smaller height */
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  position: relative;
-  cursor: pointer;
+  gap: 12px; /* Reduced gap */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.2s ease;
+}
+
+.booking-card:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .booking-card-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  margin-bottom: 0px;
 }
 
 .service-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.service-title {
+  font-size: 16px; /* Adjusted font size */
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.booking-id {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.header-right-section {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.service-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: #111827;
-}
-
 .status-badge {
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 12px;
+  padding: 4px 10px; /* Reduced padding */
+  border-radius: 20px;
+  font-size: 11px; /* Reduced font size */
   font-weight: 600;
-  text-transform: capitalize;
+  text-transform: uppercase;
+  color: #3b82f6; /* Set a default color */
+  background-color: #e0f2fe; /* Set a default background */
 }
 
-.status-badge.accepted {
+.status-badge.active {
   background-color: #dcfce7;
   color: #16a34a;
 }
 
+.status-badge.upcoming {
+  background-color: #e0f2fe;
+  color: #0284c7;
+}
+
+.status-badge.completed {
+  background-color: #f0f9ff;
+  color: #0ea5e9;
+}
+
 .status-badge.canceled {
-  background-color: #fee2e2;
+  background-color: #fef2f2;
   color: #ef4444;
 }
 
-.status-badge.active,
-.status-badge.pending {
-  background-color: #e7f0ff;
-  color: #0d6efd;
-}
-.status-badge.completed {
-  background-color: #e2f2ff;
-  color: #3b82f6;
+.status-badge.accepted {
+  background-color: #f0f9ff;
+  color: #0ea5e9;
 }
 
 .card-options {
   font-size: 18px;
   color: #9ca3af;
   cursor: pointer;
+  padding: 4px;
 }
 
+.card-options:hover {
+  color: #6b7280;
+}
+
+/* Technician Info Row */
 .technician-info-row {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
-.tech-avatar-container {
-  width: 56px;
-  height: 56px;
+.tech-avatar-wrapper {
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  background-color: #e5e7eb;
+  background-color: #e0f2fe;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
-  font-weight: bold;
-  color: #4b5563;
 }
 
-.tech-avatar {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 50%;
+.tech-avatar-placeholder {
+  font-size: 18px;
+  font-weight: 600;
+  color: #0284c7;
+  text-transform: uppercase;
 }
 
 .tech-name-rating {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  gap: 8px;
 }
 
 .tech-name {
-  font-size: 16px;
-  font-weight: 700;
-  color: #111827;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
 }
 
 .tech-rating {
@@ -328,74 +266,131 @@
 
 .star-icon {
   color: #fbbf24;
+  font-size: 12px;
 }
 
-.booking-details {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.booking-details p {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
+/* Booking Details Grid */
+.booking-details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 24px;
   font-size: 14px;
   color: #6b7280;
 }
 
-.booking-details svg {
-  color: #9ca3af;
+.detail-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.eta {
-  color: #0d6efd;
+.detail-icon {
+  color: #9ca3af;
+  width: 14px;
+  height: 14px;
+}
+
+.rupee-icon {
+  font-size: 14px;
+}
+
+.eta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  margin-top: 4px;
+  background-color: #dcfce7;
+  border-radius: 8px;
+  color: #16a34a;
+}
+
+.eta-label {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.eta-value {
+  font-size: 14px;
   font-weight: 600;
+}
+
+.description-row {
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #f3f4f6;
 }
 
 .booking-description {
-  font-style: italic;
-  margin-top: 8px;
-}
-
-.book-similar-btn {
-  align-self: flex-start;
-  background: #0d6efd;
-  color: #fff;
-  border: none;
-  padding: 10px 16px;
-  border-radius: 8px;
   font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  margin-top: 8px;
+  color: #6b7280;
+  font-style: italic;
+  line-height: 1.5;
 }
 
 .no-results-message {
   text-align: center;
-  padding: 40px;
+  padding: 60px 20px;
   color: #6b7280;
   font-size: 16px;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
 }
 
 /* Media Queries for Responsiveness */
 @media (max-width: 768px) {
+  .my-bookings-main-content {
+    padding: 16px;
+    margin-top: 70px;
+  }
+
   .bookings-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
   }
 
+  .filter-search-bar {
+    width: 100%;
+  }
+
   .search-input {
     width: 100%;
+  }
+
+  .booking-filters-tabs {
+    overflow-x: auto;
+    padding-bottom: 12px;
+  }
+
+  .booking-card {
+    padding: 20px;
+  }
+
+  .booking-card-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .header-right-section {
+    width: 100%;
+    justify-content: space-between;
   }
 }
 
 @media (max-width: 480px) {
-  .bookings-summary {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
+  .back-btn {
+    font-size: 20px;
+  }
+
+  .service-title {
+    font-size: 18px;
+  }
+
+  .filter-tab {
+    padding: 6px 16px;
+    font-size: 12px;
   }
 }

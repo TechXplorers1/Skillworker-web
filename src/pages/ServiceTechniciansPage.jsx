@@ -190,8 +190,8 @@ const ServiceTechniciansPage = () => {
         // Filter by hourly price
         if (selectedHourlyPrice !== 'All') {
             const hourlyPriceRange = selectedHourlyPrice.split('-');
-            const minPrice = parseInt(hourlyPriceRange[0].replace('$', ''), 10);
-            const maxPrice = hourlyPriceRange[1] ? parseInt(hourlyPriceRange[1].replace('$/hour', ''), 10) : Infinity;
+            const minPrice = parseInt(hourlyPriceRange[0].replace('₹', ''), 10);
+            const maxPrice = hourlyPriceRange[1] ? parseInt(hourlyPriceRange[1].replace('₹/hour', ''), 10) : Infinity;
 
             newFilteredList = newFilteredList.filter((tech) =>
                 tech.price.type === 'hourly' && tech.price.amount >= minPrice && tech.price.amount <= maxPrice
@@ -201,8 +201,8 @@ const ServiceTechniciansPage = () => {
         // Filter by dayly price
         if (selecteddaylyPrice !== 'All') {
             const daylyPriceRange = selecteddaylyPrice.split('-');
-            const minPrice = parseInt(daylyPriceRange[0].replace('$', ''), 10);
-            const maxPrice = daylyPriceRange[1] ? parseInt(daylyPriceRange[1].replace('$/day', ''), 10) : Infinity;
+            const minPrice = parseInt(daylyPriceRange[0].replace('₹', ''), 10);
+            const maxPrice = daylyPriceRange[1] ? parseInt(daylyPriceRange[1].replace('₹/day', ''), 10) : Infinity;
 
             newFilteredList = newFilteredList.filter((tech) =>
                 tech.price.type === 'dayly' && tech.price.amount >= minPrice && tech.price.amount <= maxPrice
@@ -272,15 +272,15 @@ const ServiceTechniciansPage = () => {
                             </select>
                             <select className="filter-select" value={selectedHourlyPrice} onChange={(e) => { setSelectedHourlyPrice(e.target.value); setSelecteddaylyPrice('All'); }}>
                                 <option>Hourly prices</option>
-                                <option>$20-50/hour</option>
-                                <option>$50-100/hour</option>
-                                <option>$100+/hour</option>
+                                <option>₹20-50/hour</option>
+                                <option>₹50-100/hour</option>
+                                <option>₹100+/hour</option>
                             </select>
                             <select className="filter-select" value={selecteddaylyPrice} onChange={(e) => { setSelecteddaylyPrice(e.target.value); setSelectedHourlyPrice('All'); }}>
                                 <option>Day prices</option>
-                                <option>$200-400/day</option>
-                                <option>$400-600/day</option>
-                                <option>$600+/day</option>
+                                <option>₹200-400/day</option>
+                                <option>₹400-600/day</option>
+                                <option>₹600+/day</option>
                             </select>
                             <select className="filter-select" value={selectedAvailability} onChange={(e) => setSelectedAvailability(e.target.value)}>
                                 <option>All Availability</option>
@@ -303,6 +303,7 @@ const ServiceTechniciansPage = () => {
                             {filteredTechnicians.map((tech, i) => (
                                 <div className="technician-card" key={i}>
                                     <div className="card-header">
+                                        <img src={tech.image} alt={tech.name} className="tech-image" />
                                         <div className="tech-info">
                                             <h3 className="tech-name">{tech.name}</h3>
                                             <div className="tech-rating">
@@ -318,7 +319,7 @@ const ServiceTechniciansPage = () => {
                                             </div>
                                         </div>
                                         <div className="tech-price">
-                                            ${tech.price.amount}
+                                            ₹{tech.price.amount}
                                             <br />
                                             per {tech.price.type === 'hourly' ? 'hour' : 'day'}
                                         </div>

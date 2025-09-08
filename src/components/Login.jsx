@@ -16,6 +16,12 @@ const Login = () => {
   const [errors, setErrors] = useState({});
   const [showSuccess, setShowSuccess] = useState(false);
 
+  // Predefined credentials
+  const predefinedCredentials = {
+    "naresh@user.com": { password: "Naresh@user1", role: "user", name: "Naresh" },
+    "naresh@tech.com": { password: "Naresh@tech1", role: "technician", name: "Naresh" }
+  };
+
   const handleCreateAccount = () => {
     navigate("/signup");
   };
@@ -51,26 +57,57 @@ const Login = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validateForm()) {
-      // Simulate successful login
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("userEmail", email);
-      localStorage.setItem("userName", email.split('@')[0]); // Simple username from email
-      
-      console.log("Login successful!", { email, password });
-      setShowSuccess(true);
-      
-      setTimeout(() => {
-        setShowSuccess(false);
+      // Check against predefined credentials
+      if (predefinedCredentials[email] && predefinedCredentials[email].password === password) {
+        // Successful login with predefined credentials
+        localStorage.setItem("isLoggedIn", "true");
+        localStorage.setItem("userEmail", email);
+        localStorage.setItem("userName", predefinedCredentials[email].name);
+        localStorage.setItem("userRole", predefinedCredentials[email].role);
         
-        // Check if there's a redirect URL stored
-        const redirectUrl = localStorage.getItem("redirectAfterLogin");
-        if (redirectUrl) {
-          localStorage.removeItem("redirectAfterLogin");
-          navigate(redirectUrl);
-        } else {
-          navigate("/");
-        }
-      }, 1500);
+        console.log("Login successful!", { email, password, role: predefinedCredentials[email].role });
+        setShowSuccess(true);
+        
+        setTimeout(() => {
+          setShowSuccess(false);
+          
+          // Check if there's a redirect URL stored
+          const redirectUrl = localStorage.getItem("redirectAfterLogin");
+          if (redirectUrl) {
+            localStorage.removeItem("redirectAfterLogin");
+            navigate(redirectUrl);
+          } else {
+            // If technician, show registration prompt
+            if (predefinedCredentials[email].role === "technician") {
+              navigate("/technician-registration-prompt");
+            } else {
+              navigate("/");
+            }
+          }
+        }, 1500);
+      } else {
+        // For other emails, simulate successful login with user role
+        localStorage.setItem("isLoggedIn", "true");
+        localStorage.setItem("userEmail", email);
+        localStorage.setItem("userName", email.split('@')[0]);
+        localStorage.setItem("userRole", "user");
+        
+        console.log("Login successful!", { email, password, role: "user" });
+        setShowSuccess(true);
+        
+        setTimeout(() => {
+          setShowSuccess(false);
+          
+          // Check if there's a redirect URL stored
+          const redirectUrl = localStorage.getItem("redirectAfterLogin");
+          if (redirectUrl) {
+            localStorage.removeItem("redirectAfterLogin");
+            navigate(redirectUrl);
+          } else {
+            navigate("/");
+          }
+        }, 1500);
+      }
     }
   };
 
@@ -87,6 +124,13 @@ const Login = () => {
           <div className="logo-icon-path"></div>
           <p className="welcome-text">Welcome back</p>
           <p className="signin-text">Sign in to access your account</p>
+        </div>
+
+        {/* Predefined credentials for testing */}
+        <div style={{marginBottom: '20px', padding: '10px', backgroundColor: '#f5f5f5', borderRadius: '8px', fontSize: '12px'}}>
+          <p style={{margin: '0 0 5px 0', fontWeight: 'bold'}}>Test Credentials:</p>
+          <p style={{margin: '2px 0'}}>User: naresh@user.com / Naresh@user1</p>
+          <p style={{margin: '2px 0'}}>Technician: naresh@tech.com / Naresh@tech1</p>
         </div>
 
         <form className="login-form" onSubmit={handleSubmit}>
@@ -125,7 +169,7 @@ const Login = () => {
             Forgot your password?
           </a>
 
-          <button type="submit" className="signin-btn">
+          <button type="submit" className="create-btn">
             Sign In
           </button>
         </form>
@@ -141,10 +185,12 @@ const Login = () => {
 
         <div className="divider"></div>
 
-        <p className="no-account-text">Don't have an account?</p>
-        <button className="create-account-btn" onClick={handleCreateAccount}>
-          Create Account
-        </button>
+        <div className="signup-inline">
+          <p className="no-account-text">Don't have an account?</p>
+          <p className="create-account-link" onClick={handleCreateAccount}>
+            Create Account
+          </p>
+        </div>
       </div>
     </div>
   );

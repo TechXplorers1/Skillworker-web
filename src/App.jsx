@@ -4,14 +4,17 @@ import Login from './components/Login';
 import Signup from './components/Signup';
 import Homepage from './pages/HomePage';
 import ScrollToTop from './components/ScrollToTop';
+import TechnicianRegistrationPrompt from "./components/TechnicianRegistrationPrompt";
 import ServiceTechniciansPage from "./pages/ServiceTechniciansPage";
 import ChatScreen from './components/ChatScreen';
 import BookingPage from './pages/BookingPage';
-import MyBookingsPage from './pages/MyBookingsPage'; // New Import
+import MyBookingsPage from './pages/MyBookingsPage';
+import BecomeTechnician from './components/BecomeTechnician'; // New Import
 
 const App = () => {
     return (
-        <><ScrollToTop />
+        <>
+            <ScrollToTop />
             <Routes>
                 <Route path="/" element={<Homepage />} />
                 <Route path="/signup" element={<Signup />} />
@@ -19,7 +22,9 @@ const App = () => {
                 <Route path="/services/:serviceName" element={<ServiceTechniciansPage />} />
                 <Route path="/chat/:serviceName/:technicianId" element={<ChatScreen />} />
                 <Route path="/booking/:serviceName/:technicianId" element={<BookingPage />} />
-                <Route path="/my-bookings" element={<MyBookingsPage />} /> {/* New Route */}
+                <Route path="/my-bookings" element={<MyBookingsPage />} />
+                <Route path="/become-technician" element={<BecomeTechnician />} />
+                <Route path="/technician-registration-prompt" element={<TechnicianRegistrationPrompt />} />
             </Routes>
         </>
     );

@@ -18,6 +18,8 @@ const MyBookingsPage = () => {
 
   const [activeFilter, setActiveFilter] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedService, setSelectedService] = useState('All Services');
+  const [selectedDate, setSelectedDate] = useState('');
 
   // Placeholder data for bookings
   const allBookings = [
@@ -29,12 +31,12 @@ const MyBookingsPage = () => {
       technicianAvatar: '/path/to/techy1-avatar.png',
       status: 'Active',
       date: 'Today',
+      dateObj: new Date('2025-09-09'),
       time: '2:00 PM',
       duration: '2-3 hours',
       location: 'Bengaluru',
       price: 1350,
       description: 'Kitchen sink leak repair',
-      estimatedArrival: '15 minutes',
       bookingId: '#48'
     },
     {
@@ -45,6 +47,7 @@ const MyBookingsPage = () => {
       technicianAvatar: '/path/to/alex-avatar.png',
       status: 'Upcoming',
       date: 'Tomorrow',
+      dateObj: new Date('2025-09-10'),
       time: '10:00 AM',
       duration: '1-2 hours',
       location: 'Mumbai',
@@ -60,6 +63,7 @@ const MyBookingsPage = () => {
       technicianAvatar: '/path/to/coolfix1-avatar.png',
       status: 'Completed',
       date: 'Dec 10, 2024',
+      dateObj: new Date('2024-12-10'),
       time: '3:00 PM',
       duration: '2 hours',
       location: 'Delhi',
@@ -74,7 +78,8 @@ const MyBookingsPage = () => {
       technicianRating: '4.5',
       technicianAvatar: '/path/to/ironfix1-avatar.png',
       status: 'Accepted',
-      date: '9/8/2025',
+      date: 'Sep 8, 2025',
+      dateObj: new Date('2025-09-08'),
       time: '9:30 AM',
       duration: '4 hours',
       location: 'Bengaluru',
@@ -89,7 +94,8 @@ const MyBookingsPage = () => {
       technicianRating: '4.7',
       technicianAvatar: '/path/to/electro2-avatar.png',
       status: 'Canceled',
-      date: '9/4/2025',
+      date: 'Sep 4, 2025',
+      dateObj: new Date('2025-09-04'),
       time: '11:00 AM',
       duration: '1-2 hours',
       location: 'Mumbai',
@@ -99,12 +105,17 @@ const MyBookingsPage = () => {
     },
   ];
 
+  const serviceTypes = ['All Services', ...new Set(allBookings.map(booking => booking.service))];
+
   const filteredBookings = allBookings.filter((booking) => {
-    const matchesFilter = activeFilter === 'All' || booking.status === activeFilter;
-    const matchesSearch = booking.service.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesStatus = activeFilter === 'All' || booking.status === activeFilter;
+    const matchesService = selectedService === 'All Services' || booking.service === selectedService;
+    const matchesDate = !selectedDate || booking.dateObj.toDateString() === new Date(selectedDate).toDateString();
+    const matchesSearch = searchTerm === '' ||
+      booking.service.toLowerCase().includes(searchTerm.toLowerCase()) ||
       booking.technicianName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       booking.description.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesFilter && matchesSearch;
+    return matchesStatus && matchesService && matchesDate && matchesSearch;
   });
 
   const handleBookingClick = (bookingId) => {
@@ -116,33 +127,79 @@ const MyBookingsPage = () => {
       <Header />
       <main className="my-bookings-main-content">
         <div className="bookings-header">
-          {/* <button className="back-btn" onClick={() => navigate(-1)}>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H109.2l105.4-105.4c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg>
-            My Bookings
-          </button> */}
           <div className="filter-search-bar">
+            <select
+              className="service-select"
+              value={selectedService}
+              onChange={(e) => setSelectedService(e.target.value)}
+            >
+              {serviceTypes.map(service => (
+                <option key={service} value={service}>{service}</option>
+              ))}
+            </select>
+            <input
+              type="date"
+              className="date-input"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+            />
             <div className="search-container">
               <FaSearch className="search-icon" />
               <input
                 type="text"
                 className="search-input"
-                placeholder="Search bookings..."
+                placeholder="Search..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <button className="filter-btn">
-              <FaFilter /> Filter
-            </button>
           </div>
         </div>
 
-        <div className="booking-filters-tabs">
-          <button className={`filter-tab ${activeFilter === 'All' ? 'active' : ''}`} onClick={() => setActiveFilter('All')}>All</button>
-          <button className={`filter-tab ${activeFilter === 'Active' ? 'active' : ''}`} onClick={() => setActiveFilter('Active')}>Active</button>
-          <button className={`filter-tab ${activeFilter === 'Upcoming' ? 'active' : ''}`} onClick={() => setActiveFilter('Upcoming')}>Upcoming</button>
-          <button className={`filter-tab ${activeFilter === 'Completed' ? 'active' : ''}`} onClick={() => setActiveFilter('Completed')}>Completed</button>
-          <button className={`filter-tab ${activeFilter === 'Canceled' ? 'active' : ''}`} onClick={() => setActiveFilter('Canceled')}>Canceled</button>
+        <div className="toggle-container">
+          <div className="glass-radio-group">
+            <input
+              type="radio"
+              name="plan"
+              id="all"
+              checked={activeFilter === 'All'}
+              onChange={() => setActiveFilter('All')}
+            />
+            <label htmlFor="all">All</label>
+            <input
+              type="radio"
+              name="plan"
+              id="active"
+              checked={activeFilter === 'Active'}
+              onChange={() => setActiveFilter('Active')}
+            />
+            <label htmlFor="active">Active</label>
+            <input
+              type="radio"
+              name="plan"
+              id="upcoming"
+              checked={activeFilter === 'Upcoming'}
+              onChange={() => setActiveFilter('Upcoming')}
+            />
+            <label htmlFor="upcoming">Upcoming</label>
+            <input
+              type="radio"
+              name="plan"
+              id="completed"
+              checked={activeFilter === 'Completed'}
+              onChange={() => setActiveFilter('Completed')}
+            />
+            <label htmlFor="completed">Completed</label>
+            <input
+              type="radio"
+              name="plan"
+              id="canceled"
+              checked={activeFilter === 'Canceled'}
+              onChange={() => setActiveFilter('Canceled')}
+            />
+            <label htmlFor="canceled">Canceled</label>
+            <div className="glass-glider" />
+          </div>
         </div>
 
         <div className="bookings-list">
@@ -161,7 +218,6 @@ const MyBookingsPage = () => {
 
                 <div className="technician-info-row">
                   <div className="tech-avatar-wrapper">
-                      {/* You would use an img tag here with a source */}
                       <span className="tech-avatar-placeholder">
                         {booking.technicianName.charAt(0)}
                       </span>

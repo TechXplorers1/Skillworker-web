@@ -9,37 +9,23 @@
 .my-bookings-main-content {
   flex: 1;
   padding: 24px;
-  max-width: 900px; /* Increased width */
-  margin: 80px auto 0;
+  max-width: 900px;
+  margin: 40px auto 0;
   width: 100%;
 }
 
 /* Header */
 .bookings-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: center; /* Changed to center */
   align-items: center;
   margin-bottom: 24px;
   padding: 20px 0;
 }
 
+/* Back button removed as per request */
 .back-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 24px;
-  font-weight: 700;
-  color: #1f2937;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 8px 0;
-}
-
-.back-btn svg {
-  width: 20px;
-  height: 20px;
-  color: #6b7280;
+  display: none;
 }
 
 .filter-search-bar {
@@ -59,6 +45,7 @@
   left: 12px;
   color: #9ca3af;
   z-index: 1;
+  font-size: 14px; /* Reduced size */
 }
 
 .search-input {
@@ -88,36 +75,141 @@
   background: #f9fafb;
 }
 
-/* Filter Tabs */
-.booking-filters-tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 32px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.filter-tab {
-  background: white;
+/* Added styles for new select and date inputs */
+.service-select,
+.date-input {
+  padding: 10px 12px;
   border: 1px solid #e5e7eb;
-  border-radius: 20px;
-  padding: 8px 20px;
+  border-radius: 8px;
   font-size: 14px;
-  font-weight: 500;
-  color: #6b7280;
+  background: white;
+  color: #4b5563;
   cursor: pointer;
-  transition: all 0.2s ease;
 }
 
-.filter-tab.active {
-  background-color: #3b82f6;
-  color: white;
-  border-color: #3b82f6;
+.service-select:focus,
+.date-input:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
 }
 
-.filter-tab:hover {
-  background-color: #f9fafb;
+/* Glass Radio Styling for Filter Tabs */
+.booking-filters-tabs {
+  display: none;
 }
+
+.toggle-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.glass-radio-group {
+    --bg: #fff; /* White background */
+    --text: #ffffff;
+    
+    display: flex;
+    position: relative;
+    background: var(--bg);
+    border-radius: 1rem;
+    backdrop-filter: blur(12px);
+    box-shadow:
+      inset 1px 1px 4px rgba(0, 0, 0, 0.05),
+      inset -1px -1px 6px rgba(0, 0, 0, 0.1),
+      0 4px 12px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    width: fit-content;
+    margin: 0 auto;
+}
+
+.glass-radio-group input {
+    display: none;
+}
+
+.glass-radio-group label {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 80px;
+    font-size: 14px;
+    padding: 0.8rem 1.6rem;
+    cursor: pointer;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    color: #4b5563; /* Dark text for light background */
+    position: relative;
+    z-index: 2;
+    transition: color 0.3s ease-in-out;
+}
+
+.glass-radio-group label:hover {
+    color: #1f2937;
+}
+
+.glass-radio-group input:checked + label {
+    color: #fff;
+}
+
+.glass-glider {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: calc(100% / 5);
+    border-radius: 1rem;
+    z-index: 1;
+    transition:
+      transform 0.5s cubic-bezier(0.37, 1.95, 0.66, 0.56),
+      background 0.4s ease-in-out,
+      box-shadow 0.4s ease-in-out;
+}
+
+/* All */
+#all:checked ~ .glass-glider {
+    transform: translateX(0%);
+    background: linear-gradient(135deg, #1d4ed8, #2563eb);
+    box-shadow:
+      0 0 18px rgba(37, 99, 235, 0.5),
+      0 0 10px rgba(29, 78, 216, 0.4) inset;
+}
+
+/* Active */
+#active:checked ~ .glass-glider {
+    transform: translateX(100%);
+    background: linear-gradient(135deg, #059669, #10b981);
+    box-shadow:
+      0 0 18px rgba(16, 185, 129, 0.5),
+      0 0 10px rgba(5, 150, 105, 0.4) inset;
+}
+
+/* Upcoming */
+#upcoming:checked ~ .glass-glider {
+    transform: translateX(200%);
+    background: linear-gradient(135deg, #b45309, #d97706);
+    box-shadow:
+      0 0 18px rgba(217, 119, 6, 0.5),
+      0 0 10px rgba(180, 83, 9, 0.4) inset;
+}
+
+/* Completed */
+#completed:checked ~ .glass-glider {
+    transform: translateX(300%);
+    background: linear-gradient(135deg, #4b5563, #6b7280);
+    box-shadow:
+      0 0 18px rgba(107, 114, 128, 0.5),
+      0 0 10px rgba(75, 85, 99, 0.4) inset;
+}
+
+/* Canceled */
+#canceled:checked ~ .glass-glider {
+    transform: translateX(400%);
+    background: linear-gradient(135deg, #b91c1c, #dc2626);
+    box-shadow:
+      0 0 18px rgba(220, 38, 38, 0.5),
+      0 0 10px rgba(185, 28, 28, 0.4) inset;
+}
+
 
 /* Bookings List & Cards */
 .bookings-list {
@@ -130,10 +222,10 @@
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
-  padding: 20px; /* Reduced padding for smaller height */
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 12px; /* Reduced gap */
+  gap: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: box-shadow 0.2s ease;
 }
@@ -156,16 +248,10 @@
 }
 
 .service-title {
-  font-size: 16px; /* Adjusted font size */
+  font-size: 16px;
   font-weight: 600;
   color: #1f2937;
   margin: 0;
-}
-
-.booking-id {
-  font-size: 14px;
-  color: #6b7280;
-  font-weight: 500;
 }
 
 .header-right-section {
@@ -175,13 +261,11 @@
 }
 
 .status-badge {
-  padding: 4px 10px; /* Reduced padding */
+  padding: 4px 10px;
   border-radius: 20px;
-  font-size: 11px; /* Reduced font size */
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  color: #3b82f6; /* Set a default color */
-  background-color: #e0f2fe; /* Set a default background */
 }
 
 .status-badge.active {
@@ -205,8 +289,8 @@
 }
 
 .status-badge.accepted {
-  background-color: #f0f9ff;
-  color: #0ea5e9;
+  background-color: #e0f2fe;
+  color: #0284c7;
 }
 
 .card-options {
@@ -347,16 +431,28 @@
 
   .bookings-header {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center; /* Changed to center */
     gap: 16px;
+    justify-content: center; /* Changed to center */
   }
 
   .filter-search-bar {
     width: 100%;
+    flex-wrap: wrap;
+    justify-content: center; /* Ensures content stays centered on mobile */
   }
 
+  .search-container {
+    width: 100%;
+  }
+  
   .search-input {
     width: 100%;
+  }
+
+  .service-select,
+  .date-input {
+    width: calc(50% - 6px);
   }
 
   .booking-filters-tabs {

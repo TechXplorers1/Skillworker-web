@@ -43,12 +43,35 @@ const technicianData = {
     image: '/profile1.png',
     status: 'Online'
   },
+  coolfix1: {
+    id: 'coolfix1',
+    name: 'COOLFIX 1',
+    service: 'AC Repair',
+    rating: '4.7',
+    reviews: '75',
+    experience: '5+ years',
+    distance: '2.0 km',
+    price: 70,
+    image: '/profile1.png',
+    status: 'Online'
+  },
+  support: {
+    id: 'support',
+    name: 'SkillWorkers Support',
+    service: 'Support',
+    rating: '5.0',
+    reviews: '1000+',
+    experience: 'Always available',
+    distance: 'Anywhere',
+    price: 0,
+    image: '/support.png',
+    status: 'Online'
+  }
 };
 
 const ChatScreen = () => {
   const { serviceName, technicianId } = useParams();
   const navigate = useNavigate();
-  const [hasBooking, setHasBooking] = useState(false);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef(null);
@@ -66,49 +89,29 @@ const ChatScreen = () => {
     status: 'Online'
   };
 
-  // Check if user has a booking with this technician
+  // Initial messages - since we're coming from message box, assume booking is confirmed
   useEffect(() => {
-    // In a real app, this would check your database/API
-    // For demo purposes, we'll check localStorage for a booking flag
-    const bookingKey = `booking_${technicianId}`;
-    const hasActiveBooking = localStorage.getItem(bookingKey) === 'true';
-    
-    setHasBooking(hasActiveBooking);
-    
-    if (!hasActiveBooking) {
-      // If no booking, redirect to booking page after a delay
-      const timer = setTimeout(() => {
-        navigate(`/booking/${serviceName}/${technicianId}`);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [technicianId, serviceName, navigate]);
-
-  // Initial messages - only load if user has booking
-  useEffect(() => {
-    if (hasBooking) {
-      setMessages([
-        {
-          id: 1,
-          sender: 'technician',
-          text: 'Good morning! I\'m on my way to your location. I should arrive in about 15 minutes. Is that okay?',
-          time: '9:39 AM'
-        },
-        {
-          id: 2,
-          sender: 'user',
-          text: 'Yes, that works perfectly. I\'ll be waiting. Do you need any specific information about the plumbing issue?',
-          time: '9:42 AM'
-        },
-        {
-          id: 3,
-          sender: 'technician',
-          text: 'Could you describe the problem? Is it a leak, blockage, or something else?',
-          time: '9:43 AM'
-        }
-      ]);
-    }
-  }, [technicianId, hasBooking]);
+    setMessages([
+      {
+        id: 1,
+        sender: 'technician',
+        text: 'Good morning! I\'m on my way to your location. I should arrive in about 15 minutes. Is that okay?',
+        time: '9:39 AM'
+      },
+      {
+        id: 2,
+        sender: 'user',
+        text: 'Yes, that works perfectly. I\'ll be waiting. Do you need any specific information about the plumbing issue?',
+        time: '9:42 AM'
+      },
+      {
+        id: 3,
+        sender: 'technician',
+        text: 'Could you describe the problem? Is it a leak, blockage, or something else?',
+        time: '9:43 AM'
+      }
+    ]);
+  }, [technicianId]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -145,43 +148,13 @@ const ChatScreen = () => {
     }, 2000);
   };
 
-  const handleBack = () => {
-    navigate(-1);
-  };
-
-  const handleBookNow = () => {
-    navigate(`/booking/${serviceName}/${technicianId}`);
-  };
-
-  // Show loading/redirect message if no booking
-  if (!hasBooking) {
-    return (
-      <div className="chat-screen-container">
-        <Header />
-        <div className="no-booking-message">
-          <FaExclamationTriangle className="warning-icon" />
-          <h2>Booking Required</h2>
-          <p>You need to book this technician before you can start a conversation.</p>
-          <p>Redirecting to booking page...</p>
-          <button className="redirect-btn" onClick={() => navigate(`/booking/${serviceName}/${technicianId}`)}>
-            Go to Booking Now
-          </button>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
+ 
 
   return (
     <div className="chat-screen-container">
       <Header />
       
       <div className="chat-main-content">
-        <div className="back-nav">
-          <button className="back-button" onClick={handleBack}>
-            <FaArrowLeft /> Back
-          </button>
-        </div>
 
         <div className="chat-layout">
           {/* Left Column - Chat */}

@@ -84,12 +84,6 @@ const services = [
     link: 'camera-fittings'
   },
   {
-    title: 'developers',
-    description: 'Software and web development services for custom applications and websites.',
-    image: developersImg,
-    link: 'developers'
-  },
-  {
     title: 'delivery',
     description: 'Fast and reliable courier and delivery services for packages and documents.',
     image: deliveryImg,
@@ -117,10 +111,21 @@ const services = [
 
 const Homepage = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState('1');
 
   const filteredServices = services.filter(service =>
     service.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const displayedServices = activeTab === '1' ? filteredServices.slice(0, 9) : filteredServices.slice(9, 15);
+
+  const handleTabChange = (tabValue) => {
+    setActiveTab(tabValue);
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
 
   return (
     <div className="homepage">
@@ -130,8 +135,9 @@ const Homepage = () => {
         {/* Services Section */}
         <section className="services">
           <h2 className="section-title">Explore our Services</h2>
+          
           <div className="services-grid">
-            {filteredServices.map((service, index) => (
+            {displayedServices.map((service, index) => (
               <div className="service-card" key={index}>
                 {service.image ? (
                   <img
@@ -152,6 +158,34 @@ const Homepage = () => {
                 </div>
               </div>
             ))}
+          </div>
+          
+          <div className="radio-input-container">
+            <div className="radio-input">
+              <label>
+                <input 
+                  type="radio" 
+                  id="tab-1" 
+                  name="service-tabs" 
+                  value="1" 
+                  checked={activeTab === '1'} 
+                  onChange={() => handleTabChange('1')} 
+                />
+                <span>1</span>
+              </label>
+              <label>
+                <input 
+                  type="radio" 
+                  id="tab-2" 
+                  name="service-tabs" 
+                  value="2" 
+                  checked={activeTab === '2'} 
+                  onChange={() => handleTabChange('2')} 
+                />
+                <span>2</span>
+              </label>
+              <span className="selection" />
+            </div>
           </div>
         </section>
 

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
@@ -19,8 +20,12 @@ const BookingPage = () => {
     experience: '5+ years',
     distance: '2.3 km away',
     price: { type: 'hourly', amount: 45 },
-    image: 'https://placehold.co/56x56/E5E7EB/4B5563?text=AV',
     available: true,
+  };
+
+  // Get first letter for avatar
+  const getInitial = (name) => {
+    return name ? name.charAt(0).toUpperCase() : 'T';
   };
 
   const makeDates = () => {
@@ -82,13 +87,13 @@ const BookingPage = () => {
         <div className="popup-card">
           <div className="popup-header">
             <div className="popup-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM369 209L207 371c-9.4 9.4-24.6 9.4-33.9 0L123 325c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l35.1 35.1L335.1 175.1c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM369 209L207 371c-9.4 9.4-24.6 9.4-33.9 0L123 325c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l35.1 35.1L335.1 175.1c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z" /></svg>
             </div>
           </div>
           <div className="popup-content">
             <h2 className="popup-title">Booking Confirmed!</h2>
             <p className="popup-message">Your service has been successfully booked. You'll receive a confirmation message shortly.</p>
-            
+
             <div className="booking-details-card">
               <div className="booking-details-header">
                 <h3>Booking Details</h3>
@@ -119,14 +124,14 @@ const BookingPage = () => {
             <div className="what-happens-next-card">
               <h3>What happens next?</h3>
               <ul>
-                <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM369 209L207 371c-9.4 9.4-24.6 9.4-33.9 0L123 325c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l35.1 35.1L335.1 175.1c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z"/></svg> Your technician will contact you shortly</li>
-                <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM369 209L207 371c-9.4 9.4-24.6 9.4-33.9 0L123 325c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l35.1 35.1L335.1 175.1c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z"/></svg> You'll receive a SMS/email confirmation</li>
-                <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM369 209L207 371c-9.4 9.4-24.6 9.4-33.9 0L123 325c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l35.1 35.1L335.1 175.1c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z"/></svg> Track your service in real-time</li>
+                <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM369 209L207 371c-9.4 9.4-24.6 9.4-33.9 0L123 325c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l35.1 35.1L335.1 175.1c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z" /></svg> Your technician will contact you shortly</li>
+                <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM369 209L207 371c-9.4 9.4-24.6 9.4-33.9 0L123 325c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l35.1 35.1L335.1 175.1c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z" /></svg> You'll receive a SMS/email confirmation</li>
+                <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM369 209L207 371c-9.4 9.4-24.6 9.4-33.9 0L123 325c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l35.1 35.1L335.1 175.1c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z" /></svg> Track your service in real-time</li>
               </ul>
             </div>
-            
+
             <button className="btn primary full-width" onClick={handleViewBooking}>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M304 48a48 48 0 1 0 -96 0 48 48 0 1 0 96 0zm-72 96a72 72 0 1 0 0 144 72 72 0 1 0 0-144zM24 88c-13.3 0-24 10.7-24 24V408c0 13.3 10.7 24 24 24H488c13.3 0 24-10.7 24-24V112c0-13.3-10.7-24-24-24H24zM300 176c0 28.5-12.6 53.6-32 71.3V344c0 13.3-10.7 24-24 24s-24-10.7-24-24V247.3c-19.4-17.7-32-42.8-32-71.3c0-44.2 35.8-80 80-80s80 35.8 80 80z"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M304 48a48 48 0 1 0 -96 0 48 48 0 1 0 96 0zm-72 96a72 72 0 1 0 0 144 72 72 0 1 0 0-144zM24 88c-13.3 0-24 10.7-24 24V408c0 13.3 10.7 24 24 24H488c13.3 0 24-10.7 24-24V112c0-13.3-10.7-24-24-24H24zM300 176c0 28.5-12.6 53.6-32 71.3V344c0 13.3-10.7 24-24 24s-24-10.7-24-24V247.3c-19.4-17.7-32-42.8-32-71.3c0-44.2 35.8-80 80-80s80 35.8 80 80z" /></svg>
               View Booking
             </button>
             <p className="popup-caption" onClick={handleBack}>Go back to homepage</p>
@@ -138,7 +143,7 @@ const BookingPage = () => {
 
   return (
     <div className="booking-page-container">
-         <Header />
+      <Header />
       <style>
         {`
         /* Page shell */
@@ -249,7 +254,13 @@ const BookingPage = () => {
           width: 56px;
           height: 56px;
           border-radius: 50%;
-          object-fit: cover;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #0d6efd;
+          color: white;
+          font-weight: 700;
+          font-size: 24px;
         }
         .pro-info { display: flex; flex-direction: column; gap: 6px; }
         .pro-top { display: flex; align-items: center; gap: 12px; }
@@ -300,7 +311,7 @@ const BookingPage = () => {
           gap: 8px;
           color: #374151;
           font-size: 14px;
-          padding: 4px 0;
+          padding: 2px 0;
         }
         .included li svg { width: 14px; height: 14px; color: #16a34a; }
 
@@ -656,7 +667,7 @@ const BookingPage = () => {
                 </div>
               </div>
               <div className="pro-row">
-                <img className="avatar" src={technician.image} alt={technician.name} />
+                <div className="avatar">{getInitial(technician.name)}</div>
                 <div className="pro-info">
                   <div className="pro-top">
                     <h3 className="pro-name">{technician.name}</h3>
@@ -667,9 +678,9 @@ const BookingPage = () => {
                     </div>
                   </div>
                   <div className="pro-meta">
-                    <span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M256 0a256 256 0 1 1 0 512A256 256 0 1 1 256 0zM232 120V256c0 8 4 15.5 10.7 20l96 64c11 7.4 25.5 4.7 32.9-6.3s4.7-25.5-6.3-32.9L280 232V120c0-13.3-10.7-24-24-24s-24 10.7-24 24z"/></svg> {technician.experience} experience</span>
-                    <span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" fill="currentColor"><path d="M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 128a64 64 0 1 1 0 128 64 64 0 1 1 0-128z"/></svg>
- {technician.distance}</span>
+                    <span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M256 0a256 256 0 1 1 0 512A256 256 0 1 1 256 0zM232 120V256c0 8 4 15.5 10.7 20l96 64c11 7.4 25.5 4.7 32.9-6.3s4.7-25.5-6.3-32.9L280 232V120c0-13.3-10.7-24-24-24s-24 10.7-24 24z" /></svg> {technician.experience} experience</span>
+                    <span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" fill="currentColor"><path d="M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 128a64 64 0 1 1 0 128 64 64 0 1 1 0-128z" /></svg>
+                      {technician.distance}</span>
                   </div>
                 </div>
               </div>
@@ -679,10 +690,10 @@ const BookingPage = () => {
               <h3>What's included:</h3>
               <p>Professional {technician.service.toLowerCase()} repair and maintenance service</p>
               <ul>
-                <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/></svg> Professional consultation and assessment</li>
-                <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/></svg> All necessary tools and basic materials</li>
-                <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/></svg> Quality guarantee on work performed</li>
-                <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/></svg> Clean-up after service completion</li>
+                <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z" /></svg> Professional consultation and assessment</li>
+                <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z" /></svg> All necessary tools and basic materials</li>
+                <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z" /></svg> Quality guarantee on work performed</li>
+                <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z" /></svg> Clean-up after service completion</li>
               </ul>
             </div>
 
@@ -765,46 +776,46 @@ const BookingPage = () => {
               </div>
               <div className="appt-mini">
                 <div className="mini">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M152 24c0-13.3-10.7-24-24-24s-24 10.7-24 24V64H64C28.7 64 0 92.7 0 128v16 48V448c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V192 144 128c0-35.3-28.7-64-64-64H344V24c0-13.3-10.7-24-24-24s-24 10.7-24 24V64H152V24zM48 192H400V448c0 8.8-7.2 16-16 16H64c-8.8 0-16-7.2-16-16V192z"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M152 24c0-13.3-10.7-24-24-24s-24 10.7-24 24V64H64C28.7 64 0 92.7 0 128v16 48V448c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V192 144 128c0-35.3-28.7-64-64-64H344V24c0-13.3-10.7-24-24-24s-24 10.7-24 24V64H152V24zM48 192H400V448c0 8.8-7.2 16-16 16H64c-8.8 0-16-7.2-16-16V192z" /></svg>
                   <span>{selectedDate.label}, {selectedDate.sub}</span>
                 </div>
                 <div className="mini">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M256 0a256 256 0 1 1 0 512A256 256 0 1 1 256 0zM232 120V256c0 8 4 15.5 10.7 20l96 64c11 7.4 25.5 4.7 32.9-6.3s4.7-25.5-6.3-32.9L280 232V120c0-13.3-10.7-24-24-24s-24 10.7-24 24z"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M464 256A208 208 0 1 1 48 256a208 208 0 1 1 416 0zM0 256a256 256 0 1 0 512 0A256 256 0 1 0 0 256zM232 120V256c0 8 4 15.5 10.7 20l96 64c11 7.4 25.5 4.7 32.9-6.3s4.7-25.5-6.3-32.9L280 232V120c0-13.3-10.7-24-24-24s-24 10.7-24 24z" /></svg>
                   <span>{selectedTime}</span>
                 </div>
               </div>
               <div className="actions">
                 <button className="btn primary" onClick={handleConfirmBooking}>
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V96c0-35.3-28.7-64-64-64H64zM337 209L209 337c-9.4 9.4-24.6 9.4-33.9 0l-64-64c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l47 47L303 175c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V96c0-35.3-28.7-64-64-64H64zM337 209L209 337c-9.4 9.4-24.6 9.4-33.9 0l-64-64c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l47 47L303 175c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z" /></svg>
                   Confirm Booking
                 </button>
                 <div className="rowed">
                   <button className="btn outline" onClick={handleBack}>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M48.5 224H40c-13.3 0-24-10.7-24-24V72c0-9.7 5.8-18.5 14.8-22.2s19.3-1.7 26.2 5.2L98.6 96.6c87.6-86.5 228.7-86.2 315.8 1c87.5 87.5 87.5 229.3 0 316.8s-229.3 87.5-316.8 0c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0c62.5 62.5 163.8 62.5 226.3 0s62.5-163.8 0-226.3c-62.2-62.2-162.7-62.5-225.3-1L185 183c6.9 6.9 8.9 17.2 5.2 26.2s-12.5 14.8-22.2 14.8H48.5z"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-306.7 0L214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z" /></svg>
                     Back
                   </button>
                   <button className="btn ghost" onClick={() => navigate('/')}>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" fill="currentColor"><path d="M575.8 255.5c0 18-15 32.1-32 32.1h-32l.7 160.2c0 2.7-.2 5.4-.5 8.1V472c0 22.1-17.9 40-40 40H456c-1.1 0-2.2 0-3.3-.1c-1.4 .1-2.8 .1-4.2 .1H416 392c-22.1 0-40-17.9-40-40V448 384c0-17.7-14.3-32-32-32H256c-17.7 0-32 14.3-32 32v64 24c0 22.1-17.9 40-40 40H160 128.1c-1.5 0-3-.1-4.5-.2c-1.2 .1-2.4 .2-3.6 .2H104c-22.1 0-40-17.9-40-40V360c0-.9 0-1.9 .1-2.8V287.6H32c-18 0-32-14-32-32.1c0-9 3-17 10-24L266.4 8c7-7 15-8 22-8s15 2 21 7L564.8 231.5c8 7 12 15 11 24z"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" fill="currentColor"><path d="M575.8 255.5c0 18-15 32.1-32 32.1h-32l.7 160.2c0 2.7-.2 5.4-.5 8.1V472c0 22.1-17.9 40-40 40H456c-1.1 0-2.2 0-3.3-.1c-1.4 .1-2.8 .1-4.2 .1H416 392c-22.1 0-40-17.9-40-40V448 384c0-17.7-14.3-32-32-32H256c-17.7 0-32 14.3-32 32v64 24c0 22.1-17.9 40-40 40H160 128.1c-1.5 0-3-.1-4.5-.2c-1.2 .1-2.4 .2-3.6 .2H104c-22.1 0-40-17.9-40-40V360c0-.9 0-1.9 .1-2.8V287.6H32c-18 0-32-14-32-32.1c0-9 3-17 10-24L266.4 8c7-7 15-8 22-8s15 2 21 7L564.8 231.5c8 7 12 15 11 24z" /></svg>
                     Home
                   </button>
                 </div>
               </div>
               <div className="guarantee">
                 <h4>Service Guarantee</h4>
-                <p>If you're not satisfied with the service, we'll work to make it right or provide a refund.</p>
+                <p>Your satisfaction is guaranteed. If you're not happy with the service, we'll make it right.</p>
               </div>
             </div>
 
             <div className="card help">
               <h3>Need Help?</h3>
               <div className="help-line">
-                <strong>Call us:</strong> +91 98{Math.floor(Math.random() * 100000000).toString().padStart(8, '0').substring(0, 8)}
+                <strong>Call us:</strong> +91 9988218879
               </div>
               <div className="help-line">
-                <strong>Email:</strong> support@skillworkers.in
+                <strong>Email:</strong> support@skillworkers.com
               </div>
               <div className="help-line">
-                <strong>Hours:</strong> 8 AM - 10 PM, 7 days a week
+                <strong>Hours:</strong> Mon-Fri 8am-8pm, Sat-Sun 9am-5pm
               </div>
             </div>
           </div>
@@ -812,7 +823,6 @@ const BookingPage = () => {
       </div>
 
       <Footer />
-
       <BookingConfirmationPopup />
     </div>
   );

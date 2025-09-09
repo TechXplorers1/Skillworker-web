@@ -42,7 +42,7 @@ const Signup = () => {
     // Email validation
     if (!email) {
       newErrors.email = "Email is required.";
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
+    } else if (!/\S+@\S+\.\S/.test(email)) {
       newErrors.email = "Email address is invalid.";
     }
 
@@ -184,7 +184,10 @@ const Signup = () => {
 
           <label>Account Type</label>
           <div className="role-selection">
-            <div className="role-option">
+            <div
+              className={`role-option ${userRole === "user" ? "active" : ""}`}
+              onClick={() => setUserRole("user")}
+            >
               <input
                 type="radio"
                 id="user-role"
@@ -195,7 +198,10 @@ const Signup = () => {
               />
               <label htmlFor="user-role">User</label>
             </div>
-            <div className="role-option">
+            <div
+              className={`role-option ${userRole === "technician" ? "active" : ""}`}
+              onClick={() => setUserRole("technician")}
+            >
               <input
                 type="radio"
                 id="technician-role"

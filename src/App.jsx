@@ -9,7 +9,9 @@ import ServiceTechniciansPage from "./pages/ServiceTechniciansPage";
 import ChatScreen from './components/ChatScreen';
 import BookingPage from './pages/BookingPage';
 import MyBookingsPage from './pages/MyBookingsPage';
-import BecomeTechnician from './components/BecomeTechnician'; // New Import
+import BecomeTechnician from './components/BecomeTechnician'; 
+import NotificationsPage from './components/NotificationsPage';
+import MessageBox from './components/MessageBox';
 
 const App = () => {
     return (
@@ -25,6 +27,8 @@ const App = () => {
                 <Route path="/my-bookings" element={<MyBookingsPage />} />
                 <Route path="/become-technician" element={<BecomeTechnician />} />
                 <Route path="/technician-registration-prompt" element={<TechnicianRegistrationPrompt />} />
+                 <Route path="/notifications" element={<NotificationsPage />} />
+                <Route path="/messages" element={<MessageBox />} />
             </Routes>
         </>
     );

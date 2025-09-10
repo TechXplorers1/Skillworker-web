@@ -1,117 +1,67 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { FaArrowLeft, FaPaperPlane, FaStar, FaClock, FaMapMarkerAlt, FaSearch, FaExclamationTriangle } from 'react-icons/fa';
 import '../styles/ChatScreen.css';
 
-// Mock technician data
-const technicianData = {
-  tech1: {
-    id: 'tech1',
-    name: 'John Davidson',
-    service: 'Plumbing',
-    rating: '4.8',
-    reviews: '127',
-    experience: '5+ years',
-    distance: '2.3 km',
-    price: 45,
-    image: '/profile1.png',
-    status: 'Online'
-  },
-  tech2: {
-    id: 'tech2',
-    name: 'TECHY 2',
-    service: 'Plumbing',
-    rating: '4.9',
-    reviews: '89',
-    experience: '3+ years',
-    distance: '1.8 km',
-    price: 55,
-    image: '/profile2.png',
-    status: 'Online'
-  },
-  electro1: {
-    id: 'electro1',
-    name: 'ELECTRO 1',
-    service: 'Electrical',
-    rating: '4.8',
-    reviews: '102',
-    experience: '6+ years',
-    distance: '1.6 km',
-    price: 50,
-    image: '/profile1.png',
-    status: 'Online'
-  },
-  coolfix1: {
-    id: 'coolfix1',
-    name: 'COOLFIX 1',
-    service: 'AC Repair',
-    rating: '4.7',
-    reviews: '75',
-    experience: '5+ years',
-    distance: '2.0 km',
-    price: 70,
-    image: '/profile1.png',
-    status: 'Online'
-  },
-  support: {
-    id: 'support',
-    name: 'SkillWorkers Support',
-    service: 'Support',
-    rating: '5.0',
-    reviews: '1000+',
-    experience: 'Always available',
-    distance: 'Anywhere',
-    price: 0,
-    image: '/support.png',
-    status: 'Online'
-  }
-};
-
 const ChatScreen = () => {
-  const { serviceName, technicianId } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef(null);
 
-  const technician = technicianData[technicianId] || {
-    id: technicianId,
-    name: 'Professional Technician',
-    service: serviceName,
-    rating: '4.5',
-    reviews: '50',
-    experience: '5+ years',
-    distance: '2.0 km',
-    price: 45,
-    image: '/profile1.png',
-    status: 'Online'
-  };
+  // Get technician/service details from navigation state or use defaults
+  const { 
+    technician, 
+    service, 
+    user, 
+    bookingDetails 
+  } = location.state || {};
 
-  // Initial messages - since we're coming from message box, assume booking is confirmed
+  const chatTitle = technician?.name || user?.name || 'Professional';
+  const chatSubtitle = technician?.service || service || 'Service Provider';
+  const isTechnicianChat = !!technician;
+
+  // Initial messages based on context
   useEffect(() => {
-    setMessages([
-      {
-        id: 1,
-        sender: 'technician',
-        text: 'Good morning! I\'m on my way to your location. I should arrive in about 15 minutes. Is that okay?',
-        time: '9:39 AM'
-      },
-      {
-        id: 2,
-        sender: 'user',
-        text: 'Yes, that works perfectly. I\'ll be waiting. Do you need any specific information about the plumbing issue?',
-        time: '9:42 AM'
-      },
-      {
-        id: 3,
-        sender: 'technician',
-        text: 'Could you describe the problem? Is it a leak, blockage, or something else?',
-        time: '9:43 AM'
-      }
-    ]);
-  }, [technicianId]);
+    let initialMessages = [];
+    
+    if (isTechnicianChat) {
+      // Chat with technician
+      initialMessages = [
+        {
+          id: 1,
+          sender: 'technician',
+          text: `Hello! I'm ${technician.name}, your ${technician.service} specialist. How can I help you today?`,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }
+      ];
+    } else if (user) {
+      // Chat with user (for technicians)
+      initialMessages = [
+        {
+          id: 1,
+          sender: 'user',
+          text: `Hi! I need help with my ${service || 'service request'}.`,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }
+      ];
+    } else {
+      // Default chat
+      initialMessages = [
+        {
+          id: 1,
+          sender: 'system',
+          text: 'Start a conversation about your service needs.',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }
+      ];
+    }
+    
+    setMessages(initialMessages);
+  }, [technician, user, isTechnicianChat, service]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -128,7 +78,7 @@ const ChatScreen = () => {
 
     const newMsg = {
       id: messages.length + 1,
-      sender: 'user',
+      sender: isTechnicianChat ? 'user' : 'technician',
       text: newMessage,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
@@ -136,19 +86,19 @@ const ChatScreen = () => {
     setMessages([...messages, newMsg]);
     setNewMessage('');
 
-    // Simulate technician response after a delay
+    // Simulate response after a delay
     setTimeout(() => {
       const response = {
         id: messages.length + 2,
-        sender: 'technician',
-        text: 'Thanks for the information. I\'ll assess the situation when I arrive.',
+        sender: isTechnicianChat ? 'technician' : 'user',
+        text: isTechnicianChat 
+          ? 'Thanks for your message. I\'ll get back to you shortly.' 
+          : 'Thank you for reaching out. I appreciate your assistance.',
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       setMessages(prev => [...prev, response]);
     }, 2000);
   };
-
- 
 
   return (
     <div className="chat-screen-container">
@@ -161,12 +111,14 @@ const ChatScreen = () => {
           <div className="chat-column">
             <div className="chat-header">
               <div className="technician-info">
-                <img src={technician.image} alt={technician.name} className="tech-avatar" />
+                <div className="tech-avatar">
+                  {chatTitle.charAt(0).toUpperCase()}
+                </div>
                 <div className="tech-details">
-                  <h3>{technician.name}</h3>
+                  <h3>{chatTitle}</h3>
                   <div className="online-status">
                     <div className="status-dot"></div>
-                    <span>{technician.status}</span>
+                    <span>Online</span>
                   </div>
                 </div>
               </div>
@@ -204,34 +156,71 @@ const ChatScreen = () => {
           {/* Right Column - Service Details */}
           <div className="details-column">
             <div className="service-details-card">
-              <h3>Service Details</h3>
+              <h3>{isTechnicianChat ? 'Service Details' : 'Request Details'}</h3>
               <div className="service-info">
-                <div className="info-row">
-                  <span className="label">Service Type:</span>
-                  <span className="value"><strong>{technician.service} Repair</strong></span>
-                </div>
-                <div className="info-row">
-                  <span className="label">Scheduled:</span>
-                  <span className="value">Today, 2:00 PM</span>
-                </div>
-                <div className="info-row">
-                  <span className="label">Estimated Duration:</span>
-                  <span className="value">2-3 hours</span>
-                </div>
-                <div className="info-row">
-                  <span className="label">Rate:</span>
-                  <span className="value">${technician.price}/hour</span>
-                </div>
+                {bookingDetails && (
+                  <>
+                    <div className="info-row">
+                      <span className="label">Service Type:</span>
+                      <span className="value"><strong>{bookingDetails.service || chatSubtitle}</strong></span>
+                    </div>
+                    {bookingDetails.date && (
+                      <div className="info-row">
+                        <span className="label">Scheduled:</span>
+                        <span className="value">{bookingDetails.date}</span>
+                      </div>
+                    )}
+                    {bookingDetails.time && (
+                      <div className="info-row">
+                        <span className="label">Timing:</span>
+                        <span className="value">{bookingDetails.time}</span>
+                      </div>
+                    )}
+                    {bookingDetails.location && (
+                      <div className="info-row">
+                        <span className="label">Location:</span>
+                        <span className="value">{bookingDetails.location}</span>
+                      </div>
+                    )}
+                    {bookingDetails.price && (
+                      <div className="info-row">
+                        <span className="label">Price:</span>
+                        <span className="value">₹{bookingDetails.price}</span>
+                      </div>
+                    )}
+                  </>
+                )}
+                
+                {!bookingDetails && (
+                  <>
+                    <div className="info-row">
+                      <span className="label">Service Type:</span>
+                      <span className="value"><strong>{chatSubtitle}</strong></span>
+                    </div>
+                    <div className="info-row">
+                      <span className="label">Status:</span>
+                      <span className="value">Active</span>
+                    </div>
+                  </>
+                )}
               </div>
               
-              <div className="technician-qualifications">
-                <h4>Technician Info</h4>
-                <ul>
-                  <li>Licensed & Insured</li>
-                  <li>Background Verified</li>
-                  <li>{technician.experience} Experience</li>
-                </ul>
-              </div>
+              {isTechnicianChat && technician && (
+                <div className="technician-qualifications">
+                  <h4>Technician Info</h4>
+                  <ul>
+                    <li>Licensed & Insured</li>
+                    <li>Background Verified</li>
+                    <li>{technician.experience || '5+ years'} Experience</li>
+                    {technician.rating && (
+                      <li>
+                        <FaStar style={{color: '#fbbf24', marginRight: '5px'}} /> 
+                        {technician.rating} Rating
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
         </div>

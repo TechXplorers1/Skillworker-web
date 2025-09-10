@@ -8,7 +8,6 @@ import {
   FaMapMarkerAlt,
   FaRegClock,
   FaRupeeSign,
-  FaEllipsisV,
   FaStar,
 } from 'react-icons/fa';
 import '../styles/MyBookingsPage.css';
@@ -16,98 +15,107 @@ import '../styles/MyBookingsPage.css';
 const MyBookingsPage = () => {
   const navigate = useNavigate();
 
-  const [activeFilter, setActiveFilter] = useState('All');
+  const [activeFilter, setActiveFilter] = useState('Active');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedService, setSelectedService] = useState('All Services');
   const [selectedDate, setSelectedDate] = useState('');
+  const [bookings, setBookings] = useState([]);
 
-  // Placeholder data for bookings
-  const allBookings = [
-    {
-      id: 'bkg1',
-      service: 'Plumbing Repair',
-      technicianName: 'Alex Thompson',
-      technicianRating: '4.8',
-      technicianAvatar: '/path/to/techy1-avatar.png',
-      status: 'Active',
-      date: 'Today',
-      dateObj: new Date('2025-09-09'),
-      time: '2:00 PM',
-      duration: '2-3 hours',
-      location: 'Bengaluru',
-      price: 1350,
-      description: 'Kitchen sink leak repair',
-      bookingId: '#48'
-    },
-    {
-      id: 'bkg2',
-      service: 'Electrical Work',
-      technicianName: 'Sarah Johnson',
-      technicianRating: '4.9',
-      technicianAvatar: '/path/to/alex-avatar.png',
-      status: 'Upcoming',
-      date: 'Tomorrow',
-      dateObj: new Date('2025-09-10'),
-      time: '10:00 AM',
-      duration: '1-2 hours',
-      location: 'Mumbai',
-      price: 850,
-      description: 'Install ceiling fan in bedroom',
-      bookingId: '#49'
-    },
-    {
-      id: 'bkg3',
-      service: 'AC Repair',
-      technicianName: 'Mike Wilson',
-      technicianRating: '4.7',
-      technicianAvatar: '/path/to/coolfix1-avatar.png',
-      status: 'Completed',
-      date: 'Dec 10, 2024',
-      dateObj: new Date('2024-12-10'),
-      time: '3:00 PM',
-      duration: '2 hours',
-      location: 'Delhi',
-      price: 1200,
-      description: 'AC not cooling properly',
-      bookingId: '#47'
-    },
-    {
-      id: 'bkg4',
-      service: 'Welder',
-      technicianName: 'IRONFIX 1',
-      technicianRating: '4.5',
-      technicianAvatar: '/path/to/ironfix1-avatar.png',
-      status: 'Accepted',
-      date: 'Sep 8, 2025',
-      dateObj: new Date('2025-09-08'),
-      time: '9:30 AM',
-      duration: '4 hours',
-      location: 'Bengaluru',
-      price: 3800,
-      description: 'Gate welding repair',
-      bookingId: '#46'
-    },
-    {
-      id: 'bkg5',
-      service: 'Electrician',
-      technicianName: 'ELECTRO 2',
-      technicianRating: '4.7',
-      technicianAvatar: '/path/to/electro2-avatar.png',
-      status: 'Canceled',
-      date: 'Sep 4, 2025',
-      dateObj: new Date('2025-09-04'),
-      time: '11:00 AM',
-      duration: '1-2 hours',
-      location: 'Mumbai',
-      price: 4500,
-      description: 'house wiring',
-      bookingId: '#45'
-    },
-  ];
+  // Initialize bookings data
+  useEffect(() => {
+    const initialBookings = [
+      {
+        id: 'bkg1',
+        service: 'Electrician',
+        technicianName: 'Bharath Surya',
+        technicianRating: '4.8',
+        technicianAvatar: '/path/to/techy1-avatar.png',
+        status: 'Active',
+        bookedOn: '31/05/2025 12:29',
+        date: '31/05/2025',
+        dateObj: new Date('2025-05-31'),
+        time: 'Afternoon (12:00 PM - 3:00 PM)',
+        duration: '2-3 hours',
+        location: 'Bengaluru',
+        price: 1350,
+        description: 'I have pipe leaking issue',
+        bookingId: '#48'
+      },
+      {
+        id: 'bkg2',
+        service: 'Electrician',
+        technicianName: 'chav tech',
+        technicianRating: '4.9',
+        technicianAvatar: '/path/to/alex-avatar.png',
+        status: 'Accepted',
+        bookedOn: '30/05/2025 11:25',
+        date: '30/05/2025',
+        dateObj: new Date('2025-05-30'),
+        time: 'Afternoon (12:00 PM - 3:00 PM)',
+        duration: '1-2 hours',
+        location: 'Mumbai',
+        price: 850,
+        description: 'bb',
+        bookingId: '#49'
+      },
+      {
+        id: 'bkg3',
+        service: 'Plumber',
+        technicianName: 'chav tech',
+        technicianRating: '4.7',
+        technicianAvatar: '/path/to/coolfix1-avatar.png',
+        status: 'Completed',
+        bookedOn: '24/05/2025 11:18',
+        date: '24/05/2025',
+        dateObj: new Date('2025-05-24'),
+        time: 'Afternoon (12:00 PM - 3:00 PM)',
+        duration: '2 hours',
+        location: 'Delhi',
+        price: 1200,
+        description: 'chat sorting test',
+        bookingId: '#47'
+      },
+      {
+        id: 'bkg4',
+        service: 'Electrician',
+        technicianName: 'Sandy Sandy',
+        technicianRating: '4.5',
+        technicianAvatar: '/path/to/ironfix1-avatar.png',
+        status: 'Active',
+        bookedOn: '10/09/2025 12:55',
+        date: '10/09/2025',
+        dateObj: new Date('2025-09-10'),
+        time: 'Afternoon (12:00 PM - 3:00 PM)',
+        duration: '4 hours',
+        location: 'Bengaluru',
+        price: 3800,
+        description: 'AC not cooling properly',
+        bookingId: '#46'
+      },
+      {
+        id: 'bkg5',
+        service: 'Electrician',
+        technicianName: 'Gopi Ravi',
+        technicianRating: '4.7',
+        technicianAvatar: '/path/to/electro2-avatar.png',
+        status: 'Canceled',
+        bookedOn: '08/09/2025 14:52',
+        date: '08/09/2025',
+        dateObj: new Date('2025-09-08'),
+        time: 'Afternoon (12:00 PM - 3:00 PM)',
+        duration: '1-2 hours',
+        location: 'Mumbai',
+        price: 4500,
+        description: 'house wiring',
+        bookingId: '#45'
+      },
+    ];
+    setBookings(initialBookings);
+  }, []);
 
-  const serviceTypes = ['All Services', ...new Set(allBookings.map(booking => booking.service))];
+  const serviceTypes = ['All Services', ...new Set(bookings.map(booking => booking.service))];
 
-  const filteredBookings = allBookings.filter((booking) => {
+  const filteredBookings = bookings.filter((booking) => {
     const matchesStatus = activeFilter === 'All' || booking.status === activeFilter;
     const matchesService = selectedService === 'All Services' || booking.service === selectedService;
     const matchesDate = !selectedDate || booking.dateObj.toDateString() === new Date(selectedDate).toDateString();
@@ -120,6 +128,43 @@ const MyBookingsPage = () => {
 
   const handleBookingClick = (bookingId) => {
     navigate(`/booking-details/${bookingId}`);
+  };
+
+  const handleCancelBooking = (bookingId) => {
+    setBookings(prevBookings => 
+      prevBookings.map(booking => 
+        booking.id === bookingId ? { ...booking, status: 'Canceled' } : booking
+      )
+    );
+  };
+
+  const handleCompleteBooking = (bookingId) => {
+    setBookings(prevBookings => 
+      prevBookings.map(booking => 
+        booking.id === bookingId ? { ...booking, status: 'Completed' } : booking
+      )
+    );
+  };
+
+    const handleChatClick = (booking) => {
+    navigate('/chat/booking', { 
+      state: { 
+        technician: {
+          name: booking.technicianName,
+          service: booking.service,
+          rating: booking.technicianRating,
+          experience: '5+ years' // Default value
+        },
+        bookingDetails: {
+          service: booking.service,
+          date: booking.date,
+          time: booking.time,
+          location: booking.location,
+          price: booking.price,
+          description: booking.description
+        }
+      } 
+    });
   };
 
   return (
@@ -161,14 +206,6 @@ const MyBookingsPage = () => {
             <input
               type="radio"
               name="plan"
-              id="all"
-              checked={activeFilter === 'All'}
-              onChange={() => setActiveFilter('All')}
-            />
-            <label htmlFor="all">All</label>
-            <input
-              type="radio"
-              name="plan"
               id="active"
               checked={activeFilter === 'Active'}
               onChange={() => setActiveFilter('Active')}
@@ -177,11 +214,11 @@ const MyBookingsPage = () => {
             <input
               type="radio"
               name="plan"
-              id="upcoming"
-              checked={activeFilter === 'Upcoming'}
-              onChange={() => setActiveFilter('Upcoming')}
+              id="accepted"
+              checked={activeFilter === 'Accepted'}
+              onChange={() => setActiveFilter('Accepted')}
             />
-            <label htmlFor="upcoming">Upcoming</label>
+            <label htmlFor="accepted">Accepted</label>
             <input
               type="radio"
               name="plan"
@@ -209,10 +246,10 @@ const MyBookingsPage = () => {
                 <div className="booking-card-header">
                   <div className="service-info">
                     <span className="service-title">{booking.service}</span>
+                    <span className="booked-on">Booked on: {booking.bookedOn}</span>
                   </div>
                   <div className="header-right-section">
                     <span className={`status-badge ${booking.status.toLowerCase()}`}>{booking.status}</span>
-                    <FaEllipsisV className="card-options" />
                   </div>
                 </div>
 
@@ -223,7 +260,7 @@ const MyBookingsPage = () => {
                       </span>
                   </div>
                   <div className="tech-name-rating">
-                    <span className="tech-name">{booking.technicianName}</span>
+                    <span className="tech-name">Technician: {booking.technicianName}</span>
                     <div className="tech-rating">
                       <FaStar className="star-icon" />
                       <span>{booking.technicianRating}</span>
@@ -234,11 +271,11 @@ const MyBookingsPage = () => {
                 <div className="booking-details-grid">
                   <div className="detail-row">
                     <FaRegClock className="detail-icon" />
-                    <span>{booking.date} at {booking.time}</span>
+                    <span>Date: {booking.date}</span>
                   </div>
                   <div className="detail-row">
                     <FaRegClock className="detail-icon" />
-                    <span>{booking.duration}</span>
+                    <span>Timings: {booking.time}</span>
                   </div>
                   <div className="detail-row">
                     <FaMapMarkerAlt className="detail-icon" />
@@ -250,24 +287,52 @@ const MyBookingsPage = () => {
                   </div>
                 </div>
                   
-                {booking.estimatedArrival && (
-                  <div className="eta-row">
-                    <span className="eta-label">Estimated arrival:</span>
-                    <span className="eta-value">{booking.estimatedArrival}</span>
+                <div className="description-row">
+                  <span className="description-label">Description:</span>
+                  <span className="booking-description">{booking.description}</span>
+                </div>
+
+                {booking.status === 'Active' && (
+                  <div className="booking-actions">
+                    <button 
+                      className="action-btn cancel-btn"
+                      onClick={() => handleCancelBooking(booking.id)}
+                    >
+                      Cancel
+                    </button>
                   </div>
                 )}
-                  
-                <div className="description-row">
-                  <span className="booking-description">"{booking.description}"</span>
+
+                    {booking.status === 'Accepted' && (
+                <div className="booking-actions">
+                  <button 
+                    className="action-btn cancel-btn"
+                    onClick={() => handleCancelBooking(booking.id)}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    className="action-btn chat-btn"
+                    onClick={() => handleChatClick(booking)}
+                  >
+                    Chat
+                  </button>
+                  <button 
+                    className="action-btn complete-btn"
+                    onClick={() => handleCompleteBooking(booking.id)}
+                  >
+                    Complete
+                  </button>
                 </div>
-              </div>
-            ))
-          ) : (
-            <div className="no-results-message">
-              <p>No bookings found for the selected filter or search term.</p>
+              )}
             </div>
-          )}
-        </div>
+          ))
+        ) : (
+          <div className="no-results-message">
+            <p>No bookings found for the selected filter or search term.</p>
+          </div>
+        )}
+      </div>
       </main>
       <Footer />
     </div>

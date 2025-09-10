@@ -1,0 +1,269 @@
+import React, { useState, useEffect } from "react";
+import Header from "./Header";
+import "../styles/Profile.css";
+
+const Profile = () => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [userData, setUserData] = useState({
+    fullName: "Mike Technician",
+    bio: "Professional electrician with over 8 years of experience in residential and commercial electrical work. Specialized in smart home installations and energy-efficient solutions.",
+    email: "alex.trompson@email.com",
+    phone: "+234 (0) 123 456 7890",
+    location: "Abuja, Nigeria",
+    experience: "8+ Years",
+    certification: "Licensed Electrician",
+    hourlyRate: "$45",
+    availability: "Available",
+    skills: ["Biblical Wiring", "Great Installation", "Smart Home Setup", "Troubleshooting", "Energy Efficiency"]
+  });
+
+  const [newSkill, setNewSkill] = useState("");
+
+  useEffect(() => {
+    // Load user data from localStorage if available
+    const storedUserData = localStorage.getItem("userProfileData");
+    if (storedUserData) {
+      setUserData(JSON.parse(storedUserData));
+    }
+  }, []);
+
+  const handleEditToggle = () => {
+    setIsEditing(!isEditing);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setUserData({
+      ...userData,
+      [name]: value
+    });
+  };
+
+  const handleSave = () => {
+    localStorage.setItem("userProfileData", JSON.stringify(userData));
+    setIsEditing(false);
+  };
+
+  const handleAddSkill = () => {
+    if (newSkill.trim() !== "") {
+      setUserData({
+        ...userData,
+        skills: [...userData.skills, newSkill.trim()]
+      });
+      setNewSkill("");
+    }
+  };
+
+  const handleRemoveSkill = (index) => {
+    const updatedSkills = [...userData.skills];
+    updatedSkills.splice(index, 1);
+    setUserData({
+      ...userData,
+      skills: updatedSkills
+    });
+  };
+
+  return (
+    <div className="profile-container">
+      <Header />
+      <div className="profile-content">
+        <div className="profile-header">
+          <h1>Profile Management</h1>
+          <button className="edit-profile-btn" onClick={isEditing ? handleSave : handleEditToggle}>
+            {isEditing ? "Save Profile" : "Edit Profile"}
+          </button>
+        </div>
+
+        <div className="profile-section">
+          <h2 className="section-title">Full Name</h2>
+          {isEditing ? (
+            <input
+              type="text"
+              name="fullName"
+              value={userData.fullName}
+              onChange={handleInputChange}
+              className="edit-input full-name-input"
+            />
+          ) : (
+            <p className="full-name">{userData.fullName}</p>
+          )}
+          
+          <h3 className="subsection-title">Bio</h3>
+          {isEditing ? (
+            <textarea
+              name="bio"
+              value={userData.bio}
+              onChange={handleInputChange}
+              className="edit-textarea bio-textarea"
+            />
+          ) : (
+            <p className="bio-text">{userData.bio}</p>
+          )}
+        </div>
+
+        <div className="section-divider"></div>
+
+        <div className="profile-section">
+          <h2 className="section-title">Personal Information</h2>
+          
+          <div className="info-grid">
+            <div className="info-item">
+              <span className="info-label">Email</span>
+              {isEditing ? (
+                <input
+                  type="email"
+                  name="email"
+                  value={userData.email}
+                  onChange={handleInputChange}
+                  className="edit-input email-input"
+                />
+              ) : (
+                <a href={`mailto:${userData.email}`} className="info-value email-link">{userData.email}</a>
+              )}
+            </div>
+            
+            <div className="info-item">
+              <span className="info-label">Phone</span>
+              {isEditing ? (
+                <input
+                  type="tel"
+                  name="phone"
+                  value={userData.phone}
+                  onChange={handleInputChange}
+                  className="edit-input phone-input"
+                />
+              ) : (
+                <span className="info-value">{userData.phone}</span>
+              )}
+            </div>
+            
+            <div className="info-item">
+              <span className="info-label">Location</span>
+              {isEditing ? (
+                <input
+                  type="text"
+                  name="location"
+                  value={userData.location}
+                  onChange={handleInputChange}
+                  className="edit-input location-input"
+                />
+              ) : (
+                <span className="info-value">{userData.location}</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="section-divider"></div>
+
+        <div className="profile-section">
+          <h2 className="section-title">Professional Details</h2>
+          
+          <div className="details-grid">
+            <div className="detail-item">
+              <span className="detail-label">Experience</span>
+              {isEditing ? (
+                <input
+                  type="text"
+                  name="experience"
+                  value={userData.experience}
+                  onChange={handleInputChange}
+                  className="edit-input experience-input"
+                />
+              ) : (
+                <span className="detail-value">{userData.experience}</span>
+              )}
+            </div>
+            
+            <div className="detail-item">
+              <span className="detail-label">Certification</span>
+              {isEditing ? (
+                <input
+                  type="text"
+                  name="certification"
+                  value={userData.certification}
+                  onChange={handleInputChange}
+                  className="edit-input certification-input"
+                />
+              ) : (
+                <span className="detail-value">{userData.certification}</span>
+              )}
+            </div>
+            
+            <div className="detail-item">
+              <span className="detail-label">Hourly Rate</span>
+              {isEditing ? (
+                <input
+                  type="text"
+                  name="hourlyRate"
+                  value={userData.hourlyRate}
+                  onChange={handleInputChange}
+                  className="edit-input rate-input"
+                />
+              ) : (
+                <span className="detail-value">{userData.hourlyRate}</span>
+              )}
+            </div>
+            
+            <div className="detail-item">
+              <span className="detail-label">Availability</span>
+              {isEditing ? (
+                <select
+                  name="availability"
+                  value={userData.availability}
+                  onChange={handleInputChange}
+                  className="edit-select availability-select"
+                >
+                  <option value="Available">Available</option>
+                  <option value="Busy">Busy</option>
+                  <option value="Away">Away</option>
+                </select>
+              ) : (
+                <span className="detail-value">{userData.availability}</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="section-divider"></div>
+
+        <div className="profile-section">
+          <h2 className="section-title">Skills & Specializations</h2>
+          
+          <div className="skills-grid">
+            {userData.skills.map((skill, index) => (
+              <div key={index} className="skill-tag">
+                <span className="skill-text">{skill}</span>
+                {isEditing && (
+                  <button 
+                    className="remove-skill-btn"
+                    onClick={() => handleRemoveSkill(index)}
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+          
+          {isEditing && (
+            <div className="add-skill-container">
+              <input
+                type="text"
+                value={newSkill}
+                onChange={(e) => setNewSkill(e.target.value)}
+                placeholder="Add new skill"
+                className="skill-input"
+              />
+              <button className="add-skill-btn" onClick={handleAddSkill}>
+                Add Skill
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Profile;

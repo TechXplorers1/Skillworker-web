@@ -1,0 +1,260 @@
+.profile-container {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding-top: 80px; /* Added padding to prevent overlap with fixed header */
+}
+
+.profile-content {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 25px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin-top: 20px;
+  margin-bottom: 40px;
+}
+
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.profile-header h1 {
+  color: #2c3e50;
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.edit-profile-btn {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.edit-profile-btn:hover {
+  background-color: #2980b9;
+}
+
+.profile-section {
+  margin-bottom: 25px;
+}
+
+.section-title {
+  color: #2c3e50;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 15px;
+}
+
+.subsection-title {
+  color: #7f8c8d;
+  font-size: 16px;
+  font-weight: 500;
+  margin: 15px 0 8px;
+}
+
+.full-name {
+  font-size: 16px;
+  font-weight: 500;
+  color: #34495e;
+  margin: 5px 0 10px;
+}
+
+.bio-text {
+  color: #5d6d7e;
+  line-height: 1.5;
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+.section-divider {
+  height: 1px;
+  background-color: #eaeaea;
+  margin: 25px 0;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.info-label {
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+
+.info-value {
+  color: #34495e;
+  font-size: 14px;
+}
+
+.email-link {
+  color: #3498db;
+  text-decoration: none;
+}
+
+.email-link:hover {
+  text-decoration: underline;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+
+.detail-value {
+  color: #34495e;
+  font-size: 14px;
+}
+
+.skills-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.skill-tag {
+  background-color: #e8f4fd;
+  padding: 6px 12px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.skill-text {
+  color: #2c3e50;
+  font-size: 14px;
+}
+
+.remove-skill-btn {
+  background: none;
+  border: none;
+  color: #e74c3c;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+}
+
+.add-skill-container {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.skill-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.add-skill-btn {
+  background-color: #2ecc71;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.add-skill-btn:hover {
+  background-color: #27ae60;
+}
+
+.edit-input,
+.edit-textarea,
+.edit-select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 14px;
+  margin: 5px 0;
+}
+
+.edit-textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.edit-select {
+  background-color: white;
+}
+
+.full-name-input {
+  font-weight: 500;
+}
+
+.bio-textarea {
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .profile-container {
+    padding-top: 70px; /* Adjusted for mobile */
+  }
+  
+  .profile-content {
+    padding: 20px 15px;
+    margin: 15px 10px;
+  }
+  
+  .profile-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .add-skill-container {
+    flex-direction: column;
+  }
+}

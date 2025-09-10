@@ -20,9 +20,9 @@ const Footer = () => {
             reliable, and affordable solutions at your fingertips.
           </p>
           <div className="footer-contact">
-            <p><FaPhoneAlt /> +234 (0) 123 456 7890</p>
+            <p><FaPhoneAlt /> +91 8855181212</p>
             <p><FaEnvelope /> support@skillworkers.com</p>
-            <p><FaMapMarkerAlt /> Plot 123, Central Business District, Abuja, Nigeria</p>
+            <p><FaMapMarkerAlt /> India</p>
           </div>
         </div>
 
@@ -72,7 +72,7 @@ const Footer = () => {
       {/* Bottom Bar */}
       <div className="footer-bottom">
         <p>© 2025 SkillWorkers. All rights reserved.</p>
-        <p className="made-with">Made with ❤️ in Nigeria</p>
+        <p className="made-with">Made with ❤️ in India</p>
         <div className="social-icons">
           <a href="#"><FaFacebookF /></a>
           <a href="#"><FaTwitter /></a>

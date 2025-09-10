@@ -12,9 +12,11 @@ import MyBookingsPage from './pages/MyBookingsPage';
 import BecomeTechnician from './components/BecomeTechnician'; 
 import NotificationsPage from './components/NotificationsPage';
 import MessageBox from './components/MessageBox';
+import Profile from './components/Profile';
+import ServiceRequests from "./pages/ServiceRequests";
 
 const App = () => {
-    return (
+     return (
         <>
             <ScrollToTop />
             <Routes>
@@ -22,13 +24,15 @@ const App = () => {
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/services/:serviceName" element={<ServiceTechniciansPage />} />
-                <Route path="/chat/:serviceName/:technicianId" element={<ChatScreen />} />
+                <Route path="/chat/:chatType" element={<ChatScreen />} />
                 <Route path="/booking/:serviceName/:technicianId" element={<BookingPage />} />
                 <Route path="/my-bookings" element={<MyBookingsPage />} />
                 <Route path="/become-technician" element={<BecomeTechnician />} />
                 <Route path="/technician-registration-prompt" element={<TechnicianRegistrationPrompt />} />
-                 <Route path="/notifications" element={<NotificationsPage />} />
+                <Route path="/notifications" element={<NotificationsPage />} />
                 <Route path="/messages" element={<MessageBox />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/service-requests" element={<ServiceRequests />} />
             </Routes>
         </>
     );

@@ -34,8 +34,8 @@
 }
 
 .header-icon {
-  font-size: 20px;
-  color: #666;
+  font-size: 22px;
+  color: #555;
   transition: color 0.2s ease;
 }
 
@@ -68,7 +68,7 @@
 }
 
 .technician-icon {
-  font-size: 18px;
+  font-size: 20px;
 }
 
 .user-menu {
@@ -129,7 +129,7 @@
 }
 
 .user-icon {
-  font-size: 16px;
+  font-size: 18px;
 }
 
 .user-name {
@@ -161,7 +161,7 @@
 }
 
 .logout-icon {
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .signin-btn {
@@ -209,7 +209,7 @@
   
   .become-technician-btn .technician-icon {
     margin-right: 0;
-    font-size: 16px;
+    font-size: 18px;
   }
   
   .signin-btn {
@@ -219,7 +219,7 @@
   }
   
   .header-icon {
-    font-size: 18px;
+    font-size: 20px;
   }
   
   .header-logo {

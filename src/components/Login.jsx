@@ -19,7 +19,8 @@ const Login = () => {
   // Predefined credentials
   const predefinedCredentials = {
     "naresh@user.com": { password: "Naresh@user1", role: "user", name: "Naresh" },
-    "naresh@tech.com": { password: "Naresh@tech1", role: "technician", name: "Naresh" }
+    "naresh@tech.com": { password: "Naresh@tech1", role: "technician", name: "Naresh" },
+    "admin@gmail.com": { password: "Admin@sw123", role: "admin", name: "Admin" }
   };
 
   const handleCreateAccount = () => {
@@ -131,6 +132,7 @@ const Login = () => {
           <p style={{margin: '0 0 5px 0', fontWeight: 'bold'}}>Test Credentials:</p>
           <p style={{margin: '2px 0'}}>User: naresh@user.com / Naresh@user1</p>
           <p style={{margin: '2px 0'}}>Technician: naresh@tech.com / Naresh@tech1</p>
+          <p style={{margin: '2px 0'}}>Admin: admin@gmail.com / Admin@sw123</p>
         </div>
 
         <form className="login-form" onSubmit={handleSubmit}>

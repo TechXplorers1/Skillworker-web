@@ -14,6 +14,7 @@ import NotificationsPage from './components/NotificationsPage';
 import MessageBox from './components/MessageBox';
 import Profile from './components/Profile';
 import ServiceRequests from "./pages/ServiceRequests";
+// import UserManagement from "./admin/UserManagement";
 
 const App = () => {
      return (
@@ -33,6 +34,7 @@ const App = () => {
                 <Route path="/messages" element={<MessageBox />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/service-requests" element={<ServiceRequests />} />
+                {/* <Route path="/user-management" element={<UserManagement />} /> */}
             </Routes>
         </>
     );

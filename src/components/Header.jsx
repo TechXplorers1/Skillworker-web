@@ -1,7 +1,20 @@
 import React from "react";
-import { HiOutlineHome, HiOutlineBell, HiOutlineChatAlt2, HiOutlineUser, HiOutlineBookOpen } from "react-icons/hi";
-import { MdOutlineHandyman, MdOutlineWorkOutline } from "react-icons/md";
-import { FiLogOut } from "react-icons/fi";
+import { 
+  HiOutlineBell, 
+  HiOutlineUser
+} from "react-icons/hi";
+import { 
+  MdOutlineHandyman, 
+  MdOutlineWorkOutline
+} from "react-icons/md";
+import { 
+  FiLogOut,
+  FiMessageSquare
+} from "react-icons/fi";
+import { 
+  RiCalendarEventLine,
+  RiDashboardLine
+} from "react-icons/ri";
 import { useNavigate, useLocation } from "react-router-dom";
 import "../styles/Header.css";
 
@@ -58,6 +71,10 @@ const Header = () => {
     navigate("/service-requests");
   };
 
+  const handleDashboard = () => {
+    navigate("/user-management");
+  };
+
   // Get first letter of name or email for avatar
   const getAvatarLetter = () => {
     if (userName) return userName.charAt(0).toUpperCase();
@@ -88,7 +105,7 @@ const Header = () => {
         {isLoggedIn ? (
           <div className="user-menu">
             <button className="icon-btn" onClick={handleBookings} title="My Bookings">
-              <HiOutlineBookOpen className="header-icon" />
+              <RiCalendarEventLine className="header-icon" />
             </button>
             
             {userRole === "technician" && (
@@ -97,11 +114,17 @@ const Header = () => {
               </button>
             )}
             
+            {userRole === "admin" && (
+              <button className="icon-btn" onClick={handleDashboard} title="Admin Dashboard">
+                <RiDashboardLine className="header-icon" />
+              </button>
+            )}
+            
             <button className="icon-btn" onClick={handleNotifications} title="Notifications">
               <HiOutlineBell className="header-icon" />
             </button>
             <button className="icon-btn" onClick={handleMessages} title="Messages">
-              <HiOutlineChatAlt2 className="header-icon" />
+              <FiMessageSquare className="header-icon" />
             </button>
             <div className="user-info">
               <div className="user-avatar" onClick={handleProfile} title="Profile">

@@ -72,7 +72,6 @@ const Header = () => {
         onClick={handleLogoClick}
         style={{ cursor: "pointer" }}
       >
-        <HiOutlineHome className="header-icon" />
         <h2 className="header-logo">SkillWorkers</h2>
       </div>
       

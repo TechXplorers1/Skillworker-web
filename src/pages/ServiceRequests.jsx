@@ -250,7 +250,7 @@ const ServiceRequests = () => {
               onChange={() => setActiveFilter('History')}
             />
             <label htmlFor="history">History</label>
-            <div className="glass-glider" />
+            <div className="glass-glider2" />
           </div>
         </div>
 
@@ -311,13 +311,13 @@ const ServiceRequests = () => {
                 {request.status === 'Requests' && (
                   <div className="request-actions">
                     <button 
-                      className="action-btn decline-btn"
+                      className="action-btn1 decline-btn"
                       onClick={() => handleDeclineRequest(request.id)}
                     >
                       Decline
                     </button>
                     <button 
-                      className="action-btn accept-btn"
+                      className="action-btn1 accept-btn"
                       onClick={() => handleAcceptRequest(request.id)}
                     >
                       Accept
@@ -328,19 +328,19 @@ const ServiceRequests = () => {
                  {request.status === 'Accepted' && (
                 <div className="request-actions">
                   <button 
-                    className="action-btn cancel-btn"
+                    className="action-btn1 cancel-btn"
                     onClick={() => handleCancelRequest(request.id)}
                   >
                     Cancel
                   </button>
                   <button 
-                    className="action-btn chat-btn"
+                    className="action-btn1 chat-btn"
                     onClick={() => handleChatClick(request)}
                   >
                     Chat
                   </button>
                   <button 
-                    className="action-btn complete-btn"
+                    className="action-btn1 complete-btn"
                     onClick={() => handleCompleteRequest(request.id)}
                   >
                     Complete

@@ -1,4 +1,4 @@
-.user-management-container {
+.technician-management-container {
   font-family: "Inter", sans-serif;
   background: white;
   padding: 20px;
@@ -39,16 +39,7 @@
   font-size: 14px;
 }
 
-/* .search-icon {
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #6b7280;
-  font-size: 16px;
-} */
-
-.add-user-btn {
+.add-technician-btn {
   background: black;
   color: white;
   border: none;
@@ -60,63 +51,84 @@
   white-space: nowrap;
 }
 
-.add-user-btn:hover {
+.add-technician-btn:hover {
   background: #333;
 }
 
-.user-table {
+.technician-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.user-table th,
-.user-table td {
+.technician-table th,
+.technician-table td {
   padding: 14px 10px;
   text-align: left;
   border-bottom: 1px solid #e5e7eb;
   font-size: 14px;
 }
 
-.user-table th {
+.technician-table th {
   font-weight: 600;
   color: #374151;
+  background-color: #f9fafb;
 }
 
-.user-info strong {
-  display: block;
+.technician-name {
   font-weight: 500;
+  margin-bottom: 4px;
 }
 
-.user-info p {
+.technician-email {
   font-size: 13px;
   color: #6b7280;
-  margin: 0;
 }
 
-.role-badge {
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  background: #f3f4f6;
-  color: #374151;
+.bio-text {
+  font-size: 13px;
+  color: #4b5563;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .status-badge {
   padding: 4px 8px;
   border-radius: 6px;
   font-size: 12px;
-  background: #f3f4f6;
-  color: #374151;
+  font-weight: 500;
 }
 
 .status-badge.active {
-  background: #f3f4f6;
-  color: #374151;
+  background: #ecfdf5;
+  color: #065f46;
 }
 
 .status-badge.suspended {
-  background: #f3f4f6;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.timings-text {
+  font-size: 13px;
+  color: #4b5563;
+}
+
+.skills-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.skill-badge {
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  background: #e5e7eb;
   color: #374151;
+  white-space: nowrap;
 }
 
 .actions {
@@ -200,21 +212,21 @@ input:checked + .slider:before {
 }
 
 .confirmation-popup,
-.add-user-popup,
-.edit-user-popup {
+.add-technician-popup,
+.edit-technician-popup {
   background: white;
   padding: 24px;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  width: 400px;
+  width: 500px;
   max-width: 90%;
   max-height: 90vh;
   overflow-y: auto;
 }
 
 .confirmation-popup h3,
-.add-user-popup h3,
-.edit-user-popup h3 {
+.add-technician-popup h3,
+.edit-technician-popup h3 {
   margin-top: 0;
   margin-bottom: 16px;
   font-size: 1.2rem;
@@ -237,12 +249,70 @@ input:checked + .slider:before {
 }
 
 .form-group input,
-.form-group select {
+.form-group select,
+.form-group textarea {
   width: 100%;
   padding: 8px 12px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
   font-size: 14px;
+  font-family: "Inter", sans-serif;
+}
+
+.form-group textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.skills-input-container {
+  display: flex;
+  gap: 8px;
+}
+
+.skills-input-container input {
+  flex: 1;
+}
+
+.add-skill-btn {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.add-skill-btn:hover {
+  background: #e5e7eb;
+}
+
+.skills-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.skill-tag {
+  display: flex;
+  align-items: center;
+  background: #e5e7eb;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.remove-skill {
+  margin-left: 5px;
+  cursor: pointer;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.remove-skill:hover {
+  color: #ef4444;
 }
 
 .popup-buttons {
@@ -299,6 +369,11 @@ input:checked + .slider:before {
   .search-box {
     width: 200px;
   }
+  
+  .technician-table {
+    display: block;
+    overflow-x: auto;
+  }
 }
 
 @media (max-width: 480px) {
@@ -315,7 +390,11 @@ input:checked + .slider:before {
     width: 100%;
   }
   
-  .add-user-btn {
+  .add-technician-btn {
     width: 100%;
+  }
+  
+  .skills-input-container {
+    flex-direction: column;
   }
 }

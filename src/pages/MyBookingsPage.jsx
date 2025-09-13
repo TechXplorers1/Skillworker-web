@@ -235,7 +235,7 @@ const MyBookingsPage = () => {
               onChange={() => setActiveFilter('Canceled')}
             />
             <label htmlFor="canceled">Canceled</label>
-            <div className="glass-glider" />
+            <div className="glass-glider1" />
           </div>
         </div>
 
@@ -295,7 +295,7 @@ const MyBookingsPage = () => {
                 {booking.status === 'Active' && (
                   <div className="booking-actions">
                     <button 
-                      className="action-btn cancel-btn"
+                      className="action-btn1 cancel-btn"
                       onClick={() => handleCancelBooking(booking.id)}
                     >
                       Cancel
@@ -306,19 +306,19 @@ const MyBookingsPage = () => {
                     {booking.status === 'Accepted' && (
                 <div className="booking-actions">
                   <button 
-                    className="action-btn cancel-btn"
+                    className="action-btn1 cancel-btn"
                     onClick={() => handleCancelBooking(booking.id)}
                   >
                     Cancel
                   </button>
                   <button 
-                    className="action-btn chat-btn"
+                    className="action-btn1 chat-btn"
                     onClick={() => handleChatClick(booking)}
                   >
                     Chat
                   </button>
                   <button 
-                    className="action-btn complete-btn"
+                    className="action-btn1 complete-btn"
                     onClick={() => handleCompleteBooking(booking.id)}
                   >
                     Complete

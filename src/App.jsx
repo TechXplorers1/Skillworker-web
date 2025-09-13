@@ -14,7 +14,12 @@ import NotificationsPage from './components/NotificationsPage';
 import MessageBox from './components/MessageBox';
 import Profile from './components/Profile';
 import ServiceRequests from "./pages/ServiceRequests";
-// import UserManagement from "./admin/UserManagement";
+import UserManagement from "./admin/UserManagement";
+import TechnicianManagement from "./admin/TechnicianManagement";
+import BookingManagement from "./admin/BookingManagement";
+import ServiceManagement from "./admin/ServiceManagement";
+import Settings from "./admin/Settings";
+import Dashboard from "./admin/Dashboard";
 
 const App = () => {
      return (
@@ -34,7 +39,12 @@ const App = () => {
                 <Route path="/messages" element={<MessageBox />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/service-requests" element={<ServiceRequests />} />
-                {/* <Route path="/user-management" element={<UserManagement />} /> */}
+                <Route path="/user-management" element={<UserManagement />} />
+                 <Route path="/booking-management" element={<BookingManagement />} />
+                   <Route path="/technician-management" element={<TechnicianManagement />} />
+                   <Route path="/service-management" element={<ServiceManagement />} />
+                   <Route path="/settings" element={<Settings />} />
+                <Route path="/dashboard" element={<Dashboard />} />
             </Routes>
         </>
     );

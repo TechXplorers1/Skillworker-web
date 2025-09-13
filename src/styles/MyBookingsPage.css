@@ -23,11 +23,6 @@
   padding: 20px 0;
 }
 
-/* Back button removed as per request */
-.back-btn {
-  display: none;
-}
-
 .filter-search-bar {
   display: flex;
   align-items: center;
@@ -149,7 +144,7 @@
     color: #fff;
 }
 
-.glass-glider {
+.glass-glider1 {
     position: absolute;
     top: 0;
     bottom: 0;
@@ -163,7 +158,7 @@
 }
 
 /* Active */
-#active:checked ~ .glass-glider {
+#active:checked ~ .glass-glider1 {
     transform: translateX(0%);
     background: linear-gradient(135deg, #059669, #10b981);
     box-shadow:
@@ -172,7 +167,7 @@
 }
 
 /* Accepted */
-#accepted:checked ~ .glass-glider {
+#accepted:checked ~ .glass-glider1 {
     transform: translateX(100%);
     background: linear-gradient(135deg, #1d4ed8, #2563eb);
     box-shadow:
@@ -181,7 +176,7 @@
 }
 
 /* Completed */
-#completed:checked ~ .glass-glider {
+#completed:checked ~ .glass-glider1 {
     transform: translateX(200%);
     background: linear-gradient(135deg, #4b5563, #6b7280);
     box-shadow:
@@ -190,7 +185,7 @@
 }
 
 /* Canceled */
-#canceled:checked ~ .glass-glider {
+#canceled:checked ~ .glass-glider1 {
     transform: translateX(300%);
     background: linear-gradient(135deg, #b91c1c, #dc2626);
     box-shadow:
@@ -383,7 +378,7 @@
   align-items: center;
 }
 
-.action-btn {
+.action-btn1 {
   padding: 8px 16px;
   border-radius: 6px;
   font-size: 14px;
@@ -418,7 +413,7 @@
   color: white;
   border: 1px solid #059669;
   padding: 8px 12px;
-  min-width: auto;
+  width: auto;
 }
 
 .complete-btn:hover {
@@ -508,7 +503,7 @@
     flex-direction: column;
   }
   
-  .action-btn {
+  .action-btn1 {
     width: 100%;
   }
   

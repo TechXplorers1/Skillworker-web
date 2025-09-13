@@ -72,7 +72,7 @@ const Header = () => {
   };
 
   const handleDashboard = () => {
-    navigate("/user-management");
+    navigate("/dashboard");
   };
 
   // Get first letter of name or email for avatar

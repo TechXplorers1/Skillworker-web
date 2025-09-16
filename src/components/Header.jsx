@@ -106,32 +106,40 @@ const Header = () => {
           <div className="user-menu">
             <button className="icon-btn" onClick={handleBookings} title="My Bookings">
               <RiCalendarEventLine className="header-icon" />
+              <span className="icon-label">Bookings</span>
             </button>
             
             {userRole === "technician" && (
               <button className="icon-btn" onClick={handleServiceRequests} title="Service Requests">
                 <MdOutlineWorkOutline className="header-icon" />
+                <span className="icon-label">Requests</span>
               </button>
             )}
             
             {userRole === "admin" && (
               <button className="icon-btn" onClick={handleDashboard} title="Admin Dashboard">
                 <RiDashboardLine className="header-icon" />
+                <span className="icon-label">Dashboard</span>
               </button>
             )}
             
             <button className="icon-btn" onClick={handleNotifications} title="Notifications">
               <HiOutlineBell className="header-icon" />
+              <span className="icon-label">Notifications</span>
             </button>
+            
             <button className="icon-btn" onClick={handleMessages} title="Messages">
               <FiMessageSquare className="header-icon" />
+              <span className="icon-label">Messages</span>
             </button>
+            
             <div className="user-info">
               <div className="user-avatar" onClick={handleProfile} title="Profile">
                 <HiOutlineUser className="user-icon" />
               </div>
               <span className="user-name">{userName || userEmail.split('@')[0]}</span>
             </div>
+            
             <button className="logout-btn" onClick={handleLogout} title="Logout">
               <FiLogOut className="logout-icon" />
               Logout

@@ -92,7 +92,7 @@ const Header = () => {
         <h2 className="header-logo">SkillWorkers</h2>
       </div>
       
-      {isLoggedIn && userRole === "technician" ? (
+      {isLoggedIn && userRole !== "technician" && userRole !== "admin" ? (
         <div className="header-center">
           <button className="become-technician-btn" onClick={handleBecomeTechnician}>
             <MdOutlineHandyman className="technician-icon" />

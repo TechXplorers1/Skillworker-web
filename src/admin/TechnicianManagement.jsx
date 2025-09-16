@@ -6,6 +6,7 @@ const TechnicianManagement = () => {
   const [showAddTechnicianPopup, setShowAddTechnicianPopup] = useState(false);
   const [editingTechnician, setEditingTechnician] = useState(null);
   const [deactivatingTechnician, setDeactivatingTechnician] = useState(null);
+  const [activatingTechnician, setActivatingTechnician] = useState(null);
   const [newSkill, setNewSkill] = useState("");
   
   const [technicians, setTechnicians] = useState([
@@ -19,9 +20,9 @@ const TechnicianManagement = () => {
       country: "India",
       role: "Technician",
       status: "Active",
-      bio: "Experienced AC repair technician with 8 years of expertise in servicing all major brands. Specialized in troubleshooting complex electrical issues and providing efficient cooling solutions.",
+      bio: "Experienced AC mechanic with 8 years of expertise in servicing all major brands. Specialized in troubleshooting complex electrical issues and providing efficient cooling solutions.",
       timings: "9:00 AM - 6:00 PM (Mon-Sat)",
-      skills: ["AC Repair", "AC Installation", "AC Maintenance", "Gas Charging"]
+      skills: ["AC Mechanic", "Electrician"]
     },
     {
       id: 2,
@@ -33,9 +34,9 @@ const TechnicianManagement = () => {
       country: "India",
       role: "Technician",
       status: "Active",
-      bio: "Skilled refrigerator technician with extensive knowledge of modern refrigeration systems. Committed to providing prompt and reliable service with attention to detail.",
+      bio: "Skilled plumber with extensive knowledge of modern plumbing systems. Committed to providing prompt and reliable service with attention to detail.",
       timings: "10:00 AM - 7:00 PM (Tue-Sun)",
-      skills: ["Refrigerator Repair", "Freezer Service", "Cooling System Maintenance"]
+      skills: ["Plumber", "House cleaners"]
     },
     {
       id: 3,
@@ -47,9 +48,9 @@ const TechnicianManagement = () => {
       country: "India",
       role: "Technician",
       status: "Suspended",
-      bio: "Expert washing machine technician with 6 years of hands-on experience. Specializes in repairing front-load and top-load machines of all major brands.",
+      bio: "Expert electrician with 6 years of hands-on experience. Specializes in repairing all types of electrical issues for residential and commercial spaces.",
       timings: "8:00 AM - 5:00 PM (Mon-Fri)",
-      skills: ["Washing Machine Repair", "Dryer Service", "Water Pump Replacement"]
+      skills: ["Electrician", "Welders", "Camera fittings"]
     },
     {
       id: 4,
@@ -61,9 +62,9 @@ const TechnicianManagement = () => {
       country: "India",
       role: "Technician",
       status: "Active",
-      bio: "Versatile home appliance technician with expertise in multiple domains. Known for efficient problem-solving and customer-friendly approach to appliance repairs.",
+      bio: "Versatile carpenter with expertise in multiple domains. Known for efficient problem-solving and customer-friendly approach to appliance repairs.",
       timings: "9:30 AM - 6:30 PM (Mon-Sat)",
-      skills: ["Microwave Repair", "Oven Service", "Mixer Grinder Repair", "Small Appliance Fixing"]
+      skills: ["Carpenter", "Packers & Movers"]
     }
   ]);
 
@@ -81,6 +82,12 @@ const TechnicianManagement = () => {
     skills: []
   });
 
+  const availableSkills = [
+    'Plumber', 'Electrician', 'AC Mechanic', 'Carpenter', 'Packers & Movers', 
+    'House cleaners', 'Laundry', 'Construction cleaners', 'Surveyors', 'Camera fittings', 
+    'Welders', 'Private investigators', 'Body Massage', 'Software Developer', 'Delivery'
+  ];
+
   const filteredTechnicians = technicians.filter(technician => 
     technician.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     technician.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -91,9 +98,7 @@ const TechnicianManagement = () => {
     if (technician.status === "Active") {
       setDeactivatingTechnician(technician);
     } else {
-      setTechnicians(technicians.map(t => 
-        t.id === technicianId ? {...t, status: "Active"} : t
-      ));
+      setActivatingTechnician(technician);
     }
   };
 
@@ -106,8 +111,21 @@ const TechnicianManagement = () => {
     }
   };
 
+  const confirmActivation = () => {
+    if (activatingTechnician) {
+      setTechnicians(technicians.map(t => 
+        t.id === activatingTechnician.id ? {...t, status: "Active"} : t
+      ));
+      setActivatingTechnician(null);
+    }
+  };
+
   const cancelDeactivation = () => {
     setDeactivatingTechnician(null);
+  };
+  
+  const cancelActivation = () => {
+    setActivatingTechnician(null);
   };
 
   const handleAddTechnician = () => {
@@ -163,7 +181,10 @@ const TechnicianManagement = () => {
   };
 
   const addSkill = (isEdit = false) => {
-    if (newSkill.trim() === "") return;
+    if (newSkill.trim() === "" || (isEdit && editingTechnician?.skills.includes(newSkill.trim())) || (!isEdit && newTechnician.skills.includes(newSkill.trim()))) {
+      setNewSkill("");
+      return;
+    }
     
     if (isEdit && editingTechnician) {
       setEditingTechnician({
@@ -303,6 +324,24 @@ const TechnicianManagement = () => {
         </div>
       )}
 
+      {/* Activation Confirmation Popup */}
+      {activatingTechnician && (
+        <div className="popup-overlay">
+          <div className="confirmation-popup">
+            <h3>Confirm Activation</h3>
+            <p>Are you sure you want to activate {activatingTechnician.name}?</p>
+            <div className="popup-buttons">
+              <button className="cancel-btn" onClick={cancelActivation}>
+                Cancel
+              </button>
+              <button className="confirm-btn" onClick={confirmActivation}>
+                Yes, Activate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Add Technician Popup */}
       {showAddTechnicianPopup && (
         <div className="popup-overlay">
@@ -396,7 +435,13 @@ const TechnicianManagement = () => {
                   onChange={(e) => setNewSkill(e.target.value)}
                   onKeyPress={(e) => handleSkillKeyPress(e, false)}
                   placeholder="Add a skill"
+                  list="service-options"
                 />
+                <datalist id="service-options">
+                  {availableSkills.map((skill, index) => (
+                    <option key={index} value={skill} />
+                  ))}
+                </datalist>
                 <button 
                   type="button" 
                   className="add-skill-btn"
@@ -531,7 +576,13 @@ const TechnicianManagement = () => {
                   onChange={(e) => setNewSkill(e.target.value)}
                   onKeyPress={(e) => handleSkillKeyPress(e, true)}
                   placeholder="Add a skill"
+                  list="service-options"
                 />
+                <datalist id="service-options">
+                  {availableSkills.map((skill, index) => (
+                    <option key={index} value={skill} />
+                  ))}
+                </datalist>
                 <button 
                   type="button" 
                   className="add-skill-btn"

@@ -6,6 +6,7 @@ const UserManagement = () => {
   const [showAddUserPopup, setShowAddUserPopup] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [deactivatingUser, setDeactivatingUser] = useState(null);
+  const [activatingUser, setActivatingUser] = useState(null);
   
   const [users, setUsers] = useState([
     {
@@ -37,27 +38,39 @@ const UserManagement = () => {
       name: "Vikram Singh",
       email: "vikram.singh@email.com",
       phone: "+91 7654321098",
-      city: "Delhi",
-      state: "Delhi",
+      city: "Bangalore",
+      state: "Karnataka",
       country: "India",
-      role: "Technician",
+      role: "Customer",
       status: "Suspended",
-      joined: "2024-01-08",
+      joined: "2024-02-20",
     },
     {
       id: 4,
       name: "Anjali Mehta",
       email: "anjali.mehta@email.com",
       phone: "+91 6543210987",
-      city: "Bangalore",
-      state: "Karnataka",
+      city: "Kolkata",
+      state: "West Bengal",
       country: "India",
       role: "Customer",
       status: "Active",
-      joined: "2024-01-20",
+      joined: "2024-03-05",
+    },
+    {
+      id: 5,
+      name: "Suresh Reddy",
+      email: "suresh.reddy@email.com",
+      phone: "+91 9123456789",
+      city: "Hyderabad",
+      state: "Telangana",
+      country: "India",
+      role: "Technician",
+      status: "Suspended",
+      joined: "2024-02-28",
     },
   ]);
-
+  
   const [newUser, setNewUser] = useState({
     name: "",
     email: "",
@@ -67,7 +80,7 @@ const UserManagement = () => {
     country: "India",
     role: "Customer",
     status: "Active",
-    joined: new Date().toISOString().split('T')[0]
+    joined: new Date().toISOString().slice(0, 10),
   });
 
   const filteredUsers = users.filter(user => 
@@ -80,9 +93,7 @@ const UserManagement = () => {
     if (user.status === "Active") {
       setDeactivatingUser(user);
     } else {
-      setUsers(users.map(u => 
-        u.id === userId ? {...u, status: "Active"} : u
-      ));
+      setActivatingUser(user);
     }
   };
 
@@ -95,8 +106,21 @@ const UserManagement = () => {
     }
   };
 
+  const confirmActivation = () => {
+    if (activatingUser) {
+      setUsers(users.map(u => 
+        u.id === activatingUser.id ? {...u, status: "Active"} : u
+      ));
+      setActivatingUser(null);
+    }
+  };
+
   const cancelDeactivation = () => {
     setDeactivatingUser(null);
+  };
+
+  const cancelActivation = () => {
+    setActivatingUser(null);
   };
 
   const handleAddUser = () => {
@@ -115,7 +139,7 @@ const UserManagement = () => {
       country: "India",
       role: "Customer",
       status: "Active",
-      joined: new Date().toISOString().split('T')[0]
+      joined: new Date().toISOString().slice(0, 10),
     });
   };
 
@@ -175,11 +199,13 @@ const UserManagement = () => {
       <table className="user-table">
         <thead>
           <tr>
-            <th>User</th>
+            <th>Name</th>
             <th>Email</th>
+            <th>Phone</th>
+            <th>Location</th>
             <th>Role</th>
             <th>Status</th>
-            <th>Joined</th>
+            <th>Joined On</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -187,12 +213,17 @@ const UserManagement = () => {
           {filteredUsers.map((user) => (
             <tr key={user.id}>
               <td>
-                <div className="user-info">
-                  <strong>{user.name}</strong>
-                  <p>{user.phone} • {user.city}, {user.state}</p>
-                </div>
+                <div className="user-name">{user.name}</div>
               </td>
-              <td>{user.email}</td>
+              <td>
+                <div className="user-email">{user.email}</div>
+              </td>
+              <td>
+                <div className="user-phone">{user.phone}</div>
+              </td>
+              <td>
+                <div className="user-location">{user.city}, {user.state}</div>
+              </td>
               <td>
                 <span className={`role-badge ${user.role.toLowerCase()}`}>
                   {user.role}
@@ -203,7 +234,9 @@ const UserManagement = () => {
                   {user.status}
                 </span>
               </td>
-              <td>{user.joined}</td>
+              <td>
+                <div className="user-joined">{user.joined}</div>
+              </td>
               <td className="actions">
                 <label className="toggle-switch">
                   <input
@@ -238,6 +271,24 @@ const UserManagement = () => {
               </button>
               <button className="confirm-btn" onClick={confirmDeactivation}>
                 Yes, Deactivate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Activation Confirmation Popup */}
+      {activatingUser && (
+        <div className="popup-overlay">
+          <div className="confirmation-popup">
+            <h3>Confirm Activation</h3>
+            <p>Are you sure you want to activate {activatingUser.name}?</p>
+            <div className="popup-buttons">
+              <button className="cancel-btn" onClick={cancelActivation}>
+                Cancel
+              </button>
+              <button className="confirm-btn" onClick={confirmActivation}>
+                Yes, Activate
               </button>
             </div>
           </div>

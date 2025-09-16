@@ -49,16 +49,17 @@
   gap: 16px;
 }
 
-/* .service-card {
+/* Updated service-card styling for a single-line layout */
+.service-card {
   background-color: white;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  display: flex;
-  align-items: flex-start;
+  /* padding: 20px; */
+  display: flex; /* Use flexbox for horizontal layout */
+  align-items: center; /* Vertically align items */
   gap: 20px;
   border: 1px solid #e0e0e0;
-} */
+}
 
 .service-image {
   flex-shrink: 0;
@@ -94,7 +95,7 @@
   flex: 1;
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center; /* Align items to the center */
   gap: 20px;
 }
 
@@ -119,9 +120,9 @@
 
 .service-actions {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 15px;
+  flex-direction: row; /* Change to row for horizontal layout */
+  align-items: center; /* Vertically align action buttons */
+  gap: 20px; /* Adjust gap for better spacing */
   flex-shrink: 0;
 }
 
@@ -195,8 +196,8 @@ input:checked + .slider:before {
 }
 
 .action-btn {
-  width: 40px;
-  height: 40px;
+  width: 50px; /* Increased size */
+  height: 50px; /* Increased size */
   border: 1px solid #ddd;
   border-radius: 6px;
   cursor: pointer;
@@ -222,13 +223,14 @@ input:checked + .slider:before {
 }
 
 .delete-btn {
-  color: #666;
+  color: #666; /* Match the edit icon color */
 }
 
 .delete-btn:hover {
-  color: #f44336;
-  border-color: #f44336;
+  color: #333; /* A neutral color on hover */
+  border-color: #333; /* A neutral border on hover */
 }
+
 
 /* Modal Styles */
 .modal-overlay {
@@ -382,16 +384,7 @@ input:checked + .slider:before {
   border-color: #555;
 }
 
-.delete-btn {
-  border-color: #d32f2f;
-  background-color: #d32f2f;
-  color: white;
-}
 
-.delete-btn:hover {
-  background-color: #c62828;
-  border-color: #c62828;
-}
 
 @media (max-width: 768px) {
   .service-management {

@@ -9,7 +9,7 @@ import {
 } from "react-icons/ai";
 import { FaCity, FaMapMarkerAlt, FaFileAlt } from "react-icons/fa";
 import "../styles/BecomeTechnician.css";
-import Header from "./Header"; // Assuming Header.jsx is in the same directory
+import Header from "./Header";
 
 const BecomeTechnician = () => {
   const navigate = useNavigate();
@@ -25,25 +25,61 @@ const BecomeTechnician = () => {
     state: "",
     zipcode: "",
     yearsOfExperience: "",
-    serviceType: "",
     serviceCategories: [],
     description: "",
     aadharNumber: "",
-    licenseNumber: "",
     idFile: null,
-    policeCertificateFile: null,
     declaration: false,
   });
   const [errors, setErrors] = useState({});
 
-  const cities = ["New Delhi", "Mumbai", "Bangalore", "Kolkata", "Chennai", "Hyderabad", "Pune"];
-  const serviceTypes = ["Home Maintenance", "Electronics Repair", "Automotive", "Beauty & Wellness"];
-  const serviceCategoriesMap = {
-    "Home Maintenance": ["Plumbing", "Electrical", "Carpentry", "Painting", "Appliance Repair"],
-    "Electronics Repair": ["Mobile Repair", "Laptop Repair", "TV Repair", "Console Repair"],
-    "Automotive": ["Car Wash", "Tire Repair", "Engine Diagnostics"],
-    "Beauty & Wellness": ["Hair Stylist", "Makeup Artist", "Spa & Massage"],
+  const statesAndCities = {
+    "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Nellore"],
+    "Arunachal Pradesh": ["Itanagar"],
+    "Assam": ["Guwahati", "Dibrugarh"],
+    "Bihar": ["Patna", "Gaya"],
+    "Chhattisgarh": ["Raipur", "Bilaspur"],
+    "Goa": ["Panaji", "Margao"],
+    "Gujarat": ["Ahmedabad", "Surat", "Vadodara"],
+    "Haryana": ["Faridabad", "Gurgaon"],
+    "Himachal Pradesh": ["Shimla"],
+    "Jharkhand": ["Ranchi", "Jamshedpur"],
+    "Karnataka": ["Bangalore", "Mysore", "Hubli"],
+    "Kerala": ["Thiruvananthapuram", "Kochi", "Kozhikode"],
+    "Madhya Pradesh": ["Bhopal", "Indore", "Jabalpur"],
+    "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Nashik"],
+    "Manipur": ["Imphal"],
+    "Meghalaya": ["Shillong"],
+    "Mizoram": ["Aizawl"],
+    "Nagaland": ["Kohima"],
+    "Odisha": ["Bhubaneswar", "Cuttack"],
+    "Punjab": ["Ludhiana", "Amritsar", "Jalandhar"],
+    "Rajasthan": ["Jaipur", "Jodhpur", "Udaipur"],
+    "Sikkim": ["Gangtok"],
+    "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai"],
+    "Telangana": ["Hyderabad", "Warangal"],
+    "Tripura": ["Agartala"],
+    "Uttar Pradesh": ["Lucknow", "Kanpur", "Varanasi"],
+    "Uttarakhand": ["Dehradun", "Haridwar"],
+    "West Bengal": ["Kolkata", "Howrah"],
+    "Delhi": ["New Delhi"],
   };
+
+  const allServices = [
+    "Plumber",
+    "Electrician",
+    "Ac Mechanic",
+    "Carpenter",
+    "Packers & Movers",
+    "House cleaners",
+    "laundry",
+    "Construction cleaners",
+    "surveyors",
+    "camera fiitings",
+    "welders",
+    "private investigators",
+    "Body Massage",
+  ];
 
   const handleBack = () => {
     if (step > 1) {
@@ -77,27 +113,79 @@ const BecomeTechnician = () => {
   const validateStep = () => {
     const newErrors = {};
     if (step === 1) {
-      if (!formData.firstName) newErrors.firstName = "First name is required.";
-      if (!formData.lastName) newErrors.lastName = "Last name is required.";
-      if (!formData.email) newErrors.email = "Email address is required.";
-      if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Invalid email address.";
-      if (!formData.phoneNumber) newErrors.phoneNumber = "Phone number is required.";
-      if (!/^\d{10}$/.test(formData.phoneNumber)) newErrors.phoneNumber = "Phone number must be 10 digits.";
-      if (!formData.dob) newErrors.dob = "Date of birth is required.";
+      // First Name validation
+      if (!formData.firstName) {
+        newErrors.firstName = "First name is required.";
+      } else if (!/^[A-Za-z]+$/.test(formData.firstName)) {
+        newErrors.firstName = "First name must contain only alphabets.";
+      } else if (formData.firstName.length > 15) {
+        newErrors.firstName = "First name cannot exceed 15 characters.";
+      }
+      // Last Name validation
+      if (!formData.lastName) {
+        newErrors.lastName = "Last name is required.";
+      } else if (!/^[A-Za-z]+$/.test(formData.lastName)) {
+        newErrors.lastName = "Last name must contain only alphabets.";
+      } else if (formData.lastName.length > 15) {
+        newErrors.lastName = "Last name cannot exceed 15 characters.";
+      }
+      // Email validation
+      if (!formData.email) {
+        newErrors.email = "Email address is required.";
+      } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
+        newErrors.email = "Invalid email address.";
+      }
+      // Phone Number validation
+      if (!formData.phoneNumber) {
+        newErrors.phoneNumber = "Phone number is required.";
+      } else if (!/^\d{10}$/.test(formData.phoneNumber)) {
+        newErrors.phoneNumber = "Phone number must be exactly 10 digits.";
+      }
+      // DOB validation (min 18 years old)
+      if (!formData.dob) {
+        newErrors.dob = "Date of birth is required.";
+      } else {
+        const today = new Date();
+        const birthDate = new Date(formData.dob);
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+        if (age < 18) {
+          newErrors.dob = "You must be at least 18 years old.";
+        }
+      }
+      // Address validation
       if (!formData.address) newErrors.address = "Address is required.";
+      // City validation
       if (!formData.city) newErrors.city = "City is required.";
+      // State validation
       if (!formData.state) newErrors.state = "State is required.";
-      if (!formData.zipcode) newErrors.zipcode = "ZIP code is required.";
+      // ZIP Code validation
+      if (!formData.zipcode) {
+        newErrors.zipcode = "ZIP code is required.";
+      } else if (!/^\d{6}$/.test(formData.zipcode)) {
+        newErrors.zipcode = "ZIP code must be exactly 6 digits.";
+      }
     } else if (step === 2) {
-      if (!formData.aadharNumber) newErrors.aadharNumber = "Aadhar Number is required.";
-      if (!/^\d{12}$/.test(formData.aadharNumber)) newErrors.aadharNumber = "Aadhar Number must be 12 digits.";
-      if (!formData.licenseNumber) newErrors.licenseNumber = "License number is required.";
+      // Aadhar Number validation
+      if (!formData.aadharNumber) {
+        newErrors.aadharNumber = "Aadhar Number is required.";
+      } else if (!/^\d{12}$/.test(formData.aadharNumber)) {
+        newErrors.aadharNumber = "Aadhar Number must be exactly 12 digits.";
+      }
+      // File upload validation
       if (!formData.idFile) newErrors.idFile = "ID Proof is required.";
-      if (!formData.policeCertificateFile) newErrors.policeCertificateFile = "Police Verification Certificate is required.";
     } else if (step === 3) {
-      if (!formData.yearsOfExperience) newErrors.yearsOfExperience = "Years of experience is required.";
-      if (!formData.serviceType) newErrors.serviceType = "Service type is required.";
-      if (formData.serviceCategories.length === 0) newErrors.serviceCategories = "At least one service category is required.";
+      // Years of Experience validation
+      if (!formData.yearsOfExperience) {
+        newErrors.yearsOfExperience = "Years of experience is required.";
+      } else if (parseInt(formData.yearsOfExperience, 10) < 0) {
+        newErrors.yearsOfExperience = "Experience cannot be negative.";
+      }
+      // Service Categories validation
+      if (formData.serviceCategories.length === 0) newErrors.serviceCategories = "At least one service is required.";
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -115,8 +203,11 @@ const BecomeTechnician = () => {
       return;
     }
     console.log("Registration Complete!", formData);
+    // Update user role to 'technician' on successful registration
+    localStorage.setItem("userRole", "technician");
     alert("Registration complete! Redirecting to homepage.");
     navigate("/");
+    window.location.reload(); // Force a reload to update the header
   };
 
   const renderStep = () => {
@@ -169,15 +260,19 @@ const BecomeTechnician = () => {
                   </div>
                   <div>
                     <label htmlFor="phoneNumber">Phone Number</label>
-                    <input
-                      type="text"
-                      id="phoneNumber"
-                      name="phoneNumber"
-                      placeholder="Enter your phone number"
-                      value={formData.phoneNumber}
-                      onChange={handleInputChange}
-                      className={errors.phoneNumber ? "input-error" : ""}
-                    />
+                    <div className="phone-input-group">
+                      <span className="country-code">+91</span>
+                      <input
+                        type="tel"
+                        id="phoneNumber"
+                        name="phoneNumber"
+                        placeholder="Enter 10-digit number"
+                        value={formData.phoneNumber}
+                        onChange={handleInputChange}
+                        maxLength="10"
+                        className={errors.phoneNumber ? "input-error" : ""}
+                      />
+                    </div>
                     {errors.phoneNumber && <p className="error-message">{errors.phoneNumber}</p>}
                   </div>
                   <div className="full-width">
@@ -186,7 +281,6 @@ const BecomeTechnician = () => {
                       type="date"
                       id="dob"
                       name="dob"
-                      placeholder="dd-mm-yyyy"
                       value={formData.dob}
                       onChange={handleInputChange}
                       className={errors.dob ? "input-error" : ""}
@@ -207,30 +301,42 @@ const BecomeTechnician = () => {
                     {errors.address && <p className="error-message">{errors.address}</p>}
                   </div>
                   <div>
-                    <label htmlFor="city">City</label>
-                    <input
-                      type="text"
-                      id="city"
-                      name="city"
-                      placeholder="Enter your city"
-                      value={formData.city}
-                      onChange={handleInputChange}
-                      className={errors.city ? "input-error" : ""}
-                    />
-                    {errors.city && <p className="error-message">{errors.city}</p>}
-                  </div>
-                  <div>
                     <label htmlFor="state">State</label>
-                    <input
-                      type="text"
+                    <select
                       id="state"
                       name="state"
-                      placeholder="Enter your state"
                       value={formData.state}
                       onChange={handleInputChange}
                       className={errors.state ? "input-error" : ""}
-                    />
+                    >
+                      <option value="">Select a state</option>
+                      {Object.keys(statesAndCities).sort().map((stateName) => (
+                        <option key={stateName} value={stateName}>
+                          {stateName}
+                        </option>
+                      ))}
+                    </select>
                     {errors.state && <p className="error-message">{errors.state}</p>}
+                  </div>
+                  <div>
+                    <label htmlFor="city">City</label>
+                    <select
+                      id="city"
+                      name="city"
+                      value={formData.city}
+                      onChange={handleInputChange}
+                      className={errors.city ? "input-error" : ""}
+                      disabled={!formData.state}
+                    >
+                      <option value="">Select a city</option>
+                      {formData.state &&
+                        statesAndCities[formData.state].sort().map((cityName) => (
+                          <option key={cityName} value={cityName}>
+                            {cityName}
+                          </option>
+                        ))}
+                    </select>
+                    {errors.city && <p className="error-message">{errors.city}</p>}
                   </div>
                   <div>
                     <label htmlFor="zipcode">ZIP Code</label>
@@ -241,6 +347,7 @@ const BecomeTechnician = () => {
                       placeholder="Enter your ZIP code"
                       value={formData.zipcode}
                       onChange={handleInputChange}
+                      maxLength="6"
                       className={errors.zipcode ? "input-error" : ""}
                     />
                     {errors.zipcode && <p className="error-message">{errors.zipcode}</p>}
@@ -257,7 +364,7 @@ const BecomeTechnician = () => {
               <h3 className="section-title">Identity Verification</h3>
               <form className="step-form">
                 <div className="form-grid-three">
-                  <div>
+                  <div className="full-width">
                     <label htmlFor="aadharNumber">Aadhar Number</label>
                     <input
                       type="text"
@@ -266,25 +373,13 @@ const BecomeTechnician = () => {
                       placeholder="Enter your Aadhar number"
                       value={formData.aadharNumber}
                       onChange={handleInputChange}
+                      maxLength="12"
                       className={errors.aadharNumber ? "input-error" : ""}
                     />
                     {errors.aadharNumber && <p className="error-message">{errors.aadharNumber}</p>}
                   </div>
-                  <div>
-                    <label htmlFor="licenseNumber">License Number</label>
-                    <input
-                      type="text"
-                      id="licenseNumber"
-                      name="licenseNumber"
-                      placeholder="Enter your license number"
-                      value={formData.licenseNumber}
-                      onChange={handleInputChange}
-                      className={errors.licenseNumber ? "input-error" : ""}
-                    />
-                    {errors.licenseNumber && <p className="error-message">{errors.licenseNumber}</p>}
-                  </div>
                 </div>
-                <div className="file-upload-section">
+                <div className="file-upload-section single-upload">
                   <div className="file-upload-container">
                     <label htmlFor="idFile">Upload ID Proof</label>
                     <input
@@ -295,17 +390,6 @@ const BecomeTechnician = () => {
                       className={errors.idFile ? "input-error" : ""}
                     />
                     {errors.idFile && <p className="error-message">{errors.idFile}</p>}
-                  </div>
-                  <div className="file-upload-container">
-                    <label htmlFor="policeCertificateFile">Upload Police Verification Certificate</label>
-                    <input
-                      type="file"
-                      id="policeCertificateFile"
-                      name="policeCertificateFile"
-                      onChange={handleInputChange}
-                      className={errors.policeCertificateFile ? "input-error" : ""}
-                    />
-                    {errors.policeCertificateFile && <p className="error-message">{errors.policeCertificateFile}</p>}
                   </div>
                 </div>
               </form>
@@ -319,7 +403,7 @@ const BecomeTechnician = () => {
               <h3 className="section-title">Professional Details</h3>
               <form className="step-form">
                 <div className="form-grid-three">
-                  <div>
+                  <div className="full-width">
                     <label htmlFor="yearsOfExperience">Years of Experience</label>
                     <input
                       type="number"
@@ -328,44 +412,28 @@ const BecomeTechnician = () => {
                       placeholder="Enter years of experience"
                       value={formData.yearsOfExperience}
                       onChange={handleInputChange}
+                      min="0"
                       className={errors.yearsOfExperience ? "input-error" : ""}
                     />
                     {errors.yearsOfExperience && <p className="error-message">{errors.yearsOfExperience}</p>}
                   </div>
-                  <div className="full-width">
-                    <label htmlFor="serviceType">Service Type</label>
-                    <select
-                      id="serviceType"
-                      name="serviceType"
-                      value={formData.serviceType}
-                      onChange={handleInputChange}
-                      className={errors.serviceType ? "input-error" : ""}
-                    >
-                      <option value="">Select a service type</option>
-                      {serviceTypes.map((type) => (
-                        <option key={type} value={type}>
-                          {type}
-                        </option>
-                      ))}
-                    </select>
-                    {errors.serviceType && <p className="error-message">{errors.serviceType}</p>}
-                  </div>
                 </div>
-                <label>Service Categories</label>
-                <div className="checkbox-group">
-                  {formData.serviceType &&
-                    serviceCategoriesMap[formData.serviceType].map((category) => (
-                      <label key={category} className="checkbox-label">
+                <label>Services you provide</label>
+                <div className="service-selection-grid">
+                  {allServices.map((service) => (
+                    <div className="service-checkbox" key={service}>
+                      <label className="checkbox-label">
                         <input
                           type="checkbox"
                           name="serviceCategories"
-                          value={category}
-                          checked={formData.serviceCategories.includes(category)}
+                          value={service}
+                          checked={formData.serviceCategories.includes(service)}
                           onChange={handleInputChange}
                         />
-                        {category}
+                        {service}
                       </label>
-                    ))}
+                    </div>
+                  ))}
                 </div>
                 {errors.serviceCategories && <p className="error-message">{errors.serviceCategories}</p>}
                 <label htmlFor="description">Description about your expertise</label>
@@ -398,7 +466,7 @@ const BecomeTechnician = () => {
                   </div>
                   <div className="summary-item">
                     <p className="summary-label">Phone Number:</p>
-                    <p className="summary-value">{formData.phoneNumber}</p>
+                    <p className="summary-value">+91 {formData.phoneNumber}</p>
                   </div>
                   <div className="summary-item">
                     <p className="summary-label">Address:</p>
@@ -416,11 +484,7 @@ const BecomeTechnician = () => {
                     <p className="summary-value">{formData.yearsOfExperience}</p>
                   </div>
                   <div className="summary-item">
-                    <p className="summary-label">Service Type:</p>
-                    <p className="summary-value">{formData.serviceType}</p>
-                  </div>
-                  <div className="summary-item">
-                    <p className="summary-label">Service Categories:</p>
+                    <p className="summary-label">Services:</p>
                     <p className="summary-value">{formData.serviceCategories.join(", ")}</p>
                   </div>
                   <div className="summary-item">
@@ -435,16 +499,8 @@ const BecomeTechnician = () => {
                     <p className="summary-value">{formData.aadharNumber}</p>
                   </div>
                   <div className="summary-item">
-                    <p className="summary-label">License Number:</p>
-                    <p className="summary-value">{formData.licenseNumber}</p>
-                  </div>
-                  <div className="summary-item">
                     <p className="summary-label">ID Proof:</p>
                     <p className="summary-value">{formData.idFile?.name || "Not uploaded"}</p>
-                  </div>
-                  <div className="summary-item">
-                    <p className="summary-label">Police Certificate:</p>
-                    <p className="summary-value">{formData.policeCertificateFile?.name || "Not uploaded"}</p>
                   </div>
                 </div>
               </div>

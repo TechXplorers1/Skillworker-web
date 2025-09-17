@@ -137,27 +137,33 @@ const Homepage = () => {
           <h2 className="section-title">Explore our Services</h2>
           
           <div className="services-grid">
-            {displayedServices.map((service, index) => (
-              <div className="service-card" key={index}>
-                {service.image ? (
-                  <img
-                    src={service.image}
-                    alt={service.title}
-                    className="card-image"
-                  />
-                ) : (
-                  <div className="card-image-placeholder">
-                    {/* Your image here */}
+            {displayedServices.length > 0 ? (
+              displayedServices.map((service, index) => (
+                <div className="service-card" key={index}>
+                  {service.image ? (
+                    <img
+                      src={service.image}
+                      alt={service.title}
+                      className="card-image"
+                    />
+                  ) : (
+                    <div className="card-image-placeholder">
+                      {/* Your image here */}
+                    </div>
+                  )}
+                  <div className="card-content">
+                    <h3 className="card-title">{service.title}</h3>
+                    <p className="card-description">{service.description}</p>
+                    <div className="card-info"></div>
+                    <Link to={`/services/${service.link}`} className="btn">View Technicians</Link>
                   </div>
-                )}
-                <div className="card-content">
-                  <h3 className="card-title">{service.title}</h3>
-                  <p className="card-description">{service.description}</p>
-                  <div className="card-info"></div>
-                  <Link to={`/services/${service.link}`} className="btn">View Technicians</Link>
                 </div>
+              ))
+            ) : (
+              <div className="no-results-found">
+                <p>No results found for your search.</p>
               </div>
-            ))}
+            )}
           </div>
           
           <div className="radio-input-container">

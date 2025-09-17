@@ -4,15 +4,16 @@ import "../styles/Profile.css";
 
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [userData, setUserData] = useState({
     fullName: "Mike Technician",
     bio: "Professional electrician with over 8 years of experience in residential and commercial electrical work. Specialized in smart home installations and energy-efficient solutions.",
-    email: "alex.trompson@email.com",
-    phone: "+234 (0) 123 456 7890",
-    location: "Abuja, Nigeria",
+    email: "support@skillworkers.com",
+    phone: "+91 8852888444",
+    location: "Anantapur , India",
     experience: "8+ Years",
     certification: "Licensed Electrician",
-    hourlyRate: "$45",
+    hourlyRate: "45",
     availability: "Available",
     skills: ["Biblical Wiring", "Great Installation", "Smart Home Setup", "Troubleshooting", "Energy Efficiency"]
   });
@@ -42,6 +43,8 @@ const Profile = () => {
   const handleSave = () => {
     localStorage.setItem("userProfileData", JSON.stringify(userData));
     setIsEditing(false);
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 3000);
   };
 
   const handleAddSkill = () => {
@@ -66,10 +69,24 @@ const Profile = () => {
   return (
     <div className="profile-container">
       <Header />
+      
+      {/* Success Notification */}
+      {showSuccess && (
+        <div className="success-notification">
+          <div className="success-icon">
+            <svg className="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+              <circle className="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
+              <path className="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+            </svg>
+          </div>
+          <span>Profile saved successfully!</span>
+        </div>
+      )}
+      
       <div className="profile-content">
         <div className="profile-header">
           <h1>Profile Management</h1>
-          <button className="edit-profile-btn" onClick={isEditing ? handleSave : handleEditToggle}>
+          <button className={`edit-profile-btn ${isEditing ? 'save-mode' : ''}`} onClick={isEditing ? handleSave : handleEditToggle}>
             {isEditing ? "Save Profile" : "Edit Profile"}
           </button>
         </div>
@@ -201,7 +218,7 @@ const Profile = () => {
                   className="edit-input rate-input"
                 />
               ) : (
-                <span className="detail-value">{userData.hourlyRate}</span>
+                <span className="detail-value">${userData.hourlyRate}/hr</span>
               )}
             </div>
             
@@ -219,7 +236,9 @@ const Profile = () => {
                   <option value="Away">Away</option>
                 </select>
               ) : (
-                <span className="detail-value">{userData.availability}</span>
+                <span className={`availability-tag ${userData.availability.toLowerCase()}`}>
+                  {userData.availability}
+                </span>
               )}
             </div>
           </div>

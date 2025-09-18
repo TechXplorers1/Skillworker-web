@@ -5,6 +5,7 @@ import "../styles/Profile.css";
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [userRole, setUserRole] = useState("user"); // Default to user
   const [userData, setUserData] = useState({
     fullName: "Mike Technician",
     bio: "Professional electrician with over 8 years of experience in residential and commercial electrical work. Specialized in smart home installations and energy-efficient solutions.",
@@ -26,6 +27,11 @@ const Profile = () => {
     if (storedUserData) {
       setUserData(JSON.parse(storedUserData));
     }
+    
+    // Check user role - in a real app, this would come from authentication
+    // For demo purposes, we'll check localStorage or use a default
+    const role = localStorage.getItem("userRole") || "user";
+    setUserRole(role);
   }, []);
 
   const handleEditToggle = () => {
@@ -65,6 +71,8 @@ const Profile = () => {
       skills: updatedSkills
     });
   };
+
+  const isTechnician = userRole === "technician";
 
   return (
     <div className="profile-container">
@@ -171,115 +179,125 @@ const Profile = () => {
           </div>
         </div>
 
-        <div className="section-divider"></div>
+        {/* Only show Professional Details for technicians */}
+        {isTechnician && (
+          <>
+            <div className="section-divider"></div>
 
-        <div className="profile-section">
-          <h2 className="section-title">Professional Details</h2>
-          
-          <div className="details-grid">
-            <div className="detail-item">
-              <span className="detail-label">Experience</span>
-              {isEditing ? (
-                <input
-                  type="text"
-                  name="experience"
-                  value={userData.experience}
-                  onChange={handleInputChange}
-                  className="edit-input experience-input"
-                />
-              ) : (
-                <span className="detail-value">{userData.experience}</span>
-              )}
-            </div>
-            
-            <div className="detail-item">
-              <span className="detail-label">Certification</span>
-              {isEditing ? (
-                <input
-                  type="text"
-                  name="certification"
-                  value={userData.certification}
-                  onChange={handleInputChange}
-                  className="edit-input certification-input"
-                />
-              ) : (
-                <span className="detail-value">{userData.certification}</span>
-              )}
-            </div>
-            
-            <div className="detail-item">
-              <span className="detail-label">Hourly Rate</span>
-              {isEditing ? (
-                <input
-                  type="text"
-                  name="hourlyRate"
-                  value={userData.hourlyRate}
-                  onChange={handleInputChange}
-                  className="edit-input rate-input"
-                />
-              ) : (
-                <span className="detail-value">${userData.hourlyRate}/hr</span>
-              )}
-            </div>
-            
-            <div className="detail-item">
-              <span className="detail-label">Availability</span>
-              {isEditing ? (
-                <select
-                  name="availability"
-                  value={userData.availability}
-                  onChange={handleInputChange}
-                  className="edit-select availability-select"
-                >
-                  <option value="Available">Available</option>
-                  <option value="Busy">Busy</option>
-                  <option value="Away">Away</option>
-                </select>
-              ) : (
-                <span className={`availability-tag ${userData.availability.toLowerCase()}`}>
-                  {userData.availability}
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="section-divider"></div>
-
-        <div className="profile-section">
-          <h2 className="section-title">Skills & Specializations</h2>
-          
-          <div className="skills-grid">
-            {userData.skills.map((skill, index) => (
-              <div key={index} className="skill-tag">
-                <span className="skill-text">{skill}</span>
-                {isEditing && (
-                  <button 
-                    className="remove-skill-btn"
-                    onClick={() => handleRemoveSkill(index)}
-                  >
-                    ×
-                  </button>
-                )}
+            <div className="profile-section">
+              <h2 className="section-title">Professional Details</h2>
+              
+              <div className="details-grid">
+                <div className="detail-item">
+                  <span className="detail-label">Experience</span>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="experience"
+                      value={userData.experience}
+                      onChange={handleInputChange}
+                      className="edit-input experience-input"
+                    />
+                  ) : (
+                    <span className="detail-value">{userData.experience}</span>
+                  )}
+                </div>
+                
+                <div className="detail-item">
+                  <span className="detail-label">Certification</span>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="certification"
+                      value={userData.certification}
+                      onChange={handleInputChange}
+                      className="edit-input certification-input"
+                    />
+                  ) : (
+                    <span className="detail-value">{userData.certification}</span>
+                  )}
+                </div>
+                
+                <div className="detail-item">
+                  <span className="detail-label">Hourly Rate</span>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="hourlyRate"
+                      value={userData.hourlyRate}
+                      onChange={handleInputChange}
+                      className="edit-input rate-input"
+                    />
+                  ) : (
+                    <span className="detail-value">${userData.hourlyRate}/hr</span>
+                  )}
+                </div>
+                
+                <div className="detail-item">
+                  <span className="detail-label">Availability</span>
+                  {isEditing ? (
+                    <select
+                      name="availability"
+                      value={userData.availability}
+                      onChange={handleInputChange}
+                      className="edit-select availability-select"
+                    >
+                      <option value="Available">Available</option>
+                      <option value="Busy">Busy</option>
+                      <option value="Away">Away</option>
+                    </select>
+                  ) : (
+                    <span className={`availability-tag ${userData.availability.toLowerCase()}`}>
+                      {userData.availability}
+                    </span>
+                  )}
+                </div>
               </div>
-            ))}
-          </div>
-          
-          {isEditing && (
-            <div className="add-skill-container">
-              <input
-                type="text"
-                value={newSkill}
-                onChange={(e) => setNewSkill(e.target.value)}
-                placeholder="Add new skill"
-                className="skill-input"
-              />
-              <button className="add-skill-btn" onClick={handleAddSkill}>
-                Add Skill
-              </button>
             </div>
-          )}
-        </div>
+          </>
+        )}
+
+        {/* Only show Skills & Specializations for technicians */}
+        {isTechnician && (
+          <>
+            <div className="section-divider"></div>
+
+            <div className="profile-section">
+              <h2 className="section-title">Skills & Specializations</h2>
+              
+              <div className="skills-grid">
+                {userData.skills.map((skill, index) => (
+                  <div key={index} className="skill-tag">
+                    <span className="skill-text">{skill}</span>
+                    {isEditing && (
+                      <button 
+                        className="remove-skill-btn"
+                        onClick={() => handleRemoveSkill(index)}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              
+              {isEditing && (
+                <div className="add-skill-container">
+                  <input
+                    type="text"
+                    value={newSkill}
+                    onChange={(e) => setNewSkill(e.target.value)}
+                    placeholder="Add new skill"
+                    className="skill-input"
+                  />
+                  <button className="add-skill-btn" onClick={handleAddSkill}>
+                    Add Skill
+                  </button>
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

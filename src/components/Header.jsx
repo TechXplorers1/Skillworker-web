@@ -92,14 +92,15 @@ const Header = () => {
         <h2 className="header-logo">SkillWorkers</h2>
       </div>
       
-      {isLoggedIn && userRole !== "technician" && userRole !== "admin" ? (
+      {/* Show Become a Technician button only for logged-in technicians */}
+      {isLoggedIn && userRole === "technician" && (
         <div className="header-center">
           <button className="become-technician-btn" onClick={handleBecomeTechnician}>
             <MdOutlineHandyman className="technician-icon" />
             Become a Technician
           </button>
         </div>
-      ) : null}
+      )}
       
       <div className="header-right">
         {isLoggedIn ? (
@@ -112,7 +113,7 @@ const Header = () => {
             {userRole === "technician" && (
               <button className="icon-btn" onClick={handleServiceRequests} title="Service Requests">
                 <MdOutlineWorkOutline className="header-icon" />
-                <span className="icon-label">Requests</span>
+                <span className="icon-label">Service Requests</span>
               </button>
             )}
             

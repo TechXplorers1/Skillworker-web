@@ -15,7 +15,7 @@
 
 .message-container h2 {
   width: 100%;
-  max-width: 800px;
+  max-width: 1200px;
   margin-bottom: 20px;
   font-size: 22px;
   font-weight: 600;
@@ -23,7 +23,7 @@
 
 .message-card {
   width: 100%;
-  max-width: 800px;
+  max-width: 1200px;
   background: #fff;
   border-radius: 12px;
   padding: 15px;

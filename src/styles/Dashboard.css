@@ -96,24 +96,12 @@ body {
   transform: translateX(300%);
 }
 
-/* #tab-Reports:checked ~ .glass-glider {
-  transform: translateX(400%);
-}
-
-#tab-Notifications:checked ~ .glass-glider {
-  transform: translateX(500%);
-}
-
-#tab-Support:checked ~ .glass-glider {
-  transform: translateX(600%);
-} */
-
 #tab-Settings:checked ~ .glass-glider {
   transform: translateX(400%);
 }
 
 .content {
-  max-width: 1100px;
+  max-width: 90%;
   margin: 0 auto;
   background: white;
   border-radius: 10px;

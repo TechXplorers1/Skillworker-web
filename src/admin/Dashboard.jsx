@@ -11,8 +11,6 @@ import { MdSettings, MdAnalytics, MdNotifications, MdSupport } from "react-icons
 
 import "../styles/Dashboard.css";
 
-
-
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("Users");
 
@@ -39,9 +37,6 @@ const Dashboard = () => {
     { id: "Bookings", icon: <FaCalendarCheck /> },
     { id: "Services", icon: <FaConciergeBell /> },
     { id: "Settings", icon: <MdSettings /> },
-    // { id: "Reports", icon: <MdAnalytics /> },
-    // { id: "Notifications", icon: <MdNotifications /> },
-    // { id: "Support", icon: <MdSupport /> },
   ];
 
   return (

@@ -563,7 +563,7 @@ const BecomeTechnician = () => {
             )}
             {step === 4 && (
               <button className="complete-btn" onClick={handleCompleteRegistration}>
-                Complete Registration
+                Submit Registration
               </button>
             )}
           </div>

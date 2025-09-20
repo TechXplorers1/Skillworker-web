@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AiOutlineUser,
@@ -8,12 +8,16 @@ import {
   AiOutlineCalendar,
 } from "react-icons/ai";
 import { FaCity, FaMapMarkerAlt, FaFileAlt } from "react-icons/fa";
+import { ref, set } from "firebase/database";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth, database } from "../firebase";
 import "../styles/BecomeTechnician.css";
 import Header from "./Header";
 
 const BecomeTechnician = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
+  const [currentUserId, setCurrentUserId] = useState(null);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -32,6 +36,22 @@ const BecomeTechnician = () => {
     declaration: false,
   });
   const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setCurrentUserId(user.uid);
+        setFormData((prevData) => ({
+          ...prevData,
+          email: user.email || "",
+        }));
+      } else {
+        // Redirect to login if not authenticated
+        navigate("/login");
+      }
+    });
+    return () => unsubscribe();
+  }, [navigate]);
 
   const statesAndCities = {
     "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Nellore"],
@@ -197,17 +217,50 @@ const BecomeTechnician = () => {
     }
   };
 
-  const handleCompleteRegistration = () => {
+  const handleCompleteRegistration = async () => {
+    if (!currentUserId) {
+        alert("Authentication error. Please log in again.");
+        return;
+    }
     if (!formData.declaration) {
       setErrors({ ...errors, declaration: "You must agree to the declaration." });
       return;
     }
-    console.log("Registration Complete!", formData);
-    // Update user role to 'technician' on successful registration
-    localStorage.setItem("userRole", "technician");
-    alert("Registration complete! Redirecting to homepage.");
-    navigate("/");
-    window.location.reload(); // Force a reload to update the header
+
+    try {
+      // Data to be saved to the database
+      const technicianData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: `+91${formData.phoneNumber}`,
+        dob: formData.dob,
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        zipCode: formData.zipcode,
+        yearsOfExperience: formData.yearsOfExperience,
+        skills: formData.serviceCategories,
+        bio: formData.description,
+        role: "technician",
+        status: "pending_verification",
+        uid: currentUserId,
+        // In a real app, you would handle file uploads to storage here.
+        // For this example, we'll just store the Aadhar number.
+        aadharNumber: formData.aadharNumber,
+        // other fields can be added as needed
+      };
+
+      const userRef = ref(database, `users/${currentUserId}`);
+      await set(userRef, technicianData);
+
+      alert("Registration complete! Your application is pending review.");
+      navigate("/");
+      window.location.reload(); // Force a reload to update the header
+    } catch (error) {
+      console.error("Error submitting technician registration: ", error);
+      alert("An error occurred during registration. Please try again.");
+    }
   };
 
   const renderStep = () => {

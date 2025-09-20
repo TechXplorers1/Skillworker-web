@@ -1,132 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { ref, onValue, set, push, remove } from "firebase/database";
+import { database } from "../firebase";
 import '../styles/ServiceManagement.css';
 
-// Importing all service images
-import plumberImg from '../assets/plumber.png';
-import electricianImg from '../assets/electrician.png';
-import acMechanicImg from '../assets/ac mechanic.png';
-import carpenterImg from '../assets/carpenter.png';
-import packersImg from '../assets/packers&movers.png';
-import housecleanersImg from '../assets/House cleaners.png';
-import camerafittingsImg from '../assets/camera fittings.png';
-import privateinvestigatorsImg from '../assets/private investigators.png';
-import welderImg from '../assets/welder.png';
-import surveyorsImg from '../assets/surveyors.png';
-import developersImg from '../assets/SoftwareDeveloper.png';
-import bodymassageImg from '../assets/BodyMassage.png';
-import constructioncleanersImg from '../assets/Construction cleaners.png';
-import laundryImg from '../assets/laundry.png';
-import deliveryImg from '../assets/delivery.png';
-
 const ServiceManagement = () => {
-  const [services, setServices] = useState([
-    {
-      id: 1,
-      name: 'Plumber',
-      description: 'A plumber is a skilled professional who installs, repairs, and maintains water supply and drainage systems. They ensure safe water flow and proper wastewater disposal in homes and buildings.',
-      active: true,
-      image: plumberImg
-    },
-    {
-      id: 2,
-      name: 'Electrician',
-      description: 'An electrician is a skilled tradesperson who installs, maintains, and repairs electrical systems and wiring. They ensure the safe and efficient operation of power and lighting in residential, commercial, and industrial settings.',
-      active: true,
-      image: electricianImg
-    },
-    {
-      id: 3,
-      name: 'AC Mechanic',
-      description: 'An AC mechanic specializes in the installation, maintenance, and repair of air conditioning systems. They diagnose issues, fix components, and ensure optimal cooling performance for residential and commercial clients.',
-      active: true,
-      image: acMechanicImg
-    },
-    {
-      id: 4,
-      name: 'Carpenter',
-      description: 'A carpenter is a skilled tradesperson who works with wood to construct, install, and repair structures and fixtures.',
-      active: true,
-      image: carpenterImg
-    },
-    {
-      id: 5,
-      name: 'Packers & Movers',
-      description: 'Packers and movers are professionals who assist with relocating goods from one place to another. They handle packing, loading, transporting, unloading, and unpacking items securely.',
-      active: true,
-      image: packersImg
-    },
-    {
-      id: 6,
-      name: 'House cleaners',
-      description: 'House cleaners provide professional cleaning services for residential properties. They handle tasks such as dusting, vacuuming, mopping floors, and sanitizing bathrooms and kitchens to ensure a tidy living space.',
-      active: true,
-      image: housecleanersImg
-    },
-    {
-      id: 7,
-      name: 'Laundry',
-      description: 'Laundry services offer professional washing, drying, and folding of clothes and other textiles. They provide convenient solutions for individuals and businesses, often including pickup and delivery.',
-      active: true,
-      image: laundryImg
-    },
-    {
-      id: 8,
-      name: 'Construction cleaners',
-      description: 'Construction cleaners specialize in cleaning up job sites after construction or renovation. They remove debris, dust, and leftover materials to prepare the space for its new occupants.',
-      active: true,
-      image: constructioncleanersImg
-    },
-    {
-      id: 9,
-      name: 'Surveyors',
-      description: 'A surveyor measures and maps land to determine property boundaries and land features. They play a crucial role in construction, real estate, and land development projects.',
-      active: true,
-      image: surveyorsImg
-    },
-    {
-      id: 10,
-      name: 'Camera fittings',
-      description: 'Camera fitting services involve the professional installation and setup of security cameras and surveillance systems. They ensure optimal placement and functionality for monitoring homes or businesses.',
-      active: true,
-      image: camerafittingsImg
-    },
-    {
-      id: 11,
-      name: 'Welders',
-      description: 'A welder is a skilled professional who joins metal parts using heat and various techniques. They are essential in construction, manufacturing, and repair industries.',
-      active: true,
-      image: welderImg
-    },
-    {
-      id: 12,
-      name: 'Private investigators',
-      description: 'A private investigator is a professional who conducts surveillance and research to gather information for clients. They work on cases ranging from legal matters to personal inquiries.',
-      active: true,
-      image: privateinvestigatorsImg
-    },
-    {
-      id: 13,
-      name: 'Body Massage',
-      description: 'Body massage services provide therapeutic manipulation of the body\'s muscles and tissues to relieve stress, reduce pain, and promote relaxation and overall well-being.',
-      active: true,
-      image: bodymassageImg
-    },
-    {
-      id: 14,
-      name: 'Software Developer',
-      description: 'A software developer creates, tests, and maintains software applications and systems. They are skilled in various programming languages and frameworks to build functional and efficient digital solutions.',
-      active: true,
-      image: developersImg
-    },
-    {
-      id: 15,
-      name: 'Delivery',
-      description: 'Delivery services transport goods, packages, and documents from a point of origin to a specified destination. This can include food delivery, courier services, and logistics for businesses.',
-      active: true,
-      image: deliveryImg
-    }
-  ]);
-
+  const [services, setServices] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showStatusConfirm, setShowStatusConfirm] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState(null);
@@ -138,17 +16,37 @@ const ServiceManagement = () => {
     image: null
   });
 
+  useEffect(() => {
+    const servicesRef = ref(database, "services");
+    onValue(servicesRef, (snapshot) => {
+      const servicesData = snapshot.val();
+      if (servicesData) {
+        const fetchedServices = Object.keys(servicesData).map(key => ({
+          id: key,
+          ...servicesData[key]
+        }));
+        setServices(fetchedServices);
+      }
+    });
+  }, []);
+
   const confirmStatusChange = (service) => {
     setServiceToToggle(service);
     setShowStatusConfirm(true);
   };
 
   const toggleServiceStatus = () => {
-    setServices(services.map(service =>
-      service.id === serviceToToggle.id ? { ...service, active: !service.active } : service
-    ));
-    setShowStatusConfirm(false);
-    setServiceToToggle(null);
+    if (serviceToToggle) {
+      const serviceRef = ref(database, `services/${serviceToToggle.id}`);
+      set(serviceRef, { ...serviceToToggle, active: !serviceToToggle.active })
+        .then(() => {
+          setShowStatusConfirm(false);
+          setServiceToToggle(null);
+        })
+        .catch(error => {
+          console.error("Failed to toggle service status:", error);
+        });
+    }
   };
 
   const confirmDelete = (service) => {
@@ -157,9 +55,17 @@ const ServiceManagement = () => {
   };
 
   const deleteService = () => {
-    setServices(services.filter(service => service.id !== serviceToDelete.id));
-    setShowDeleteConfirm(false);
-    setServiceToDelete(null);
+    if (serviceToDelete) {
+      const serviceRef = ref(database, `services/${serviceToDelete.id}`);
+      remove(serviceRef)
+        .then(() => {
+          setShowDeleteConfirm(false);
+          setServiceToDelete(null);
+        })
+        .catch(error => {
+          console.error("Failed to delete service:", error);
+        });
+    }
   };
 
   const cancelAction = () => {
@@ -180,30 +86,34 @@ const ServiceManagement = () => {
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setNewService({
-          ...newService,
-          image: e.target.result
-        });
-      };
-      reader.readAsDataURL(file);
+      // In a real application, you would upload this file to Firebase Storage
+      // and get a URL. For this example, we'll use a placeholder.
+      console.log("Image uploaded:", file.name);
+      setNewService({
+        ...newService,
+        image: 'https://via.placeholder.com/150'
+      });
     }
   };
 
   const addNewService = () => {
     if (newService.name && newService.description) {
-      const newServiceObj = {
-        id: services.length > 0 ? Math.max(...services.map(s => s.id)) + 1 : 1,
-        name: newService.name,
+      const servicesRef = ref(database, "services");
+      const newServiceKey = push(servicesRef).key;
+      set(ref(database, `services/${newServiceKey}`), {
+        id: newServiceKey,
+        title: newService.name,
         description: newService.description,
         active: true,
         image: newService.image
-      };
-
-      setServices([...services, newServiceObj]);
-      setNewService({ name: '', description: '', image: null });
-      setShowAddService(false);
+      })
+      .then(() => {
+        setNewService({ name: '', description: '', image: null });
+        setShowAddService(false);
+      })
+      .catch(error => {
+        console.error("Failed to add new service:", error);
+      });
     }
   };
 
@@ -228,7 +138,7 @@ const ServiceManagement = () => {
             <div className="service-image">
               <div className="image-placeholder">
                 {service.image ? (
-                  <img src={service.image} alt={service.name} className="service-img" />
+                  <img src={service.image} alt={service.title} className="service-img" />
                 ) : (
                   <span className="placeholder-text">Service Image</span>
                 )}
@@ -237,7 +147,7 @@ const ServiceManagement = () => {
 
             <div className="service-content-wrapper">
               <div className="service-content">
-                <h3 className="service-name">{service.name}</h3>
+                <h3 className="service-name">{service.title}</h3>
                 <p className="service-description">{service.description}</p>
               </div>
 
@@ -341,7 +251,7 @@ const ServiceManagement = () => {
         <div className="modal-overlay">
           <div className="modal">
             <h2>Confirm Status Change</h2>
-            <p>Are you sure you want to {serviceToToggle.active ? 'deactivate' : 'activate'} the "{serviceToToggle.name}" service?</p>
+            <p>Are you sure you want to {serviceToToggle?.active ? 'deactivate' : 'activate'} the "{serviceToToggle?.title}" service?</p>
             <div className="modal-actions">
               <button className="cancel-btn" onClick={cancelAction}>
                 Cancel
@@ -358,7 +268,7 @@ const ServiceManagement = () => {
         <div className="modal-overlay">
           <div className="modal">
             <h2>Confirm Deletion</h2>
-            <p>Are you sure you want to delete the "{serviceToDelete.name}" service? This action cannot be undone.</p>
+            <p>Are you sure you want to delete the "{serviceToDelete?.title}" service? This action cannot be undone.</p>
             <div className="modal-actions">
               <button className="cancel-btn" onClick={cancelAction}>
                 Cancel

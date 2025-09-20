@@ -4,168 +4,119 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import {
   FaSearch,
-  FaFilter,
   FaMapMarkerAlt,
   FaRegClock,
   FaRupeeSign,
   FaStar,
 } from 'react-icons/fa';
+import { ref, onValue, update } from "firebase/database";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth, database } from '../firebase';
 import '../styles/MyBookingsPage.css';
 
 const MyBookingsPage = () => {
   const navigate = useNavigate();
 
-  const [activeFilter, setActiveFilter] = useState('Active');
+  const [activeFilter, setActiveFilter] = useState('pending');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedService, setSelectedService] = useState('All Services');
   const [selectedDate, setSelectedDate] = useState('');
-  const [bookings, setBookings] = useState([]);
+  const [allBookings, setAllBookings] = useState([]);
+  const [usersData, setUsersData] = useState({});
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Initialize bookings data
   useEffect(() => {
-    const initialBookings = [
-      {
-        id: 'bkg1',
-        service: 'Electrician',
-        technicianName: 'Bharath Surya',
-        technicianRating: '4.8',
-        technicianAvatar: '/path/to/techy1-avatar.png',
-        status: 'Active',
-        bookedOn: '31/05/2025 12:29',
-        date: '31/05/2025',
-        dateObj: new Date('2025-05-31'),
-        time: 'Afternoon (12:00 PM - 3:00 PM)',
-        duration: '2-3 hours',
-        location: 'Bengaluru',
-        price: 1350,
-        description: 'I have pipe leaking issue',
-        bookingId: '#48'
-      },
-      {
-        id: 'bkg2',
-        service: 'Electrician',
-        technicianName: 'chav tech',
-        technicianRating: '4.9',
-        technicianAvatar: '/path/to/alex-avatar.png',
-        status: 'Accepted',
-        bookedOn: '30/05/2025 11:25',
-        date: '30/05/2025',
-        dateObj: new Date('2025-05-30'),
-        time: 'Afternoon (12:00 PM - 3:00 PM)',
-        duration: '1-2 hours',
-        location: 'Mumbai',
-        price: 850,
-        description: 'bb',
-        bookingId: '#49'
-      },
-      {
-        id: 'bkg3',
-        service: 'Plumber',
-        technicianName: 'chav tech',
-        technicianRating: '4.7',
-        technicianAvatar: '/path/to/coolfix1-avatar.png',
-        status: 'Completed',
-        bookedOn: '24/05/2025 11:18',
-        date: '24/05/2025',
-        dateObj: new Date('2025-05-24'),
-        time: 'Afternoon (12:00 PM - 3:00 PM)',
-        duration: '2 hours',
-        location: 'Delhi',
-        price: 1200,
-        description: 'chat sorting test',
-        bookingId: '#47'
-      },
-      {
-        id: 'bkg4',
-        service: 'Electrician',
-        technicianName: 'Sandy Sandy',
-        technicianRating: '4.5',
-        technicianAvatar: '/path/to/ironfix1-avatar.png',
-        status: 'Active',
-        bookedOn: '10/09/2025 12:55',
-        date: '10/09/2025',
-        dateObj: new Date('2025-09-10'),
-        time: 'Afternoon (12:00 PM - 3:00 PM)',
-        duration: '4 hours',
-        location: 'Bengaluru',
-        price: 3800,
-        description: 'AC not cooling properly',
-        bookingId: '#46'
-      },
-      {
-        id: 'bkg5',
-        service: 'Electrician',
-        technicianName: 'Gopi Ravi',
-        technicianRating: '4.7',
-        technicianAvatar: '/path/to/electro2-avatar.png',
-        status: 'Canceled',
-        bookedOn: '08/09/2025 14:52',
-        date: '08/09/2025',
-        dateObj: new Date('2025-09-08'),
-        time: 'Afternoon (12:00 PM - 3:00 PM)',
-        duration: '1-2 hours',
-        location: 'Mumbai',
-        price: 4500,
-        description: 'house wiring',
-        bookingId: '#45'
-      },
-    ];
-    setBookings(initialBookings);
-  }, []);
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setCurrentUserId(user.uid);
+      } else {
+        navigate("/login");
+      }
+    });
 
-  const serviceTypes = ['All Services', ...new Set(bookings.map(booking => booking.service))];
+    return () => unsubscribeAuth();
+  }, [navigate]);
 
-  const filteredBookings = bookings.filter((booking) => {
-    const matchesStatus = activeFilter === 'All' || booking.status === activeFilter;
-    const matchesService = selectedService === 'All Services' || booking.service === selectedService;
-    const matchesDate = !selectedDate || booking.dateObj.toDateString() === new Date(selectedDate).toDateString();
+  useEffect(() => {
+    if (!currentUserId) return;
+
+    const usersRef = ref(database, 'users');
+    const bookingsRef = ref(database, 'bookings');
+    
+    const unsubscribeUsers = onValue(usersRef, (snapshot) => {
+      setUsersData(snapshot.val() || {});
+    });
+
+    const unsubscribeBookings = onValue(bookingsRef, (snapshot) => {
+      const allBookingsData = snapshot.val();
+      if (allBookingsData) {
+        let userBookings = Object.entries(allBookingsData)
+          .filter(([key, booking]) => booking.uid === currentUserId)
+          .map(([key, booking]) => ({
+            id: key,
+            ...booking,
+            status: booking.status || 'pending'
+          }));
+        
+        userBookings.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        
+        setAllBookings(userBookings);
+      } else {
+        setAllBookings([]);
+      }
+      setLoading(false);
+    });
+
+    return () => {
+      unsubscribeUsers();
+      unsubscribeBookings();
+    };
+  }, [currentUserId]);
+
+  const serviceTypes = ['All Services', ...new Set(allBookings.map(booking => booking.serviceName))];
+  const statusFilters = ['pending', 'accepted', 'completed', 'cancelled'];
+
+  const filteredBookings = allBookings.filter((booking) => {
+    const matchesStatus = activeFilter === booking.status;
+    const matchesService = selectedService === 'All Services' || booking.serviceName === selectedService;
+    const matchesDate = !selectedDate || new Date(booking.date).toDateString() === new Date(selectedDate).toDateString();
     const matchesSearch = searchTerm === '' ||
-      booking.service.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      booking.technicianName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      booking.serviceName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (usersData[booking.technicianId]?.firstName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       booking.description.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesStatus && matchesService && matchesDate && matchesSearch;
   });
 
-  const handleBookingClick = (bookingId) => {
-    navigate(`/booking-details/${bookingId}`);
-  };
-
   const handleCancelBooking = (bookingId) => {
-    setBookings(prevBookings => 
-      prevBookings.map(booking => 
-        booking.id === bookingId ? { ...booking, status: 'Canceled' } : booking
-      )
-    );
+    const bookingRef = ref(database, `bookings/${bookingId}`);
+    update(bookingRef, { status: 'cancelled' })
+      .catch(error => console.error("Failed to cancel booking:", error));
   };
 
   const handleCompleteBooking = (bookingId) => {
-    setBookings(prevBookings => 
-      prevBookings.map(booking => 
-        booking.id === bookingId ? { ...booking, status: 'Completed' } : booking
-      )
-    );
+    const bookingRef = ref(database, `bookings/${bookingId}`);
+    update(bookingRef, { status: 'completed' })
+      .catch(error => console.error("Failed to complete booking:", error));
   };
 
-    const handleChatClick = (booking) => {
+  const handleChatClick = (booking) => {
     navigate('/chat/booking', { 
       state: { 
-        technician: {
-          name: booking.technicianName,
-          service: booking.service,
-          rating: booking.technicianRating,
-          experience: '5+ years' // Default value
-        },
+        technician: usersData[booking.technicianId],
         bookingDetails: {
-          service: booking.service,
+          service: booking.serviceName,
           date: booking.date,
-          time: booking.time,
-          location: booking.location,
-          price: booking.price,
+          time: booking.timing,
           description: booking.description
         }
       } 
     });
   };
+
+  if (loading) {
+    return <div>Loading bookings...</div>;
+  }
 
   return (
     <div className="my-bookings-page-container">
@@ -203,38 +154,18 @@ const MyBookingsPage = () => {
 
         <div className="toggle-container">
           <div className="glass-radio-group">
-            <input
-              type="radio"
-              name="plan"
-              id="active"
-              checked={activeFilter === 'Active'}
-              onChange={() => setActiveFilter('Active')}
-            />
-            <label htmlFor="active">Active</label>
-            <input
-              type="radio"
-              name="plan"
-              id="accepted"
-              checked={activeFilter === 'Accepted'}
-              onChange={() => setActiveFilter('Accepted')}
-            />
-            <label htmlFor="accepted">Accepted</label>
-            <input
-              type="radio"
-              name="plan"
-              id="completed"
-              checked={activeFilter === 'Completed'}
-              onChange={() => setActiveFilter('Completed')}
-            />
-            <label htmlFor="completed">Completed</label>
-            <input
-              type="radio"
-              name="plan"
-              id="canceled"
-              checked={activeFilter === 'Canceled'}
-              onChange={() => setActiveFilter('Canceled')}
-            />
-            <label htmlFor="canceled">Canceled</label>
+            {statusFilters.map(filter => (
+                <React.Fragment key={filter}>
+                  <input
+                    type="radio"
+                    name="plan"
+                    id={filter}
+                    checked={activeFilter === filter}
+                    onChange={() => setActiveFilter(filter)}
+                  />
+                  <label htmlFor={filter}>{filter}</label>
+                </React.Fragment>
+            ))}
             <div className="glass-glider1" />
           </div>
         </div>
@@ -245,8 +176,8 @@ const MyBookingsPage = () => {
               <div key={booking.id} className={`booking-card ${booking.status.toLowerCase()}`}>
                 <div className="booking-card-header">
                   <div className="service-info">
-                    <span className="service-title">{booking.service}</span>
-                    <span className="booked-on">Booked on: {booking.bookedOn}</span>
+                    <span className="service-title">{booking.serviceName}</span>
+                    <span className="booked-on">Booked on: {new Date(booking.createdAt).toLocaleString()}</span>
                   </div>
                   <div className="header-right-section">
                     <span className={`status-badge ${booking.status.toLowerCase()}`}>{booking.status}</span>
@@ -256,14 +187,14 @@ const MyBookingsPage = () => {
                 <div className="technician-info-row">
                   <div className="tech-avatar-wrapper">
                       <span className="tech-avatar-placeholder">
-                        {booking.technicianName.charAt(0)}
+                        {(usersData[booking.technicianId]?.firstName || 'T').charAt(0)}
                       </span>
                   </div>
                   <div className="tech-name-rating">
-                    <span className="tech-name">Technician: {booking.technicianName}</span>
+                    <span className="tech-name">Technician: {usersData[booking.technicianId]?.firstName} {usersData[booking.technicianId]?.lastName}</span>
                     <div className="tech-rating">
                       <FaStar className="star-icon" />
-                      <span>{booking.technicianRating}</span>
+                      <span>{usersData[booking.technicianId]?.averageRating?.toFixed(1) || 'N/A'}</span>
                     </div>
                   </div>
                 </div>
@@ -275,15 +206,15 @@ const MyBookingsPage = () => {
                   </div>
                   <div className="detail-row">
                     <FaRegClock className="detail-icon" />
-                    <span>Timings: {booking.time}</span>
+                    <span>Timings: {booking.timing}</span>
                   </div>
                   <div className="detail-row">
                     <FaMapMarkerAlt className="detail-icon" />
-                    <span>{booking.location}</span>
+                    <span>{usersData[booking.technicianId]?.city || 'N/A'}</span>
                   </div>
                   <div className="detail-row">
                     <FaRupeeSign className="detail-icon rupee-icon" />
-                    <span>{booking.price}</span>
+                    <span>N/A</span>
                   </div>
                 </div>
                   
@@ -292,7 +223,7 @@ const MyBookingsPage = () => {
                   <span className="booking-description">{booking.description}</span>
                 </div>
 
-                {booking.status === 'Active' && (
+                {booking.status === 'pending' && (
                   <div className="booking-actions">
                     <button 
                       className="action-btn1 cancel-btn"
@@ -303,36 +234,36 @@ const MyBookingsPage = () => {
                   </div>
                 )}
 
-                    {booking.status === 'Accepted' && (
-                <div className="booking-actions">
-                  <button 
-                    className="action-btn1 cancel-btn"
-                    onClick={() => handleCancelBooking(booking.id)}
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    className="action-btn1 chat-btn"
-                    onClick={() => handleChatClick(booking)}
-                  >
-                    Chat
-                  </button>
-                  <button 
-                    className="action-btn1 complete-btn"
-                    onClick={() => handleCompleteBooking(booking.id)}
-                  >
-                    Complete
-                  </button>
-                </div>
-              )}
+                {booking.status === 'accepted' && (
+                  <div className="booking-actions">
+                    <button 
+                      className="action-btn1 cancel-btn"
+                      onClick={() => handleCancelBooking(booking.id)}
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      className="action-btn1 chat-btn"
+                      onClick={() => handleChatClick(booking)}
+                    >
+                      Chat
+                    </button>
+                    <button 
+                      className="action-btn1 complete-btn"
+                      onClick={() => handleCompleteBooking(booking.id)}
+                    >
+                      Complete
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))
+          ) : (
+            <div className="no-results-message">
+              <p>No bookings found for the selected filter or search term.</p>
             </div>
-          ))
-        ) : (
-          <div className="no-results-message">
-            <p>No bookings found for the selected filter or search term.</p>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
       </main>
       <Footer />
     </div>

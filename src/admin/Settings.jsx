@@ -1,23 +1,41 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { ref, onValue, set } from "firebase/database";
+import { database } from "../firebase";
 import "../styles/Settings.css";
 
 const Settings = () => {
   const [settings, setSettings] = useState({
     siteName: "StillWorkers",
     siteDescription: "Connect with skilled professionals",
-    supportEmail: "support@stillworkers.com",
-    supportPhone: "+91 8855542123",
-    socialMedia: [
-      { platform: "Facebook", url: "https://facebook.com/Stillworkers" },
-      { platform: "Twitter", url: "https://twitter.com/Stillworkers" },
-      { platform: "Instagram", url: "https://instagram.com/Stillworkers" }
-    ]
+    supportEmail: "",
+    supportPhone: "",
+    socialMedia: []
   });
 
   const [newSocialMedia, setNewSocialMedia] = useState({
     platform: "",
     url: ""
   });
+
+  useEffect(() => {
+    const settingsRef = ref(database, "contact_settings");
+    onValue(settingsRef, (snapshot) => {
+      const settingsData = snapshot.val();
+      if (settingsData) {
+        setSettings({
+          siteName: "StillWorkers", // Keeping these as hardcoded for now, as they're not in the provided JSON
+          siteDescription: "Connect with skilled professionals", // Same as above
+          supportEmail: settingsData.support_email,
+          supportPhone: settingsData.support_phone,
+          socialMedia: [
+            { platform: "Facebook", url: settingsData.facebook_url },
+            { platform: "Instagram", url: settingsData.instagram_url },
+            { platform: "Twitter", url: settingsData.twitter_url }
+          ]
+        });
+      }
+    });
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -56,10 +74,21 @@ const Settings = () => {
     }
   };
 
-  const saveSettings = () => {
-    // Here you would typically send the settings to your backend
-    console.log("Saving settings:", settings);
-    alert("Settings saved successfully!");
+  const saveSettings = async () => {
+    const settingsRef = ref(database, "contact_settings");
+    try {
+      await set(settingsRef, {
+        support_email: settings.supportEmail,
+        support_phone: settings.supportPhone,
+        facebook_url: settings.socialMedia.find(s => s.platform === 'Facebook')?.url,
+        instagram_url: settings.socialMedia.find(s => s.platform === 'Instagram')?.url,
+        twitter_url: settings.socialMedia.find(s => s.platform === 'Twitter')?.url
+      });
+      alert("Settings saved successfully!");
+    } catch (error) {
+      console.error("Failed to save settings:", error);
+      alert("An error occurred while saving settings.");
+    }
   };
 
   return (

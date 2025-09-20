@@ -1,104 +1,84 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { FaArrowLeft, FaPaperPlane, FaStar, FaClock, FaMapMarkerAlt, FaSearch, FaExclamationTriangle } from 'react-icons/fa';
+import { onAuthStateChanged } from "firebase/auth";
+import { ref, onValue, push, serverTimestamp } from "firebase/database";
+import { auth, database } from "../firebase";
 import '../styles/ChatScreen.css';
 
 const ChatScreen = () => {
+  const { chatId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const [chatUser, setChatUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
   const messagesEndRef = useRef(null);
 
-  // Get technician/service details from navigation state or use defaults
-  const { 
-    technician, 
-    service, 
-    user, 
-    bookingDetails 
-  } = location.state || {};
-
-  const chatTitle = technician?.name || user?.name || 'Professional';
-  const chatSubtitle = technician?.service || service || 'Service Provider';
-  const isTechnicianChat = !!technician;
-
-  // Initial messages based on context
   useEffect(() => {
-    let initialMessages = [];
-    
-    if (isTechnicianChat) {
-      // Chat with technician
-      initialMessages = [
-        {
-          id: 1,
-          sender: 'technician',
-          text: `Hello! I'm ${technician.name}, your ${technician.service} specialist. How can I help you today?`,
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }
-      ];
-    } else if (user) {
-      // Chat with user (for technicians)
-      initialMessages = [
-        {
-          id: 1,
-          sender: 'user',
-          text: `Hi! I need help with my ${service || 'service request'}.`,
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }
-      ];
-    } else {
-      // Default chat
-      initialMessages = [
-        {
-          id: 1,
-          sender: 'system',
-          text: 'Start a conversation about your service needs.',
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }
-      ];
-    }
-    
-    setMessages(initialMessages);
-  }, [technician, user, isTechnicianChat, service]);
+    const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            setCurrentUser(user);
+            
+            // Determine the chat partner's UID from the chat ID and current user's UID
+            const chatPartnerId = chatId.split('-').find(id => id !== user.uid);
+            
+            // Fetch chat partner's details
+            const userRef = ref(database, `users/${chatPartnerId}`);
+            onValue(userRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    setChatUser(snapshot.val());
+                }
+            });
 
-  // Auto-scroll to bottom when new messages arrive
+            // Fetch messages for the chat
+            const chatRef = ref(database, `chat/${chatId}`);
+            const unsubscribeChat = onValue(chatRef, (snapshot) => {
+                const chatData = snapshot.val();
+                if (chatData) {
+                    const loadedMessages = Object.keys(chatData).map(key => ({
+                        id: key,
+                        ...chatData[key]
+                    }));
+                    setMessages(loadedMessages);
+                } else {
+                    setMessages([]);
+                }
+            });
+
+            return () => unsubscribeChat();
+        }
+    });
+
+    return () => unsubscribeAuth();
+  }, [chatId]);
+
+
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  }, [messages]);
 
   const handleSendMessage = (e) => {
     e.preventDefault();
-    if (newMessage.trim() === '') return;
+    if (newMessage.trim() === '' || !currentUser) return;
 
-    const newMsg = {
-      id: messages.length + 1,
-      sender: isTechnicianChat ? 'user' : 'technician',
-      text: newMessage,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
+    const chatRef = ref(database, `chat/${chatId}`);
+    push(chatRef, {
+        senderId: currentUser.uid,
+        message: newMessage,
+        timestamp: serverTimestamp()
+    });
 
-    setMessages([...messages, newMsg]);
     setNewMessage('');
-
-    // Simulate response after a delay
-    setTimeout(() => {
-      const response = {
-        id: messages.length + 2,
-        sender: isTechnicianChat ? 'technician' : 'user',
-        text: isTechnicianChat 
-          ? 'Thanks for your message. I\'ll get back to you shortly.' 
-          : 'Thank you for reaching out. I appreciate your assistance.',
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-      setMessages(prev => [...prev, response]);
-    }, 2000);
   };
+
+  const chatTitle = chatUser ? `${chatUser.firstName} ${chatUser.lastName}` : 'User';
+  const chatSubtitle = chatUser ? chatUser.role : 'N/A';
+  const isTechnicianChat = chatUser?.role === 'technician';
+  const bookingDetails = location.state?.bookingDetails || {};
 
   return (
     <div className="chat-screen-container">
@@ -128,11 +108,11 @@ const ChatScreen = () => {
               {messages.map((message) => (
                 <div 
                   key={message.id} 
-                  className={`message ${message.sender === 'user' ? 'user-message' : message.sender === 'technician' ? 'technician-message' : 'system-message'}`}
+                  className={`message ${message.senderId === currentUser?.uid ? 'user-message' : 'technician-message'}`}
                 >
                   <div className="message-content">
-                    <p>{message.text}</p>
-                    <span className="message-time">{message.time}</span>
+                    <p>{message.message}</p>
+                    <span className="message-time">{new Date(message.timestamp).toLocaleTimeString()}</span>
                   </div>
                 </div>
               ))}
@@ -205,17 +185,17 @@ const ChatScreen = () => {
                 )}
               </div>
               
-              {isTechnicianChat && technician && (
+              {isTechnicianChat && chatUser && (
                 <div className="technician-qualifications">
                   <h4>Technician Info</h4>
                   <ul>
                     <li>Licensed & Insured</li>
                     <li>Background Verified</li>
-                    <li>{technician.experience || '5+ years'} Experience</li>
-                    {technician.rating && (
+                    <li>{chatUser.yearsOfExperience || '5+ years'} Experience</li>
+                    {chatUser.averageRating && (
                       <li>
                         <FaStar style={{color: '#fbbf24', marginRight: '5px'}} /> 
-                        {technician.rating} Rating
+                        {chatUser.averageRating.toFixed(1)} Rating
                       </li>
                     )}
                   </ul>

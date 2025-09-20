@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { ref, onValue, update } from "firebase/database";
+import { database } from "../firebase";
 import "../styles/TechnicianManagement.css";
 
 const TechnicianManagement = () => {
@@ -8,94 +10,49 @@ const TechnicianManagement = () => {
   const [deactivatingTechnician, setDeactivatingTechnician] = useState(null);
   const [activatingTechnician, setActivatingTechnician] = useState(null);
   const [newSkill, setNewSkill] = useState("");
-  
-  const [technicians, setTechnicians] = useState([
-    {
-      id: 1,
-      name: "Rajesh Kumar",
-      email: "rajesh.kumar@email.com",
-      phone: "+91 9876543210",
-      city: "Mumbai",
-      state: "Maharashtra",
-      country: "India",
-      role: "Technician",
-      status: "Active",
-      bio: "Experienced AC mechanic with 8 years of expertise in servicing all major brands. Specialized in troubleshooting complex electrical issues and providing efficient cooling solutions.",
-      timings: "9:00 AM - 6:00 PM (Mon-Sat)",
-      skills: ["AC Mechanic", "Electrician"]
-    },
-    {
-      id: 2,
-      name: "Priya Sharma",
-      email: "priya.sharma@email.com",
-      phone: "+91 8765432109",
-      city: "Delhi",
-      state: "Delhi",
-      country: "India",
-      role: "Technician",
-      status: "Active",
-      bio: "Skilled plumber with extensive knowledge of modern plumbing systems. Committed to providing prompt and reliable service with attention to detail.",
-      timings: "10:00 AM - 7:00 PM (Tue-Sun)",
-      skills: ["Plumber", "House cleaners"]
-    },
-    {
-      id: 3,
-      name: "Vikram Singh",
-      email: "vikram.singh@email.com",
-      phone: "+91 7654321098",
-      city: "Bangalore",
-      state: "Karnataka",
-      country: "India",
-      role: "Technician",
-      status: "Suspended",
-      bio: "Expert electrician with 6 years of hands-on experience. Specializes in repairing all types of electrical issues for residential and commercial spaces.",
-      timings: "8:00 AM - 5:00 PM (Mon-Fri)",
-      skills: ["Electrician", "Welders", "Camera fittings"]
-    },
-    {
-      id: 4,
-      name: "Anjali Patel",
-      email: "anjali.patel@email.com",
-      phone: "+91 6543210987",
-      city: "Ahmedabad",
-      state: "Gujarat",
-      country: "India",
-      role: "Technician",
-      status: "Active",
-      bio: "Versatile carpenter with expertise in multiple domains. Known for efficient problem-solving and customer-friendly approach to appliance repairs.",
-      timings: "9:30 AM - 6:30 PM (Mon-Sat)",
-      skills: ["Carpenter", "Packers & Movers"]
-    }
-  ]);
-
+  const [technicians, setTechnicians] = useState([]);
   const [newTechnician, setNewTechnician] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     email: "",
     phone: "",
     city: "",
     state: "",
     country: "India",
-    role: "Technician",
+    role: "technician",
     status: "Active",
     bio: "",
-    timings: "9:00 AM - 6:00 PM",
+    availableTimings: "9 AM - 5 PM",
     skills: []
   });
+  const [servicesData, setServicesData] = useState({});
 
-  const availableSkills = [
-    'Plumber', 'Electrician', 'AC Mechanic', 'Carpenter', 'Packers & Movers', 
-    'House cleaners', 'Laundry', 'Construction cleaners', 'Surveyors', 'Camera fittings', 
-    'Welders', 'Private investigators', 'Body Massage', 'Software Developer', 'Delivery'
-  ];
+  useEffect(() => {
+    const usersRef = ref(database, "users");
+    onValue(usersRef, (snapshot) => {
+      const users = snapshot.val();
+      if (users) {
+        const fetchedTechnicians = Object.values(users).filter(user => user.role === "technician");
+        setTechnicians(fetchedTechnicians);
+      }
+    });
+
+    const servicesRef = ref(database, "services");
+    onValue(servicesRef, (snapshot) => {
+      setServicesData(snapshot.val() || {});
+    });
+  }, []);
+
+  const availableSkills = Object.values(servicesData).map(s => s.title);
 
   const filteredTechnicians = technicians.filter(technician => 
-    technician.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (technician.firstName + ' ' + technician.lastName).toLowerCase().includes(searchTerm.toLowerCase()) ||
     technician.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const toggleTechnicianStatus = (technicianId) => {
-    const technician = technicians.find(t => t.id === technicianId);
-    if (technician.status === "Active") {
+    const technician = technicians.find(t => t.uid === technicianId);
+    if (technician.status === "Active" || technician.isActive) {
       setDeactivatingTechnician(technician);
     } else {
       setActivatingTechnician(technician);
@@ -104,19 +61,27 @@ const TechnicianManagement = () => {
 
   const confirmDeactivation = () => {
     if (deactivatingTechnician) {
-      setTechnicians(technicians.map(t => 
-        t.id === deactivatingTechnician.id ? {...t, status: "Suspended"} : t
-      ));
-      setDeactivatingTechnician(null);
+      const userRef = ref(database, `users/${deactivatingTechnician.uid}`);
+      update(userRef, { status: "Suspended", isActive: false })
+        .then(() => {
+          setDeactivatingTechnician(null);
+        })
+        .catch(error => {
+          console.error("Failed to deactivate technician:", error);
+        });
     }
   };
 
   const confirmActivation = () => {
     if (activatingTechnician) {
-      setTechnicians(technicians.map(t => 
-        t.id === activatingTechnician.id ? {...t, status: "Active"} : t
-      ));
-      setActivatingTechnician(null);
+      const userRef = ref(database, `users/${activatingTechnician.uid}`);
+      update(userRef, { status: "Active", isActive: true })
+        .then(() => {
+          setActivatingTechnician(null);
+        })
+        .catch(error => {
+          console.error("Failed to activate technician:", error);
+        });
     }
   };
 
@@ -125,37 +90,51 @@ const TechnicianManagement = () => {
   };
   
   const cancelActivation = () => {
-    setActivatingTechnician(null);
+    setActivatingUser(null);
   };
 
   const handleAddTechnician = () => {
-    const newTechnicianWithId = {
-      ...newTechnician,
-      id: Math.max(...technicians.map(t => t.id), 0) + 1
-    };
-    setTechnicians([...technicians, newTechnicianWithId]);
+    // This part requires a separate user creation flow,
+    // so we'll just log the data for now.
+    console.log("Adding new technician:", newTechnician);
     setShowAddTechnicianPopup(false);
     setNewTechnician({
-      name: "",
+      firstName: "",
+      lastName: "",
       email: "",
       phone: "",
       city: "",
       state: "",
       country: "India",
-      role: "Technician",
+      role: "technician",
       status: "Active",
       bio: "",
-      timings: "9:00 AM - 6:00 PM",
+      availableTimings: "9 AM - 5 PM",
       skills: []
     });
   };
 
   const handleEditTechnician = () => {
     if (editingTechnician) {
-      setTechnicians(technicians.map(t => 
-        t.id === editingTechnician.id ? editingTechnician : t
-      ));
-      setEditingTechnician(null);
+      const userRef = ref(database, `users/${editingTechnician.uid}`);
+      update(userRef, {
+        firstName: editingTechnician.firstName,
+        lastName: editingTechnician.lastName,
+        email: editingTechnician.email,
+        phone: editingTechnician.phone,
+        city: editingTechnician.city,
+        state: editingTechnician.state,
+        country: editingTechnician.country,
+        bio: editingTechnician.bio,
+        availableTimings: editingTechnician.availableTimings,
+        skills: editingTechnician.skills,
+      })
+      .then(() => {
+        setEditingTechnician(null);
+      })
+      .catch(error => {
+        console.error("Failed to edit technician:", error);
+      });
     }
   };
 
@@ -181,21 +160,25 @@ const TechnicianManagement = () => {
   };
 
   const addSkill = (isEdit = false) => {
-    if (newSkill.trim() === "" || (isEdit && editingTechnician?.skills.includes(newSkill.trim())) || (!isEdit && newTechnician.skills.includes(newSkill.trim()))) {
+    if (newSkill.trim() === "") {
       setNewSkill("");
       return;
     }
     
     if (isEdit && editingTechnician) {
-      setEditingTechnician({
-        ...editingTechnician,
-        skills: [...editingTechnician.skills, newSkill.trim()]
-      });
+      if (!editingTechnician.skills.includes(newSkill.trim())) {
+        setEditingTechnician({
+          ...editingTechnician,
+          skills: [...editingTechnician.skills, newSkill.trim()]
+        });
+      }
     } else {
-      setNewTechnician({
-        ...newTechnician,
-        skills: [...newTechnician.skills, newSkill.trim()]
-      });
+      if (!newTechnician.skills.includes(newSkill.trim())) {
+        setNewTechnician({
+          ...newTechnician,
+          skills: [...newTechnician.skills, newSkill.trim()]
+        });
+      }
     }
     setNewSkill("");
   };
@@ -248,7 +231,7 @@ const TechnicianManagement = () => {
       <table className="technician-table">
         <thead>
           <tr>
-              <th>Name</th>
+            <th>Name</th>
             <th>Email</th>
             <th>Bio</th>
             <th>Status</th>
@@ -258,51 +241,64 @@ const TechnicianManagement = () => {
           </tr>
         </thead>
         <tbody>
-          {filteredTechnicians.map((technician) => (
-            <tr key={technician.id}>
-               <td>
-                <div className="technician-name">{technician.name}</div>
-              </td>
-              <td>
-                <div className="technician-email">{technician.email}</div>
-              </td>
-              <td>
-                <div className="bio-text">{technician.bio}</div>
-              </td>
-              <td>
-                <span className={`status-badge ${technician.status.toLowerCase()}`}>
-                  {technician.status}
-                </span>
-              </td>
-              <td>
-                <p className="timings-text">{technician.timings}</p>
-              </td>
-              <td>
-                <div className="skills-container">
-                  {technician.skills.map((skill, index) => (
-                    <span key={index} className="skill-badge">{skill}</span>
-                  ))}
-                </div>
-              </td>
-              <td className="actions">
-                <label className="toggle-switch">
-                  <input
-                    type="checkbox"
-                    checked={technician.status === "Active"}
-                    onChange={() => toggleTechnicianStatus(technician.id)}
-                  />
-                  <span className="slider"></span>
-                </label>
-                <button 
-                  className="edit-icon"
-                  onClick={() => openEditPopup(technician)}
-                  title="Edit Technician"
-                >
-                  ✏️
-                </button>
-              </td>
-            </tr>
-          ))}
+          {filteredTechnicians.map((technician) => {
+            // Corrected code to handle both string and boolean status
+            const statusString = typeof technician.status === 'boolean'
+              ? (technician.status ? 'Active' : 'Suspended')
+              : technician.status;
+
+            const badgeClass = statusString 
+              ? statusString.toLowerCase() 
+              : (technician.isActive ? 'active' : 'suspended');
+            
+            const displayStatus = statusString || (technician.isActive ? 'Active' : 'Suspended');
+
+            return (
+              <tr key={technician.uid}>
+                <td>
+                  <div className="technician-name">{technician.firstName} {technician.lastName}</div>
+                </td>
+                <td>
+                  <div className="technician-email">{technician.email}</div>
+                </td>
+                <td>
+                  <div className="bio-text">{technician.bio}</div>
+                </td>
+                <td>
+                  <span className={`status-badge ${badgeClass}`}>
+                    {displayStatus}
+                  </span>
+                </td>
+                <td>
+                  <p className="timings-text">{technician.availableTimings}</p>
+                </td>
+                <td>
+                  <div className="skills-container">
+                    {technician.skills?.map((skill, index) => (
+                      <span key={index} className="skill-badge">{availableSkills.find(s => s.id === skill)?.title || skill}</span>
+                    ))}
+                  </div>
+                </td>
+                <td className="actions">
+                  <label className="toggle-switch">
+                    <input
+                      type="checkbox"
+                      checked={technician.status === "Active" || technician.isActive || technician.status === true}
+                      onChange={() => toggleTechnicianStatus(technician.uid)}
+                    />
+                    <span className="slider"></span>
+                  </label>
+                  <button 
+                    className="edit-icon"
+                    onClick={() => openEditPopup(technician)}
+                    title="Edit Technician"
+                  >
+                    ✏️
+                  </button>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
 
@@ -311,7 +307,7 @@ const TechnicianManagement = () => {
         <div className="popup-overlay">
           <div className="confirmation-popup">
             <h3>Confirm Deactivation</h3>
-            <p>Are you sure you want to deactivate {deactivatingTechnician.name}?</p>
+            <p>Are you sure you want to deactivate {deactivatingTechnician.firstName} {deactivatingTechnician.lastName}?</p>
             <div className="popup-buttons">
               <button className="cancel-btn" onClick={cancelDeactivation}>
                 Cancel
@@ -329,7 +325,7 @@ const TechnicianManagement = () => {
         <div className="popup-overlay">
           <div className="confirmation-popup">
             <h3>Confirm Activation</h3>
-            <p>Are you sure you want to activate {activatingTechnician.name}?</p>
+            <p>Are you sure you want to activate {activatingTechnician.firstName} {activatingTechnician.lastName}?</p>
             <div className="popup-buttons">
               <button className="cancel-btn" onClick={cancelActivation}>
                 Cancel
@@ -351,10 +347,17 @@ const TechnicianManagement = () => {
               <label>Full Name:</label>
               <input
                 type="text"
-                name="name"
-                value={newTechnician.name}
+                name="firstName"
+                value={newTechnician.firstName}
                 onChange={handleInputChange}
-                placeholder="Enter full name"
+                placeholder="Enter first name"
+              />
+              <input
+                type="text"
+                name="lastName"
+                value={newTechnician.lastName}
+                onChange={handleInputChange}
+                placeholder="Enter last name"
               />
             </div>
             <div className="form-group">
@@ -420,8 +423,8 @@ const TechnicianManagement = () => {
               <label>Available Timings:</label>
               <input
                 type="text"
-                name="timings"
-                value={newTechnician.timings}
+                name="availableTimings"
+                value={newTechnician.availableTimings}
                 onChange={handleInputChange}
                 placeholder="e.g., 9:00 AM - 6:00 PM (Mon-Sat)"
               />
@@ -474,7 +477,7 @@ const TechnicianManagement = () => {
               <button 
                 className="confirm-btn"
                 onClick={handleAddTechnician}
-                disabled={!newTechnician.name || !newTechnician.email || !newTechnician.phone}
+                disabled={!newTechnician.firstName || !newTechnician.email || !newTechnician.phone}
               >
                 Add Technician
               </button>
@@ -489,13 +492,20 @@ const TechnicianManagement = () => {
           <div className="edit-technician-popup">
             <h3>Edit Technician</h3>
             <div className="form-group">
-              <label>Full Name:</label>
+              <label>First Name:</label>
               <input
                 type="text"
-                name="name"
-                value={editingTechnician.name}
+                name="firstName"
+                value={editingTechnician.firstName}
                 onChange={(e) => handleInputChange(e, true)}
-                placeholder="Enter full name"
+                placeholder="Enter first name"
+              />
+               <input
+                type="text"
+                name="lastName"
+                value={editingTechnician.lastName}
+                onChange={(e) => handleInputChange(e, true)}
+                placeholder="Enter last name"
               />
             </div>
             <div className="form-group">
@@ -561,8 +571,8 @@ const TechnicianManagement = () => {
               <label>Available Timings:</label>
               <input
                 type="text"
-                name="timings"
-                value={editingTechnician.timings}
+                name="availableTimings"
+                value={editingTechnician.availableTimings}
                 onChange={(e) => handleInputChange(e, true)}
                 placeholder="e.g., 9:00 AM - 6:00 PM (Mon-Sat)"
               />
@@ -592,7 +602,7 @@ const TechnicianManagement = () => {
                 </button>
               </div>
               <div className="skills-list">
-                {editingTechnician.skills.map((skill, index) => (
+                {editingTechnician.skills?.map((skill, index) => (
                   <div key={index} className="skill-tag">
                     {skill}
                     <span 
@@ -615,7 +625,7 @@ const TechnicianManagement = () => {
               <button 
                 className="confirm-btn"
                 onClick={handleEditTechnician}
-                disabled={!editingTechnician.name || !editingTechnician.email || !editingTechnician.phone}
+                disabled={!editingTechnician.firstName || !editingTechnician.email || !editingTechnician.phone}
               >
                 Save Changes
               </button>

@@ -7,6 +7,9 @@ import {
   AiOutlineLock,
   AiOutlineUser
 } from "react-icons/ai";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { ref, set } from "firebase/database";
+import { auth, database } from "../firebase";
 import "../styles/Signup.css";
 
 const Signup = () => {
@@ -19,7 +22,8 @@ const Signup = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [userRole, setUserRole] = useState("user");
   const [errors, setErrors] = useState({});
-  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleSignIn = () => {
     navigate("/login");
@@ -32,21 +36,18 @@ const Signup = () => {
   const validateForm = () => {
     const newErrors = {};
 
-    // Name validation
     if (!fullName) {
       newErrors.fullName = "Full name is required.";
     } else if (!/^[a-zA-Z\s]+$/.test(fullName)) {
       newErrors.fullName = "Full name should only contain alphabets and spaces.";
     }
 
-    // Email validation
     if (!email) {
       newErrors.email = "Email is required.";
     } else if (!/\S+@\S+\.\S/.test(email)) {
       newErrors.email = "Email address is invalid.";
     }
 
-    // Password validation
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     if (!password) {
       newErrors.password = "Password is required.";
@@ -55,7 +56,6 @@ const Signup = () => {
         "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.";
     }
 
-    // Confirm password validation
     if (!confirmPassword) {
       newErrors.confirmPassword = "Confirm password is required.";
     } else if (password !== confirmPassword) {
@@ -66,35 +66,44 @@ const Signup = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setSuccessMessage("");
+    setErrorMessage("");
     if (validateForm()) {
-      // Simulate account creation
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("userEmail", email);
-      localStorage.setItem("userName", fullName);
-      localStorage.setItem("userRole", userRole);
-      
-      console.log("Account created!", { fullName, email, password, role: userRole });
-      setShowSuccess(true);
-      
-      setTimeout(() => {
-        setShowSuccess(false);
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        const [firstName, ...rest] = fullName.split(' ');
+        const lastName = rest.join(' ');
         
-        // Check if there's a redirect URL stored
-        const redirectUrl = localStorage.getItem("redirectAfterLogin");
-        if (redirectUrl) {
-          localStorage.removeItem("redirectAfterLogin");
-          navigate(redirectUrl);
-        } else {
-          // If technician, show registration prompt
+        await set(ref(database, 'users/' + user.uid), {
+          firstName: firstName || '',
+          lastName: lastName || '',
+          email: email,
+          role: userRole,
+          status: "Active",
+          createdAt: new Date().toISOString(),
+          uid: user.uid,
+        });
+
+        localStorage.setItem("userRole", userRole);
+        localStorage.setItem("isLoggedIn", "true");
+
+        setSuccessMessage("Account created successfully!");
+        
+        setTimeout(() => {
           if (userRole === "technician") {
-            navigate("/technician-registration-prompt");
+            navigate("/become-technician");
           } else {
             navigate("/");
           }
-        }
-      }, 2000);
+        }, 1500);
+
+      } catch (error) {
+        setErrorMessage(error.message);
+      }
     }
   };
 
@@ -112,6 +121,9 @@ const Signup = () => {
           <p className="create-account-text">Create your account</p>
           <p className="join-text">Join SkillWorkers to book services</p>
         </div>
+        
+        {successMessage && <div className="success-popup"><div className="popup-content"><span className="popup-icon">&#10003;</span><p>{successMessage}</p></div></div>}
+        {errorMessage && <p className="error-message">{errorMessage}</p>}
 
         <form className="signup-form" onSubmit={handleSubmit}>
           <label htmlFor="fullName">Full Name</label>
@@ -219,15 +231,6 @@ const Signup = () => {
           </button>
         </form>
         
-        {showSuccess && (
-          <div className="success-popup">
-            <div className="popup-content">
-              <span className="popup-icon">&#10003;</span>
-              <p>Account created successfully!</p>
-            </div>
-          </div>
-        )}
-
         <div className="divider"></div>
 
         <div className="signin-inline">

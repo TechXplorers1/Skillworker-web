@@ -1,119 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import HeroSection from '../components/HeroSection';
 import Footer from '../components/Footer';
 import { FaStar } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
-import plumberImg from '../assets/plumber.png';
-import electricianImg from '../assets/electrician.png';
-import acMechanicImg from '../assets/ac mechanic.png';
-import carpenterImg from '../assets/carpenter.png';
-import packersImg from '../assets/packers&movers.png';
-import housecleanersImg from '../assets/House cleaners.png';
-import camerafittingsImg from '../assets/camera fittings.png';
-import privateinvestigatorsImg from '../assets/private investigators.png';
-import welderImg from '../assets/welder.png';
-import surveyorsImg from '../assets/surveyors.png';
-import developersImg from '../assets/SoftwareDeveloper.png';
-import bodymassageImg from '../assets/BodyMassage.png';
-import constructioncleanersImg from '../assets/Construction cleaners.png';
-import laundryImg from '../assets/laundry.png';
-import deliveryImg from '../assets/delivery.png';
+import { ref, onValue } from "firebase/database";
+import { database } from '../firebase'; // Import the database instance
 
 import '../styles/Homepage.css';
-
-const services = [
-  {
-    title: 'Plumber',
-    description: 'Professional plumbing services for leak repairs, pipe fittings, installations, and maintenance.',
-    image: plumberImg,
-    link: 'plumber'
-  },
-  {
-    title: 'Electrician',
-    description: 'Expert electrical work including wiring, installations, repairs, and safety inspections.',
-    image: electricianImg,
-    link: 'electrician'
-  },
-  {
-    title: 'Ac Mechanic',
-    description: 'Air conditioning repair, installation, and maintenance by certified technicians.',
-    image: acMechanicImg,
-    link: 'ac-mechanic'
-  },
-  {
-    title: 'Carpenter',
-    description: 'Custom carpentry, furniture repair, and installation services.',
-    image: carpenterImg,
-    link: 'carpenter'
-  },
-  {
-    title: 'Packers & Movers',
-    description: 'Reliable and efficient packing and moving services for home and office relocations.',
-    image: packersImg,
-    link: 'packers-movers'
-  },
-  {
-    title: 'House cleaners',
-    description: 'Professional cleaning services for residential properties, including deep cleaning and routine maintenance.',
-    image: housecleanersImg,
-    link: 'house-cleaners'
-  },
-  {
-    title: 'laundry',
-    description: 'Expert laundry and dry-cleaning services with pick-up and delivery options.',
-    image: laundryImg,
-    link: 'laundry'
-  },
-  {
-    title: 'Construction cleaners',
-    description: 'Post-construction cleaning services to prepare new or renovated buildings for occupancy.',
-    image: constructioncleanersImg,
-    link: 'contruction-cleaners'
-  },
-  {
-    title: 'surveyors',
-    description: 'Precise land and property surveying services for various purposes.',
-    image: surveyorsImg,
-    link: 'surveyors'
-  },
-  {
-    title: 'camera fiitings',
-    description: 'Installation and maintenance of security cameras and surveillance systems.',
-    image: camerafittingsImg,
-    link: 'camera-fittings'
-  },
-  {
-    title: 'delivery',
-    description: 'Fast and reliable courier and delivery services for packages and documents.',
-    image: deliveryImg,
-    link: 'delivery'
-  },
-  {
-    title: 'welders',
-    description: 'Skilled welding services for metal fabrication, repair, and construction.',
-    image: welderImg,
-    link: 'welders'
-  },
-  {
-    title: 'private investigators',
-    description: 'Confidential and professional investigative services for personal and corporate needs.',
-    image: privateinvestigatorsImg,
-    link: 'private-investigators'
-  },
-  {
-    title: 'Body Massage',
-    description: 'Relaxing and therapeutic body massage services from certified professionals.',
-    image: bodymassageImg,
-    link: 'body-massage'
-  },
-];
 
 const Homepage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('1');
+  const [allServices, setAllServices] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredServices = services.filter(service =>
+  useEffect(() => {
+    const servicesRef = ref(database, 'services');
+    const unsubscribe = onValue(servicesRef, (snapshot) => {
+      const servicesData = snapshot.val();
+      if (servicesData) {
+        const fetchedServices = Object.keys(servicesData).map(key => ({
+          id: key,
+          ...servicesData[key],
+          link: servicesData[key].title.toLowerCase().replace(/\s/g, '-')
+        }));
+        setAllServices(fetchedServices);
+      } else {
+        setAllServices([]);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const filteredServices = allServices.filter(service =>
     service.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -127,6 +49,21 @@ const Homepage = () => {
     });
   };
 
+  if (loading) {
+    return (
+      <div className="homepage">
+        <Header />
+        <main>
+          <HeroSection setSearchQuery={setSearchQuery} />
+          <section className="services">
+            <h2 className="section-title">Loading Services...</h2>
+          </section>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="homepage">
       <Header />
@@ -138,8 +75,8 @@ const Homepage = () => {
           
           <div className="services-grid">
             {displayedServices.length > 0 ? (
-              displayedServices.map((service, index) => (
-                <div className="service-card" key={index}>
+              displayedServices.map((service) => (
+                <div className="service-card" key={service.id}>
                   {service.image ? (
                     <img
                       src={service.image}
@@ -148,7 +85,7 @@ const Homepage = () => {
                     />
                   ) : (
                     <div className="card-image-placeholder">
-                      {/* Your image here */}
+                      <p>Image Not Available</p>
                     </div>
                   )}
                   <div className="card-content">
@@ -166,33 +103,35 @@ const Homepage = () => {
             )}
           </div>
           
-          <div className="radio-input-container">
-            <div className="radio-input">
-              <label>
-                <input 
-                  type="radio" 
-                  id="tab-1" 
-                  name="service-tabs" 
-                  value="1" 
-                  checked={activeTab === '1'} 
-                  onChange={() => handleTabChange('1')} 
-                />
-                <span>1</span>
-              </label>
-              <label>
-                <input 
-                  type="radio" 
-                  id="tab-2" 
-                  name="service-tabs" 
-                  value="2" 
-                  checked={activeTab === '2'} 
-                  onChange={() => handleTabChange('2')} 
-                />
-                <span>2</span>
-              </label>
-              <span className="selection" />
+          {allServices.length > 9 && (
+            <div className="radio-input-container">
+              <div className="radio-input">
+                <label>
+                  <input 
+                    type="radio" 
+                    id="tab-1" 
+                    name="service-tabs" 
+                    value="1" 
+                    checked={activeTab === '1'} 
+                    onChange={() => handleTabChange('1')} 
+                  />
+                  <span>1</span>
+                </label>
+                <label>
+                  <input 
+                    type="radio" 
+                    id="tab-2" 
+                    name="service-tabs" 
+                    value="2" 
+                    checked={activeTab === '2'} 
+                    onChange={() => handleTabChange('2')} 
+                  />
+                  <span>2</span>
+                </label>
+                <span className="selection" />
+              </div>
             </div>
-          </div>
+          )}
         </section>
 
         {/* Why Choose Us Section */}

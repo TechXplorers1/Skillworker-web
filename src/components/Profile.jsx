@@ -1,38 +1,68 @@
 import React, { useState, useEffect } from "react";
 import Header from "./Header";
+import { ref, get, update } from "firebase/database";
+import { auth, database } from "../firebase";
+import { onAuthStateChanged } from "firebase/auth";
 import "../styles/Profile.css";
 
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [userRole, setUserRole] = useState("user"); // Default to user
-  const [userData, setUserData] = useState({
-    fullName: "Mike Technician",
-    bio: "Professional electrician with over 8 years of experience in residential and commercial electrical work. Specialized in smart home installations and energy-efficient solutions.",
-    email: "support@skillworkers.com",
-    phone: "+91 8852888444",
-    location: "Anantapur , India",
-    experience: "8+ Years",
-    certification: "Licensed Electrician",
-    hourlyRate: "45",
-    availability: "Available",
-    skills: ["Biblical Wiring", "Great Installation", "Smart Home Setup", "Troubleshooting", "Energy Efficiency"]
-  });
-
+  const [loading, setLoading] = useState(true);
+  const [userData, setUserData] = useState(null);
   const [newSkill, setNewSkill] = useState("");
 
   useEffect(() => {
-    // Load user data from localStorage if available
-    const storedUserData = localStorage.getItem("userProfileData");
-    if (storedUserData) {
-      setUserData(JSON.parse(storedUserData));
-    }
-    
-    // Check user role - in a real app, this would come from authentication
-    // For demo purposes, we'll check localStorage or use a default
-    const role = localStorage.getItem("userRole") || "user";
-    setUserRole(role);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        await fetchUserData(user.uid);
+      } else {
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
+
+  const fetchUserData = async (uid) => {
+    try {
+      const userRef = ref(database, 'users/' + uid);
+      const snapshot = await get(userRef);
+      
+      if (snapshot.exists()) {
+        setUserData(snapshot.val());
+      } else {
+        // Set default structure if user doesn't exist in database
+        setUserData({
+          firstName: "",
+          lastName: "",
+          email: "",
+          phone: "",
+          city: "",
+          state: "",
+          pincode: "",
+          country: "",
+          dob: "",
+          gender: "",
+          bio: "",
+          profileImage: "assets/profile_pic.jpg",
+          status: true,
+          role: "user",
+          // Technician specific fields
+          availableTimings: "",
+          skills: [],
+          certification: "",
+          experience: "",
+          hourlyRate: "",
+          availability: "Available"
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleEditToggle = () => {
     setIsEditing(!isEditing);
@@ -46,25 +76,33 @@ const Profile = () => {
     });
   };
 
-  const handleSave = () => {
-    localStorage.setItem("userProfileData", JSON.stringify(userData));
-    setIsEditing(false);
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
+  const handleSave = async () => {
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        const userRef = ref(database, 'users/' + user.uid);
+        await update(userRef, userData);
+        setShowSuccess(true);
+        setIsEditing(false);
+        setTimeout(() => setShowSuccess(false), 3000);
+      }
+    } catch (error) {
+      console.error("Error saving profile:", error);
+    }
   };
 
   const handleAddSkill = () => {
     if (newSkill.trim() !== "") {
       setUserData({
         ...userData,
-        skills: [...userData.skills, newSkill.trim()]
+        skills: [...(userData.skills || []), newSkill.trim()]
       });
       setNewSkill("");
     }
   };
 
   const handleRemoveSkill = (index) => {
-    const updatedSkills = [...userData.skills];
+    const updatedSkills = [...(userData.skills || [])];
     updatedSkills.splice(index, 1);
     setUserData({
       ...userData,
@@ -72,7 +110,25 @@ const Profile = () => {
     });
   };
 
-  const isTechnician = userRole === "technician";
+  if (loading) {
+    return (
+      <div className="profile-container">
+        <Header />
+        <div className="loading-spinner">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!userData) {
+    return (
+      <div className="profile-container">
+        <Header />
+        <div className="error-message">User not found</div>
+      </div>
+    );
+  }
+
+  const isTechnician = userData.role === "technician";
 
   return (
     <div className="profile-container">
@@ -99,51 +155,72 @@ const Profile = () => {
           </button>
         </div>
 
+        {/* Profile Image Section */}
         <div className="profile-section">
-          <h2 className="section-title">Full Name</h2>
-          {isEditing ? (
-            <input
-              type="text"
-              name="fullName"
-              value={userData.fullName}
-              onChange={handleInputChange}
-              className="edit-input full-name-input"
+          <h2 className="section-title">Profile Photo</h2>
+          <div className="profile-image-container">
+            <img 
+              src={userData.profileImage || "assets/profile_pic.jpg"} 
+              alt="Profile" 
+              className="profile-image"
             />
-          ) : (
-            <p className="full-name">{userData.fullName}</p>
-          )}
-          
-          <h3 className="subsection-title">Bio</h3>
-          {isEditing ? (
-            <textarea
-              name="bio"
-              value={userData.bio}
-              onChange={handleInputChange}
-              className="edit-textarea bio-textarea"
-            />
-          ) : (
-            <p className="bio-text">{userData.bio}</p>
-          )}
+            {isEditing && (
+              <button className="change-photo-btn">
+                Change Photo
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="section-divider"></div>
 
+        {/* Basic Information */}
         <div className="profile-section">
-          <h2 className="section-title">Personal Information</h2>
+          <h2 className="section-title">Basic Information</h2>
           
           <div className="info-grid">
+            <div className="info-item">
+              <span className="info-label">First Name</span>
+              {isEditing ? (
+                <input
+                  type="text"
+                  name="firstName"
+                  value={userData.firstName || ""}
+                  onChange={handleInputChange}
+                  className="edit-input"
+                />
+              ) : (
+                <span className="info-value">{userData.firstName || "Not set"}</span>
+              )}
+            </div>
+            
+            <div className="info-item">
+              <span className="info-label">Last Name</span>
+              {isEditing ? (
+                <input
+                  type="text"
+                  name="lastName"
+                  value={userData.lastName || ""}
+                  onChange={handleInputChange}
+                  className="edit-input"
+                />
+              ) : (
+                <span className="info-value">{userData.lastName || "Not set"}</span>
+              )}
+            </div>
+            
             <div className="info-item">
               <span className="info-label">Email</span>
               {isEditing ? (
                 <input
                   type="email"
                   name="email"
-                  value={userData.email}
+                  value={userData.email || ""}
                   onChange={handleInputChange}
-                  className="edit-input email-input"
+                  className="edit-input"
                 />
               ) : (
-                <a href={`mailto:${userData.email}`} className="info-value email-link">{userData.email}</a>
+                <a href={`mailto:${userData.email}`} className="info-value email-link">{userData.email || "Not set"}</a>
               )}
             </div>
             
@@ -153,30 +230,136 @@ const Profile = () => {
                 <input
                   type="tel"
                   name="phone"
-                  value={userData.phone}
+                  value={userData.phone || ""}
                   onChange={handleInputChange}
-                  className="edit-input phone-input"
+                  className="edit-input"
                 />
               ) : (
-                <span className="info-value">{userData.phone}</span>
+                <span className="info-value">{userData.phone || "Not set"}</span>
+              )}
+            </div>
+
+            <div className="info-item">
+              <span className="info-label">Date of Birth</span>
+              {isEditing ? (
+                <input
+                  type="date"
+                  name="dob"
+                  value={userData.dob || ""}
+                  onChange={handleInputChange}
+                  className="edit-input"
+                />
+              ) : (
+                <span className="info-value">{userData.dob || "Not set"}</span>
+              )}
+            </div>
+
+            <div className="info-item">
+              <span className="info-label">Gender</span>
+              {isEditing ? (
+                <select
+                  name="gender"
+                  value={userData.gender || ""}
+                  onChange={handleInputChange}
+                  className="edit-select"
+                >
+                  <option value="">Select Gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              ) : (
+                <span className="info-value">{userData.gender || "Not set"}</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="section-divider"></div>
+
+        {/* Address Information */}
+        <div className="profile-section">
+          <h2 className="section-title">Address Information</h2>
+          
+          <div className="info-grid">
+            <div className="info-item">
+              <span className="info-label">City</span>
+              {isEditing ? (
+                <input
+                  type="text"
+                  name="city"
+                  value={userData.city || ""}
+                  onChange={handleInputChange}
+                  className="edit-input"
+                />
+              ) : (
+                <span className="info-value">{userData.city || "Not set"}</span>
               )}
             </div>
             
             <div className="info-item">
-              <span className="info-label">Location</span>
+              <span className="info-label">State</span>
               {isEditing ? (
                 <input
                   type="text"
-                  name="location"
-                  value={userData.location}
+                  name="state"
+                  value={userData.state || ""}
                   onChange={handleInputChange}
-                  className="edit-input location-input"
+                  className="edit-input"
                 />
               ) : (
-                <span className="info-value">{userData.location}</span>
+                <span className="info-value">{userData.state || "Not set"}</span>
+              )}
+            </div>
+            
+            <div className="info-item">
+              <span className="info-label">Pincode</span>
+              {isEditing ? (
+                <input
+                  type="text"
+                  name="pincode"
+                  value={userData.pincode || ""}
+                  onChange={handleInputChange}
+                  className="edit-input"
+                />
+              ) : (
+                <span className="info-value">{userData.pincode || "Not set"}</span>
+              )}
+            </div>
+            
+            <div className="info-item">
+              <span className="info-label">Country</span>
+              {isEditing ? (
+                <input
+                  type="text"
+                  name="country"
+                  value={userData.country || ""}
+                  onChange={handleInputChange}
+                  className="edit-input"
+                />
+              ) : (
+                <span className="info-value">{userData.country || "Not set"}</span>
               )}
             </div>
           </div>
+        </div>
+
+        <div className="section-divider"></div>
+
+        {/* Bio Section */}
+        <div className="profile-section">
+          <h2 className="section-title">Bio</h2>
+          {isEditing ? (
+            <textarea
+              name="bio"
+              value={userData.bio || ""}
+              onChange={handleInputChange}
+              className="edit-textarea bio-textarea"
+              placeholder="Tell us about yourself..."
+            />
+          ) : (
+            <p className="bio-text">{userData.bio || "No bio provided"}</p>
+          )}
         </div>
 
         {/* Only show Professional Details for technicians */}
@@ -194,12 +377,13 @@ const Profile = () => {
                     <input
                       type="text"
                       name="experience"
-                      value={userData.experience}
+                      value={userData.experience || ""}
                       onChange={handleInputChange}
-                      className="edit-input experience-input"
+                      className="edit-input"
+                      placeholder="e.g., 5+ years"
                     />
                   ) : (
-                    <span className="detail-value">{userData.experience}</span>
+                    <span className="detail-value">{userData.experience || "Not specified"}</span>
                   )}
                 </div>
                 
@@ -209,12 +393,13 @@ const Profile = () => {
                     <input
                       type="text"
                       name="certification"
-                      value={userData.certification}
+                      value={userData.certification || ""}
                       onChange={handleInputChange}
-                      className="edit-input certification-input"
+                      className="edit-input"
+                      placeholder="e.g., Licensed Electrician"
                     />
                   ) : (
-                    <span className="detail-value">{userData.certification}</span>
+                    <span className="detail-value">{userData.certification || "Not specified"}</span>
                   )}
                 </div>
                 
@@ -224,12 +409,29 @@ const Profile = () => {
                     <input
                       type="text"
                       name="hourlyRate"
-                      value={userData.hourlyRate}
+                      value={userData.hourlyRate || ""}
                       onChange={handleInputChange}
-                      className="edit-input rate-input"
+                      className="edit-input"
+                      placeholder="e.g., 45"
                     />
                   ) : (
-                    <span className="detail-value">${userData.hourlyRate}/hr</span>
+                    <span className="detail-value">${userData.hourlyRate || "0"}/hr</span>
+                  )}
+                </div>
+                
+                <div className="detail-item">
+                  <span className="detail-label">Available Timings</span>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="availableTimings"
+                      value={userData.availableTimings || ""}
+                      onChange={handleInputChange}
+                      className="edit-input"
+                      placeholder="e.g., 9 AM - 6 PM"
+                    />
+                  ) : (
+                    <span className="detail-value">{userData.availableTimings || "Not specified"}</span>
                   )}
                 </div>
                 
@@ -238,35 +440,46 @@ const Profile = () => {
                   {isEditing ? (
                     <select
                       name="availability"
-                      value={userData.availability}
+                      value={userData.availability || "Available"}
                       onChange={handleInputChange}
-                      className="edit-select availability-select"
+                      className="edit-select"
                     >
                       <option value="Available">Available</option>
                       <option value="Busy">Busy</option>
                       <option value="Away">Away</option>
                     </select>
                   ) : (
-                    <span className={`availability-tag ${userData.availability.toLowerCase()}`}>
-                      {userData.availability}
+                    <span className={`availability-tag ${(userData.availability || "").toLowerCase()}`}>
+                      {userData.availability || "Available"}
                     </span>
+                  )}
+                </div>
+
+                <div className="detail-item">
+                  <span className="detail-label">NIN</span>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="nin"
+                      value={userData.nin || ""}
+                      onChange={handleInputChange}
+                      className="edit-input"
+                      placeholder="National Identification Number"
+                    />
+                  ) : (
+                    <span className="detail-value">{userData.nin || "Not provided"}</span>
                   )}
                 </div>
               </div>
             </div>
-          </>
-        )}
 
-        {/* Only show Skills & Specializations for technicians */}
-        {isTechnician && (
-          <>
             <div className="section-divider"></div>
 
             <div className="profile-section">
               <h2 className="section-title">Skills & Specializations</h2>
               
               <div className="skills-grid">
-                {userData.skills.map((skill, index) => (
+                {(userData.skills || []).map((skill, index) => (
                   <div key={index} className="skill-tag">
                     <span className="skill-text">{skill}</span>
                     {isEditing && (

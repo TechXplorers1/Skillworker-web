@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { ref, onValue, update } from "firebase/database";
+import { database } from "../firebase";
 import "../styles/UserManagement.css";
 
 const UserManagement = () => {
@@ -7,69 +9,7 @@ const UserManagement = () => {
   const [editingUser, setEditingUser] = useState(null);
   const [deactivatingUser, setDeactivatingUser] = useState(null);
   const [activatingUser, setActivatingUser] = useState(null);
-  
-  const [users, setUsers] = useState([
-    {
-      id: 1,
-      name: "Rahul Sharma",
-      email: "rahul.sharma@email.com",
-      phone: "+91 9876543210",
-      city: "Mumbai",
-      state: "Maharashtra",
-      country: "India",
-      role: "Customer",
-      status: "Active",
-      joined: "2024-01-15",
-    },
-    {
-      id: 2,
-      name: "Priya Patel",
-      email: "priya.patel@email.com",
-      phone: "+91 8765432109",
-      city: "Ahmedabad",
-      state: "Gujarat",
-      country: "India",
-      role: "Technician",
-      status: "Active",
-      joined: "2024-01-10",
-    },
-    {
-      id: 3,
-      name: "Vikram Singh",
-      email: "vikram.singh@email.com",
-      phone: "+91 7654321098",
-      city: "Bangalore",
-      state: "Karnataka",
-      country: "India",
-      role: "Customer",
-      status: "Suspended",
-      joined: "2024-02-20",
-    },
-    {
-      id: 4,
-      name: "Anjali Mehta",
-      email: "anjali.mehta@email.com",
-      phone: "+91 6543210987",
-      city: "Kolkata",
-      state: "West Bengal",
-      country: "India",
-      role: "Customer",
-      status: "Active",
-      joined: "2024-03-05",
-    },
-    {
-      id: 5,
-      name: "Suresh Reddy",
-      email: "suresh.reddy@email.com",
-      phone: "+91 9123456789",
-      city: "Hyderabad",
-      state: "Telangana",
-      country: "India",
-      role: "Technician",
-      status: "Suspended",
-      joined: "2024-02-28",
-    },
-  ]);
+  const [users, setUsers] = useState([]);
   
   const [newUser, setNewUser] = useState({
     name: "",
@@ -78,19 +18,30 @@ const UserManagement = () => {
     city: "",
     state: "",
     country: "India",
-    role: "Customer",
+    role: "user",
     status: "Active",
     joined: new Date().toISOString().slice(0, 10),
   });
 
+  useEffect(() => {
+    const usersRef = ref(database, "users");
+    onValue(usersRef, (snapshot) => {
+      const users = snapshot.val();
+      if (users) {
+        const fetchedUsers = Object.values(users).filter(user => user.role === "user");
+        setUsers(fetchedUsers);
+      }
+    });
+  }, []);
+
   const filteredUsers = users.filter(user => 
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (user.firstName + ' ' + user.lastName).toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const toggleUserStatus = (userId) => {
-    const user = users.find(u => u.id === userId);
-    if (user.status === "Active") {
+    const user = users.find(u => u.uid === userId);
+    if (user.status === "Active" || user.status) {
       setDeactivatingUser(user);
     } else {
       setActivatingUser(user);
@@ -99,19 +50,27 @@ const UserManagement = () => {
 
   const confirmDeactivation = () => {
     if (deactivatingUser) {
-      setUsers(users.map(u => 
-        u.id === deactivatingUser.id ? {...u, status: "Suspended"} : u
-      ));
-      setDeactivatingUser(null);
+      const userRef = ref(database, `users/${deactivatingUser.uid}`);
+      update(userRef, { status: "Suspended" })
+        .then(() => {
+          setDeactivatingUser(null);
+        })
+        .catch(error => {
+          console.error("Failed to deactivate user:", error);
+        });
     }
   };
 
   const confirmActivation = () => {
     if (activatingUser) {
-      setUsers(users.map(u => 
-        u.id === activatingUser.id ? {...u, status: "Active"} : u
-      ));
-      setActivatingUser(null);
+      const userRef = ref(database, `users/${activatingUser.uid}`);
+      update(userRef, { status: "Active" })
+        .then(() => {
+          setActivatingUser(null);
+        })
+        .catch(error => {
+          console.error("Failed to activate user:", error);
+        });
     }
   };
 
@@ -124,11 +83,8 @@ const UserManagement = () => {
   };
 
   const handleAddUser = () => {
-    const newUserWithId = {
-      ...newUser,
-      id: Math.max(...users.map(u => u.id), 0) + 1
-    };
-    setUsers([...users, newUserWithId]);
+    // This part requires a separate user creation flow
+    console.log("Adding new user:", newUser);
     setShowAddUserPopup(false);
     setNewUser({
       name: "",
@@ -137,7 +93,7 @@ const UserManagement = () => {
       city: "",
       state: "",
       country: "India",
-      role: "Customer",
+      role: "user",
       status: "Active",
       joined: new Date().toISOString().slice(0, 10),
     });
@@ -145,10 +101,22 @@ const UserManagement = () => {
 
   const handleEditUser = () => {
     if (editingUser) {
-      setUsers(users.map(u => 
-        u.id === editingUser.id ? editingUser : u
-      ));
-      setEditingUser(null);
+      const userRef = ref(database, `users/${editingUser.uid}`);
+      update(userRef, {
+        firstName: editingUser.firstName,
+        lastName: editingUser.lastName,
+        email: editingUser.email,
+        phone: editingUser.phone,
+        city: editingUser.city,
+        state: editingUser.state,
+        country: editingUser.country,
+      })
+      .then(() => {
+        setEditingUser(null);
+      })
+      .catch(error => {
+        console.error("Failed to edit user:", error);
+      });
     }
   };
 
@@ -211,9 +179,9 @@ const UserManagement = () => {
         </thead>
         <tbody>
           {filteredUsers.map((user) => (
-            <tr key={user.id}>
+            <tr key={user.uid}>
               <td>
-                <div className="user-name">{user.name}</div>
+                <div className="user-name">{user.firstName} {user.lastName}</div>
               </td>
               <td>
                 <div className="user-email">{user.email}</div>
@@ -230,19 +198,20 @@ const UserManagement = () => {
                 </span>
               </td>
               <td>
-                <span className={`status-badge ${user.status.toLowerCase()}`}>
-                  {user.status}
+                {/* Corrected code for handling user status */}
+                <span className={`status-badge ${user.status === true || user.status === false ? (user.status ? 'active' : 'suspended') : user.status?.toLowerCase() || 'suspended'}`}>
+                  {user.status === true || user.status === false ? (user.status ? 'Active' : 'Suspended') : user.status || 'Suspended'}
                 </span>
               </td>
               <td>
-                <div className="user-joined">{user.joined}</div>
+                <div className="user-joined">{user.createdAt?.slice(0, 10) || 'N/A'}</div>
               </td>
               <td className="actions">
                 <label className="toggle-switch">
                   <input
                     type="checkbox"
-                    checked={user.status === "Active"}
-                    onChange={() => toggleUserStatus(user.id)}
+                    checked={user.status === "Active" || user.status === true}
+                    onChange={() => toggleUserStatus(user.uid)}
                   />
                   <span className="slider"></span>
                 </label>
@@ -264,7 +233,7 @@ const UserManagement = () => {
         <div className="popup-overlay">
           <div className="confirmation-popup">
             <h3>Confirm Deactivation</h3>
-            <p>Are you sure you want to deactivate {deactivatingUser.name}?</p>
+            <p>Are you sure you want to deactivate {deactivatingUser.firstName} {deactivatingUser.lastName}?</p>
             <div className="popup-buttons">
               <button className="cancel-btn" onClick={cancelDeactivation}>
                 Cancel
@@ -282,7 +251,7 @@ const UserManagement = () => {
         <div className="popup-overlay">
           <div className="confirmation-popup">
             <h3>Confirm Activation</h3>
-            <p>Are you sure you want to activate {activatingUser.name}?</p>
+            <p>Are you sure you want to activate {activatingUser.firstName} {activatingUser.lastName}?</p>
             <div className="popup-buttons">
               <button className="cancel-btn" onClick={cancelActivation}>
                 Cancel
@@ -367,8 +336,8 @@ const UserManagement = () => {
                 value={newUser.role}
                 onChange={handleInputChange}
               >
-                <option value="Customer">Customer</option>
-                <option value="Technician">Technician</option>
+                <option value="user">User</option>
+                <option value="technician">Technician</option>
               </select>
             </div>
             <div className="popup-buttons">
@@ -396,13 +365,23 @@ const UserManagement = () => {
           <div className="edit-user-popup">
             <h3>Edit User</h3>
             <div className="form-group">
-              <label>Full Name:</label>
+              <label>First Name:</label>
               <input
                 type="text"
-                name="name"
-                value={editingUser.name}
+                name="firstName"
+                value={editingUser.firstName}
                 onChange={(e) => handleInputChange(e, true)}
-                placeholder="Enter full name"
+                placeholder="Enter first name"
+              />
+            </div>
+            <div className="form-group">
+              <label>Last Name:</label>
+               <input
+                type="text"
+                name="lastName"
+                value={editingUser.lastName}
+                onChange={(e) => handleInputChange(e, true)}
+                placeholder="Enter last name"
               />
             </div>
             <div className="form-group">
@@ -462,8 +441,8 @@ const UserManagement = () => {
                 value={editingUser.role}
                 onChange={(e) => handleInputChange(e, true)}
               >
-                <option value="Customer">Customer</option>
-                <option value="Technician">Technician</option>
+                <option value="user">User</option>
+                <option value="technician">Technician</option>
               </select>
             </div>
             <div className="popup-buttons">
@@ -476,7 +455,7 @@ const UserManagement = () => {
               <button 
                 className="confirm-btn"
                 onClick={handleEditUser}
-                disabled={!editingUser.name || !editingUser.email || !editingUser.phone}
+                disabled={!editingUser.firstName || !editingUser.email || !editingUser.phone}
               >
                 Save Changes
               </button>

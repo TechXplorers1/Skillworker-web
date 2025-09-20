@@ -1,46 +1,72 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { ref, get, child } from "firebase/database";
+import { database } from '../firebase';
+import BookingConfirmationPopup from '../components/BookingConfirmation';
 
 const BookingPage = () => {
   const { serviceName, technicianId } = useParams();
   const navigate = useNavigate();
 
-  // Retrieve technician data from session storage
-  const storedTechnician = sessionStorage.getItem('selectedTechnician');
-  const technician = storedTechnician ? JSON.parse(storedTechnician) : {
-    // Fallback mock data in case storage is empty (e.g., page refresh)
-    id: technicianId || 'tech1',
-    name: 'TECHY 1',
-    service: serviceName || 'Plumber',
-    rating: '4.8',
-    reviews: '127',
-    experience: '5+ years',
-    distance: '2.3 km away',
-    price: { type: 'hourly', amount: 45 },
-    available: true,
-  };
+  const [technician, setTechnician] = useState(null);
+  const [serviceDetails, setServiceDetails] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Get first letter for avatar
+  useEffect(() => {
+    const fetchAllData = async () => {
+      setLoading(true);
+      const dbRef = ref(database);
+      try {
+        const technicianSnapshot = await get(child(dbRef, `users/${technicianId}`));
+        const servicesSnapshot = await get(child(dbRef, 'services'));
+
+        if (technicianSnapshot.exists() && servicesSnapshot.exists()) {
+          const fetchedTechnician = technicianSnapshot.val();
+          setTechnician(fetchedTechnician);
+
+          const servicesData = servicesSnapshot.val();
+          const serviceEntry = Object.values(servicesData).find(s =>
+            s.title?.toLowerCase()?.replace(/\s/g, '-') === serviceName.toLowerCase()
+          );
+
+          if (serviceEntry) {
+            setServiceDetails(serviceEntry);
+          }
+        } else {
+          console.log("No data available for this technician or services.");
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAllData();
+  }, [technicianId, serviceName]);
+
   const getInitial = (name) => {
-    return name ? name.charAt(0).toUpperCase() : 'T';
+    if (name) {
+      const nameParts = name.split(' ');
+      if (nameParts.length > 1) {
+        return nameParts[0].charAt(0).toUpperCase() + nameParts[1].charAt(0).toUpperCase();
+      }
+      return name.charAt(0).toUpperCase();
+    }
+    return 'T';
   };
 
   const makeDates = () => {
     const today = new Date();
-    const mk = (d, i) => {
-      const label = i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      const sub = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      return { id: i, label, sub, disabled: i === 2 };
-    };
-
     const arr = [];
     for (let i = 0; i < 4; i++) {
       const d = new Date();
       d.setDate(today.getDate() + i);
-      arr.push(mk(d, i));
+      const label = i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const sub = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      arr.push({ id: i, label, sub, disabled: i === 2 });
     }
     return arr;
   };
@@ -48,20 +74,17 @@ const BookingPage = () => {
   const dates = makeDates();
   const [selectedDateId, setSelectedDateId] = useState(dates[0].id);
   const timeSlots = [
-    { label: '9:00 AM', disabled: true },
-    { label: '11:00 AM', disabled: false },
-    { label: '2:00 PM', disabled: false },
-    { label: '4:00 PM', disabled: false },
-    { label: '6:00 PM', disabled: true },
+    { label: 'Morning (8:00 AM - 11:00 AM)', disabled: false },
+    { label: 'Afternoon (12:00 PM - 3:00 PM)', disabled: false },
+    { label: 'Evening (4:00 PM - 7:00 PM)', disabled: false },
   ];
-  const [selectedTime, setSelectedTime] = useState('2:00 PM');
+  const [selectedTime, setSelectedTime] = useState('Afternoon (12:00 PM - 3:00 PM)');
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [showPopup, setShowPopup] = useState(false);
   const [bookingId, setBookingId] = useState('');
 
   const selectedDate = dates.find(d => d.id === selectedDateId);
-  // Calculate subtotal and total dynamically based on technician data
-  const subtotal = (technician.price.type === 'hourly' ? technician.price.amount * 1 : technician.price.amount);
+  const subtotal = (technician?.price?.type === 'hourly' ? technician.price.amount * 1 : technician?.price?.amount) || 0;
   const serviceFee = 5;
   const total = subtotal + serviceFee;
 
@@ -73,74 +96,17 @@ const BookingPage = () => {
 
   const handleBack = () => navigate(-1);
   const handleConfirmBooking = () => {
+    // You would implement the Firebase booking creation logic here
     setShowPopup(true);
   };
   const handleViewBooking = () => {
     navigate('/my-bookings');
   };
 
-  const BookingConfirmationPopup = () => {
-    if (!showPopup) return null;
-
-    return (
-      <div className="popup-overlay">
-        <div className="popup-card">
-          <div className="popup-header">
-            <div className="popup-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM369 209L207 371c-9.4 9.4-24.6 9.4-33.9 0L123 325c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l35.1 35.1L335.1 175.1c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z" /></svg>
-            </div>
-          </div>
-          <div className="popup-content">
-            <h2 className="popup-title">Booking Confirmed!</h2>
-            <p className="popup-message">Your service has been successfully booked. You'll receive a confirmation message shortly.</p>
-
-            <div className="booking-details-card">
-              <div className="booking-details-header">
-                <h3>Booking Details</h3>
-                <span className="booking-status">Confirmed</span>
-              </div>
-              <div className="details-row">
-                <span>Booking ID:</span>
-                <span>{bookingId}</span>
-              </div>
-              <div className="details-row">
-                <span>Service:</span>
-                <span>{technician.service}</span>
-              </div>
-              <div className="details-row">
-                <span>Technician:</span>
-                <span>{technician.name}</span>
-              </div>
-              <div className="details-row">
-                <span>Date & Time:</span>
-                <span>{selectedDate.label}, {selectedTime}</span>
-              </div>
-              <div className="details-row">
-                <span>Estimated Cost:</span>
-                <span>₹{total}</span>
-              </div>
-            </div>
-
-            <div className="what-happens-next-card">
-              <h3>What happens next?</h3>
-              <ul>
-                <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM369 209L207 371c-9.4 9.4-24.6 9.4-33.9 0L123 325c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l35.1 35.1L335.1 175.1c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z" /></svg> Your technician will contact you shortly</li>
-                <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM369 209L207 371c-9.4 9.4-24.6 9.4-33.9 0L123 325c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l35.1 35.1L335.1 175.1c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z" /></svg> You'll receive a SMS/email confirmation</li>
-                <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM369 209L207 371c-9.4 9.4-24.6 9.4-33.9 0L123 325c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l35.1 35.1L335.1 175.1c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z" /></svg> Track your service in real-time</li>
-              </ul>
-            </div>
-
-            <button className="btn primary full-width" onClick={handleViewBooking}>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M304 48a48 48 0 1 0 -96 0 48 48 0 1 0 96 0zm-72 96a72 72 0 1 0 0 144 72 72 0 1 0 0-144zM24 88c-13.3 0-24 10.7-24 24V408c0 13.3 10.7 24 24 24H488c13.3 0 24-10.7 24-24V112c0-13.3-10.7-24-24-24H24zM300 176c0 28.5-12.6 53.6-32 71.3V344c0 13.3-10.7 24-24 24s-24-10.7-24-24V247.3c-19.4-17.7-32-42.8-32-71.3c0-44.2 35.8-80 80-80s80 35.8 80 80z" /></svg>
-              View Booking
-            </button>
-            <p className="popup-caption" onClick={handleBack}>Go back to homepage</p>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
+  if (loading || !technician) {
+    return <div>Loading...</div>;
+  }
+  
   return (
     <div className="booking-page-container">
       <Header />
@@ -337,7 +303,7 @@ const BookingPage = () => {
         }
         .times-grid {
           display: grid;
-          grid-template-columns: repeat(5, 1fr);
+          grid-template-columns: repeat(3, 1fr);
           gap: 10px;
         }
 
@@ -475,163 +441,7 @@ const BookingPage = () => {
         /* --- Help --- */
         .help h3 { margin: 0 0 8px; font-size: 16px; font-weight: 700; color: #111827; }
         .help .help-line { font-size: 14px; color: #374151; padding: 6px 0; }
-
-        /* Booking Confirmation Popup */
-        .popup-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background: rgba(0, 0, 0, 0.5);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 1000;
-          padding: 16px;
-        }
-
-        .popup-card {
-          background: #fff;
-          border-radius: 16px;
-          width: 100%;
-          max-width: 420px;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-          display: flex;
-          flex-direction: column;
-          animation: slideUp .3s ease-out;
-          max-height: 90vh;
-          overflow-y: auto;
-        }
-
-        @keyframes slideUp {
-          from { transform: translateY(50px); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
-        }
-
-        .popup-header {
-          height: 60px;
-          background: #0d6efd;
-          border-top-left-radius: 16px;
-          border-top-right-radius: 16px;
-          position: relative;
-        }
-
-        .popup-icon {
-          position: absolute;
-          top: -30px;
-          left: 50%;
-          transform: translateX(-50%);
-          background: #fff;
-          color: #0d6efd;
-          width: 60px;
-          height: 60px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 28px;
-          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
-        .popup-icon svg { width: 28px; height: 28px; }
-
-        .popup-content {
-          padding: 30px 24px 24px;
-          text-align: center;
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-        }
-
-        .popup-title {
-          font-size: 24px;
-          font-weight: 700;
-          color: #111827;
-          margin-bottom: 4px;
-        }
-
-        .popup-message {
-          font-size: 14px;
-          color: #6b7280;
-          margin-top: 0;
-        }
-
-        .booking-details-card, .what-happens-next-card {
-          background: #f9fafb;
-          border: 1px solid #e5e7eb;
-          border-radius: 10px;
-          padding: 16px;
-          text-align: left;
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-
-        .booking-details-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: 8px;
-        }
-        .booking-details-header h3 {
-          margin: 0;
-          font-size: 16px;
-          font-weight: 700;
-          color: #111827;
-        }
-
-        .booking-status {
-          background: #dcfce7;
-          color: #16a34a;
-          padding: 4px 10px;
-          border-radius: 999px;
-          font-size: 12px;
-          font-weight: 600;
-          border: 1px solid #bbf7d0;
-        }
-
-        .details-row {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          font-size: 14px;
-          color: #374151;
-        }
-        .details-row span:last-child { font-weight: 600; color: #111827; }
-
-        .what-happens-next-card h3 {
-          margin: 0 0 10px;
-          font-size: 16px;
-          font-weight: 700;
-          color: #111827;
-        }
-        .what-happens-next-card ul {
-          list-style: none;
-          margin: 0;
-          padding: 0;
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-        .what-happens-next-card li {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          font-size: 14px;
-          color: #374151;
-        }
-        .what-happens-next-card li svg { width: 14px; height: 14px; color: #16a34a; }
-
-        .btn.full-width { width: 100%; margin-top: 4px; }
-
-        .popup-caption {
-          font-size: 12px;
-          color: #6b7280;
-          margin-top: 8px;
-          text-decoration: underline;
-          cursor: pointer;
-        }
-
+        
         @media (max-width: 1024px) {
           .booking-layout { grid-template-columns: 1fr; }
         }
@@ -644,51 +454,48 @@ const BookingPage = () => {
         `}
       </style>
 
-
       <div className="booking-main-content">
         <div className="page-title">
           <h1>Confirm Your Booking</h1>
           <p>Review the details and confirm your service booking</p>
         </div>
-
         <div className="booking-layout">
           <div className="left-col">
             <div className="card service-details">
               <div className="service-head">
                 <div className="service-title">
                   <h2>Service Details</h2>
-                  <span className="service-badge">{technician.service}</span>
+                  <span className="service-badge">{serviceDetails?.title || 'N/A'}</span>
                 </div>
                 <div className="rate-box">
-                  <div className="rate">₹{technician.price.amount}/{technician.price.type === 'hourly' ? 'hr' : 'day'}</div>
+                  <div className="rate">&#8377;{technician?.price?.amount || 'N/A'}/{technician?.price?.type === 'hourly' ? 'hr' : 'day'}</div>
                   <button className="avail-link" type="button">
-                    {technician.available ? 'Available' : 'Unavailable'}
+                    {technician?.isActive ? 'Available' : 'Unavailable'}
                   </button>
                 </div>
               </div>
               <div className="pro-row">
-                <div className="avatar">{getInitial(technician.name)}</div>
+                <div className="avatar">{getInitial(technician?.firstName + ' ' + technician?.lastName)}</div>
                 <div className="pro-info">
                   <div className="pro-top">
-                    <h3 className="pro-name">{technician.name}</h3>
+                    <h3 className="pro-name">{technician?.firstName || 'TECHY'} {technician?.lastName || '1'}</h3>
                     <div className="stars">
-                      <span className="star">★</span>
-                      <span>{technician.rating}</span>
-                      <span className="muted">({technician.reviews} reviews)</span>
+                      <span className="star">&#9733;</span>
+                      <span>{technician?.averageRating?.toFixed(1) || 'N/A'}</span>
+                      <span className="muted">({technician?.totalRatings || 0} reviews)</span>
                     </div>
                   </div>
                   <div className="pro-meta">
-                    <span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M256 0a256 256 0 1 1 0 512A256 256 0 1 1 256 0zM232 120V256c0 8 4 15.5 10.7 20l96 64c11 7.4 25.5 4.7 32.9-6.3s4.7-25.5-6.3-32.9L280 232V120c0-13.3-10.7-24-24-24s-24 10.7-24 24z" /></svg> {technician.experience} experience</span>
+                    <span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M256 0a256 256 0 1 1 0 512A256 256 0 1 1 256 0zM232 120V256c0 8 4 15.5 10.7 20l96 64c11 7.4 25.5 4.7 32.9-6.3s4.7-25.5-6.3-32.9L280 232V120c0-13.3-10.7-24-24-24s-24 10.7-24 24z" /></svg> {technician?.yearsOfExperience || 'N/A'} experience</span>
                     <span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" fill="currentColor"><path d="M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 128a64 64 0 1 1 0 128 64 64 0 1 1 0-128z" /></svg>
-                      {technician.distance}</span>
+                      {technician?.city}</span>
                   </div>
                 </div>
               </div>
             </div>
-
             <div className="card included">
               <h3>What's included:</h3>
-              <p>Professional {technician.service.toLowerCase()} repair and maintenance service</p>
+              <p>Professional {serviceDetails?.title || 'N/A'} repair and maintenance service</p>
               <ul>
                 <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z" /></svg> Professional consultation and assessment</li>
                 <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z" /></svg> All necessary tools and basic materials</li>
@@ -696,7 +503,6 @@ const BookingPage = () => {
                 <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z" /></svg> Clean-up after service completion</li>
               </ul>
             </div>
-
             <div className="card date-time">
               <h2 className="section-title">Select Date & Time</h2>
               <div className="subsection">
@@ -743,16 +549,15 @@ const BookingPage = () => {
               </div>
             </div>
           </div>
-
           <div className="right-col">
             <div className="card booking-summary">
               <h2 className="section-title">Booking Summary</h2>
               <div className="summary-rows">
                 <div className="row">
-                  <span>{technician.price.type === 'hourly' ? 'Hourly Rate' : 'Daily Rate'}</span>
-                  <span>₹{technician.price.amount}/{technician.price.type === 'hourly' ? 'hr' : 'day'}</span>
+                  <span>{technician?.price?.type === 'hourly' ? 'Hourly Rate' : 'Daily Rate'}</span>
+                  <span>&#8377;{technician?.price?.amount || 'N/A'}/{technician?.price?.type === 'hourly' ? 'hr' : 'day'}</span>
                 </div>
-                {technician.price.type === 'hourly' && (
+                {technician?.price?.type === 'hourly' && (
                   <div className="row">
                     <span>Estimated Hours</span>
                     <span>1 hour</span>
@@ -760,15 +565,15 @@ const BookingPage = () => {
                 )}
                 <div className="row">
                   <span>Subtotal</span>
-                  <span>₹{subtotal}</span>
+                  <span>&#8377;{subtotal}</span>
                 </div>
                 <div className="row">
                   <span>Service Fee</span>
-                  <span>₹{serviceFee}</span>
+                  <span>&#8377;{serviceFee}</span>
                 </div>
                 <div className="row total">
                   <span>Total</span>
-                  <span>₹{total}</span>
+                  <span>&#8377;{total}</span>
                 </div>
               </div>
               <div className="hint">
@@ -805,7 +610,6 @@ const BookingPage = () => {
                 <p>Your satisfaction is guaranteed. If you're not happy with the service, we'll make it right.</p>
               </div>
             </div>
-
             <div className="card help">
               <h3>Need Help?</h3>
               <div className="help-line">
@@ -821,9 +625,18 @@ const BookingPage = () => {
           </div>
         </div>
       </div>
-
       <Footer />
-      <BookingConfirmationPopup />
+      <BookingConfirmationPopup
+        show={showPopup}
+        bookingId={bookingId}
+        technician={technician}
+        serviceDetails={serviceDetails}
+        selectedDate={selectedDate}
+        selectedTime={selectedTime}
+        total={total}
+        onBack={() => navigate('/')}
+        onViewBooking={() => navigate('/my-bookings')}
+      />
     </div>
   );
 };

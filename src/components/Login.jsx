@@ -6,6 +6,9 @@ import {
   AiOutlineMail,
   AiOutlineLock
 } from "react-icons/ai";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { ref, get, child } from "firebase/database";
+import { auth, database } from "../firebase";
 import "../styles/Login.css";
 
 const Login = () => {
@@ -14,14 +17,8 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({});
-  const [showSuccess, setShowSuccess] = useState(false);
-
-  // Predefined credentials
-  const predefinedCredentials = {
-    "naresh@user.com": { password: "Naresh@user1", role: "user", name: "Naresh" },
-    "naresh@tech.com": { password: "Naresh@tech1", role: "technician", name: "Naresh" },
-    "admin@gmail.com": { password: "Admin@sw123", role: "admin", name: "Admin" }
-  };
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleCreateAccount = () => {
     navigate("/signup");
@@ -39,75 +36,59 @@ const Login = () => {
     const newErrors = {};
     if (!email) {
       newErrors.email = "Email is required.";
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
+    } else if (!/\S+@\S+\.\S/.test(email)) {
       newErrors.email = "Email address is invalid.";
     }
 
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     if (!password) {
       newErrors.password = "Password is required.";
-    } else if (!passwordRegex.test(password)) {
-      newErrors.password =
-        "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.";
-    }
+    } 
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setSuccessMessage("");
+    setErrorMessage("");
+
     if (validateForm()) {
-      // Check against predefined credentials
-      if (predefinedCredentials[email] && predefinedCredentials[email].password === password) {
-        // Successful login with predefined credentials
+      try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        const dbRef = ref(database);
+        const snapshot = await get(child(dbRef, `users/${user.uid}`));
+        
+        let userRole = "user"; // Default to a standard user role
+        if (snapshot.exists()) {
+          const userData = snapshot.val();
+          userRole = userData.role;
+        }
+
+        // Store role and login status in local storage for access across the app
+        localStorage.setItem("userRole", userRole);
         localStorage.setItem("isLoggedIn", "true");
-        localStorage.setItem("userEmail", email);
-        localStorage.setItem("userName", predefinedCredentials[email].name);
-        localStorage.setItem("userRole", predefinedCredentials[email].role);
-        
-        console.log("Login successful!", { email, password, role: predefinedCredentials[email].role });
-        setShowSuccess(true);
-        
+
+        setSuccessMessage("Login successful!");
+
         setTimeout(() => {
-          setShowSuccess(false);
-          
-          // Check if there's a redirect URL stored
           const redirectUrl = localStorage.getItem("redirectAfterLogin");
           if (redirectUrl) {
             localStorage.removeItem("redirectAfterLogin");
             navigate(redirectUrl);
-          } else {
-            // If technician, show registration prompt
-            if (predefinedCredentials[email].role === "technician") {
-              navigate("/technician-registration-prompt");
-            } else {
-              navigate("/");
-            }
-          }
-        }, 1500);
-      } else {
-        // For other emails, simulate successful login with user role
-        localStorage.setItem("isLoggedIn", "true");
-        localStorage.setItem("userEmail", email);
-        localStorage.setItem("userName", email.split('@')[0]);
-        localStorage.setItem("userRole", "user");
-        
-        console.log("Login successful!", { email, password, role: "user" });
-        setShowSuccess(true);
-        
-        setTimeout(() => {
-          setShowSuccess(false);
-          
-          // Check if there's a redirect URL stored
-          const redirectUrl = localStorage.getItem("redirectAfterLogin");
-          if (redirectUrl) {
-            localStorage.removeItem("redirectAfterLogin");
-            navigate(redirectUrl);
+          } else if (userRole === "admin") {
+            navigate("/dashboard");
+          } else if (userRole === "technician") {
+            navigate("/service-requests");
           } else {
             navigate("/");
           }
         }, 1500);
+
+      } catch (error) {
+        setErrorMessage("Invalid credentials. Please try again.");
       }
     }
   };
@@ -127,13 +108,8 @@ const Login = () => {
           <p className="signin-text">Sign in to access your account</p>
         </div>
 
-        {/* Predefined credentials for testing */}
-        <div style={{marginBottom: '20px', padding: '10px', backgroundColor: '#f5f5f5', borderRadius: '8px', fontSize: '12px'}}>
-          <p style={{margin: '0 0 5px 0', fontWeight: 'bold'}}>Test Credentials:</p>
-          <p style={{margin: '2px 0'}}>User: naresh@user.com / Naresh@user1</p>
-          <p style={{margin: '2px 0'}}>Technician: naresh@tech.com / Naresh@tech1</p>
-          <p style={{margin: '2px 0'}}>Admin: admin@gmail.com / Admin@sw123</p>
-        </div>
+        {successMessage && <div className="success-popup"><div className="popup-content"><span className="popup-icon">&#10003;</span><p>{successMessage}</p></div></div>}
+        {errorMessage && <p className="error-message">{errorMessage}</p>}
 
         <form className="login-form" onSubmit={handleSubmit}>
           <label htmlFor="email">Email Address</label>
@@ -175,15 +151,6 @@ const Login = () => {
             Sign In
           </button>
         </form>
-
-        {showSuccess && (
-          <div className="success-popup">
-            <div className="popup-content">
-              <span className="popup-icon">&#10003;</span>
-              <p>Login successful!</p>
-            </div>
-          </div>
-        )}
 
         <div className="divider"></div>
 

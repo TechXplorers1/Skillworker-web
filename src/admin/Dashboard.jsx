@@ -7,7 +7,7 @@ import ServiceManagement from "./ServiceManagement";
 import Settings from "./Settings";
 
 import { FaUsers, FaTools, FaCalendarCheck, FaConciergeBell } from "react-icons/fa";
-import { MdSettings, MdAnalytics, MdNotifications, MdSupport } from "react-icons/md";
+import { MdSettings } from "react-icons/md";
 
 import "../styles/Dashboard.css";
 

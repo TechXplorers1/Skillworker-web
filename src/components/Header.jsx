@@ -79,6 +79,9 @@ const Header = () => {
         await update(userRef, { isActive: false });
       }
       await signOut(auth);
+      // Clear local storage on logout
+      localStorage.removeItem("userRole");
+      localStorage.removeItem("isLoggedIn");
       navigate("/");
     } catch (error) {
       console.error("Logout failed:", error);
@@ -87,10 +90,6 @@ const Header = () => {
 
   const handleProfile = () => {
     navigate("/profile");
-  };
-
-  const handleBecomeTechnician = () => {
-    navigate("/become-technician");
   };
 
   const handleNotifications = () => {
@@ -130,9 +129,6 @@ const Header = () => {
     if (userData?.fullName) {
       return userData.fullName.charAt(0).toUpperCase();
     }
-    if (userData?.firstName) {
-      return userData.firstName.charAt(0).toUpperCase();
-    }
     if (user?.email) {
       return user.email.charAt(0).toUpperCase();
     }
@@ -142,9 +138,6 @@ const Header = () => {
   const getUserDisplayName = () => {
     if (userData?.fullName) {
       return userData.fullName;
-    }
-    if (userData?.firstName) {
-      return userData.firstName;
     }
     if (user?.email) {
         return user.email.split('@')[0];
@@ -165,7 +158,6 @@ const Header = () => {
       {user && userData?.role === "technician" && (
         <div className="header-center">
           <div className="tech-status-toggle">
-            {/* <span className="toggle-label">Online</span> */}
             <label className="toggle-switch">
               <input
                 type="checkbox"
@@ -190,13 +182,10 @@ const Header = () => {
               </button>
             )}
 
-            {/* Show Become a Technician for standard users */}
-            {userData?.role === "user" && (
-              <button className="icon-btn" onClick={handleBecomeTechnician}>
-                <MdOutlineHandyman className="technician-icon" />
-                Become a Technician
-              </button>
-            )}
+            {/*
+              NOTE: The "Become a Technician" button for the 'user' role has been removed
+              as per the request to fix the issue where it was appearing for regular users.
+            */}
 
             {/* Show Service Requests for technicians */}
             {userData?.role === "technician" && (

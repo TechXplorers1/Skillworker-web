@@ -24,6 +24,7 @@ const Signup = () => {
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false); // Added for loading state
 
   const handleSignIn = () => {
     navigate("/login");
@@ -70,58 +71,63 @@ const Signup = () => {
     e.preventDefault();
     setSuccessMessage("");
     setErrorMessage("");
-    if (validateForm()) {
-      try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
 
-        const [firstName, ...rest] = fullName.split(' ');
-        const lastName = rest.join(' ');
-        
-        await set(ref(database, 'users/' + user.uid), {
-          firstName: firstName || '',
-          lastName: lastName || '',
-          email: email,
-          role: userRole,
-          status: "Active",
-          createdAt: new Date().toISOString(),
-          uid: user.uid,
-        });
+    if (!validateForm()) {
+      return;
+    }
 
-        localStorage.setItem("userRole", userRole);
-        localStorage.setItem("isLoggedIn", "true");
+    setIsLoading(true); // Disable button on submit
 
-        setSuccessMessage("Account created successfully!");
-        
-        setTimeout(() => {
-          if (userRole === "technician") {
-            navigate("/become-technician");
-          } else {
-            navigate("/");
-          }
-        }, 1500);
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
 
-      } catch (error) {
-        setErrorMessage(error.message);
-      }
+      const [firstName, ...rest] = fullName.split(' ');
+      const lastName = rest.join(' ');
+
+      await set(ref(database, 'users/' + user.uid), {
+        firstName: firstName || '',
+        lastName: lastName || '',
+        fullName: fullName, // Storing full name as well
+        email: email,
+        role: userRole,
+        status: "Active",
+        createdAt: new Date().toISOString(),
+        uid: user.uid,
+      });
+
+      localStorage.setItem("userRole", userRole);
+      localStorage.setItem("isLoggedIn", "true");
+
+      setSuccessMessage("Account created successfully!");
+
+      setTimeout(() => {
+        if (userRole === "technician") {
+          navigate("/become-technician");
+        } else {
+          navigate("/");
+        }
+      }, 1500);
+
+    } catch (error) {
+      setErrorMessage(error.message);
+      setIsLoading(false); // Re-enable button on error
     }
   };
 
   return (
     <div className="signup-container">
       <div className="signup-box">
-        {/* Back Arrow */}
         <div className="back-arrow" onClick={handleBack}>
           &#8592;
         </div>
 
         <div className="logo-section">
-          {/* Logo Path */}
           <div className="logo-icon-path"></div>
           <p className="create-account-text">Create your account</p>
           <p className="join-text">Join SkillWorkers to book services</p>
         </div>
-        
+
         {successMessage && <div className="success-popup"><div className="popup-content"><span className="popup-icon">&#10003;</span><p>{successMessage}</p></div></div>}
         {errorMessage && <p className="error-message">{errorMessage}</p>}
 
@@ -226,11 +232,11 @@ const Signup = () => {
             </div>
           </div>
 
-          <button type="submit" className="create-btn">
-            Create Account
+          <button type="submit" className="create-btn" disabled={isLoading}>
+            {isLoading ? "Creating Account..." : "Create Account"}
           </button>
         </form>
-        
+
         <div className="divider"></div>
 
         <div className="signin-inline">

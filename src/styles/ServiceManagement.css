@@ -49,17 +49,16 @@
   gap: 16px;
 }
 
-/* Updated service-card styling for a single-line layout */
-.service-card {
+/* .service-card {
   background-color: white;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  /* padding: 20px; */
-  display: flex; /* Use flexbox for horizontal layout */
-  align-items: center; /* Vertically align items */
+  padding: 20px;
+  display: flex;
+  align-items: center;
   gap: 20px;
   border: 1px solid #e0e0e0;
-}
+} */
 
 .service-image {
   flex-shrink: 0;
@@ -81,7 +80,6 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 8px;
 }
 
 .placeholder-text {
@@ -95,7 +93,7 @@
   flex: 1;
   display: flex;
   justify-content: space-between;
-  align-items: center; /* Align items to the center */
+  align-items: center;
   gap: 20px;
 }
 
@@ -120,84 +118,14 @@
 
 .service-actions {
   display: flex;
-  flex-direction: row; /* Change to row for horizontal layout */
-  align-items: center; /* Vertically align action buttons */
-  gap: 20px; /* Adjust gap for better spacing */
+  align-items: center;
+  gap: 10px;
   flex-shrink: 0;
 }
 
-.status-section {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.status-label {
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.status-label.active {
-  color: #2e7d32;
-}
-
-.status-label.inactive {
-  color: #c62828;
-}
-
-.toggle-switch {
-  position: relative;
-  display: inline-block;
+/* .action-btn {
   width: 40px;
-  height: 20px;
-}
-
-.toggle-switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #ccc;
-  transition: .3s;
-  border-radius: 20px;
-}
-
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 16px;
-  width: 16px;
-  left: 2px;
-  bottom: 2px;
-  background-color: white;
-  transition: .3s;
-  border-radius: 50%;
-}
-
-input:checked + .slider {
-  background-color: #4caf50;
-}
-
-input:checked + .slider:before {
-  transform: translateX(20px);
-}
-
-.action-buttons {
-  display: flex;
-  gap: 10px;
-}
-
-.action-btn {
-  width: 50px; /* Increased size */
-  height: 50px; /* Increased size */
+  height: 40px;
   border: 1px solid #ddd;
   border-radius: 6px;
   cursor: pointer;
@@ -206,14 +134,14 @@ input:checked + .slider:before {
   justify-content: center;
   background-color: white;
   transition: all 0.2s;
-}
+} */
 
-.action-btn:hover {
+/* .action-btn:hover {
   background-color: #f5f5f5;
   transform: translateY(-1px);
-}
+} */
 
-.edit-btn {
+/* .edit-btn {
   color: #666;
 }
 
@@ -223,16 +151,14 @@ input:checked + .slider:before {
 }
 
 .delete-btn {
-  color: #666; /* Match the edit icon color */
+  color: #666;
 }
 
 .delete-btn:hover {
-  color: #333; /* A neutral color on hover */
-  border-color: #333; /* A neutral border on hover */
-}
+  color: #e74c3c;
+  border-color: #e74c3c;
+} */
 
-
-/* Modal Styles */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -258,7 +184,7 @@ input:checked + .slider:before {
 
 .modal h2 {
   margin-top: 0;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
   color: #333;
   font-weight: 600;
   font-size: 20px;
@@ -301,6 +227,7 @@ input:checked + .slider:before {
 
 .form-group textarea {
   resize: vertical;
+  min-height: 80px;
 }
 
 .image-upload {
@@ -326,7 +253,6 @@ input:checked + .slider:before {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 8px;
 }
 
 .upload-placeholder {
@@ -354,69 +280,32 @@ input:checked + .slider:before {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  margin-top: 16px;
+  margin-top: 24px;
 }
 
-.cancel-btn, .confirm-btn, .delete-btn {
+.cancel-btn {
   padding: 8px 16px;
   border: 1px solid #ddd;
   border-radius: 4px;
   cursor: pointer;
   font-weight: 500;
   font-size: 14px;
-  transition: all 0.2s;
   background-color: white;
   color: #333;
 }
 
-.cancel-btn:hover, .confirm-btn:hover, .delete-btn:hover {
-  background-color: #f5f5f5;
-}
-
 .confirm-btn {
-  border-color: #333;
+  padding: 8px 16px;
+  border: 1px solid #333;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
   background-color: #333;
   color: white;
 }
 
-.confirm-btn:hover {
-  background-color: #555;
-  border-color: #555;
-}
-
-
-
-@media (max-width: 768px) {
-  .service-management {
-    padding: 16px;
-  }
-  
-  .service-header {
-    flex-direction: column;
-    gap: 16px;
-    align-items: flex-start;
-  }
-  
-  .service-card {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-  }
-  
-  .service-content-wrapper {
-    flex-direction: column;
-    width: 100%;
-    gap: 15px;
-  }
-  
-  .service-actions {
-    flex-direction: row;
-    justify-content: space-between;
-    width: 100%;
-    align-items: center;
-  }
-  
-  .modal {
-    padding: 20px;
-  }
+.confirm-btn.delete {
+    background-color: #c82333;
+    border-color: #c82333;
 }

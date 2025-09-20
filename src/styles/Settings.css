@@ -1,15 +1,17 @@
 .settings-container {
   font-family: "Inter", sans-serif;
   background: white;
-  padding: 24px;
+  padding: 24px 32px;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   max-width: 800px;
-  margin: 0 auto;
+  margin: 40px auto;
 }
 
 .settings-header {
   margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .settings-header h1 {
@@ -21,19 +23,19 @@
 
 .settings-section {
   margin-bottom: 32px;
-  padding-bottom: 24px;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.settings-section:last-child {
-  border-bottom: none;
 }
 
 .settings-section h2 {
-  margin: 0 0 16px 0;
+  margin: 0 0 20px 0;
   font-size: 1.125rem;
   font-weight: 500;
   color: #111827;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
 }
 
 .form-group {
@@ -45,6 +47,7 @@
   margin-bottom: 6px;
   font-weight: 500;
   color: #374151;
+  font-size: 14px;
 }
 
 .form-group input {
@@ -53,19 +56,13 @@
   border: 1px solid #d1d5db;
   border-radius: 6px;
   font-size: 14px;
-  font-family: "Inter", sans-serif;
+  box-sizing: border-box;
 }
 
 .form-group input:focus {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.divider {
-  height: 1px;
-  background-color: #e5e7eb;
-  margin: 24px 0;
 }
 
 .save-button {
@@ -78,48 +75,9 @@
   font-weight: 500;
   font-size: 14px;
   margin-top: 16px;
+  float: right;
 }
 
 .save-button:hover {
   background: #374151;
-}
-
-.social-media-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 16px 0;
-}
-
-.social-media-table th {
-  text-align: left;
-  padding: 12px;
-  background-color: #f9fafb;
-  font-weight: 500;
-  color: #374151;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.social-media-table td {
-  padding: 12px;
-  border-bottom: 1px solid #e5e7eb;
-  color: #374151;
-}
-
-.add-social-link {
-  margin-top: 16px;
-}
-
-.add-social-link-button {
-  background: #f9fafb;
-  color: #374151;
-  border: 1px solid #d1d5db;
-  padding: 8px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 14px;
-}
-
-.add-social-link-button:hover {
-  background: #f3f4f6;
 }

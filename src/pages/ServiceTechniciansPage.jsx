@@ -9,7 +9,8 @@ import {
     FaMapMarkerAlt,
     FaFilter
 } from 'react-icons/fa';
-import { ref, get, child } from "firebase/database";
+// Correctly import onValue from firebase/database
+import { ref, get, child, onValue } from "firebase/database";
 import { database } from '../firebase';
 import '../styles/ServiceTechniciansPage.css';
 

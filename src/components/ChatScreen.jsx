@@ -1,107 +1,164 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { FaArrowLeft, FaPaperPlane, FaStar, FaClock, FaMapMarkerAlt, FaSearch, FaExclamationTriangle } from 'react-icons/fa';
+import { FaPaperPlane, FaStar } from 'react-icons/fa';
 import { onAuthStateChanged } from "firebase/auth";
-import { ref, onValue, push, serverTimestamp } from "firebase/database";
+import { ref, onValue, push, serverTimestamp, get, update, increment } from "firebase/database";
 import { auth, database } from "../firebase";
 import '../styles/ChatScreen.css';
 
 const ChatScreen = () => {
   const { chatId } = useParams();
-  const location = useLocation();
   const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  const [chatUser, setChatUser] = useState(null);
+  const [chatPartner, setChatPartner] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [currentUserData, setCurrentUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            setCurrentUser(user);
-            
-            // Determine the chat partner's UID from the chat ID and current user's UID
-            const chatPartnerId = chatId.split('-').find(id => id !== user.uid);
-            
-            // Fetch chat partner's details
-            const userRef = ref(database, `users/${chatPartnerId}`);
-            onValue(userRef, (snapshot) => {
-                if (snapshot.exists()) {
-                    setChatUser(snapshot.val());
-                }
-            });
+      if (!user) {
+        navigate('/login');
+        return;
+      }
+      setCurrentUser(user);
 
-            // Fetch messages for the chat
-            const chatRef = ref(database, `chat/${chatId}`);
-            const unsubscribeChat = onValue(chatRef, (snapshot) => {
-                const chatData = snapshot.val();
-                if (chatData) {
-                    const loadedMessages = Object.keys(chatData).map(key => ({
-                        id: key,
-                        ...chatData[key]
-                    }));
-                    setMessages(loadedMessages);
-                } else {
-                    setMessages([]);
-                }
-            });
-
-            return () => unsubscribeChat();
+      // Fetch current user's full profile data
+      const currentUserRef = ref(database, `users/${user.uid}`);
+      get(currentUserRef).then(snapshot => {
+        if(snapshot.exists()) {
+          setCurrentUserData(snapshot.val());
         }
+      });
+
+      // 1. Find the partner's ID from the userChats node
+      const userChatsRef = ref(database, `userChats/${user.uid}`);
+      get(userChatsRef).then((snapshot) => {
+        if (snapshot.exists()) {
+          const chats = snapshot.val();
+          const chatPartnerId = Object.keys(chats).find(
+            partnerId => chats[partnerId].chatId === chatId
+          );
+
+          if (chatPartnerId) {
+            // 2. Fetch the chat partner's details using the found ID
+            const partnerRef = ref(database, `users/${chatPartnerId}`);
+            onValue(partnerRef, (partnerSnapshot) => {
+              if (partnerSnapshot.exists()) {
+                setChatPartner(partnerSnapshot.val());
+              }
+              // Data is loaded, whether partner exists or not
+              setLoading(false);
+            });
+          } else {
+            // FIX: If no partner is found for this chat, stop loading
+            setLoading(false);
+          }
+        } else {
+            // FIX: If the user has no chats, stop loading
+            setLoading(false);
+        }
+      });
+      
+      // 3. Set up a listener for new messages
+      const chatRef = ref(database, `chat/${chatId}`);
+      const unsubscribeChat = onValue(chatRef, (snapshot) => {
+          const chatData = snapshot.val();
+          if (chatData) {
+              const loadedMessages = Object.values(chatData).map((msg, index) => ({
+                  id: Object.keys(chatData)[index],
+                  ...msg
+              }));
+              loadedMessages.sort((a, b) => a.timestamp - b.timestamp);
+              setMessages(loadedMessages);
+          } else {
+              setMessages([]);
+          }
+      });
+
+      return () => unsubscribeChat();
     });
 
     return () => unsubscribeAuth();
-  }, [chatId]);
-
+  }, [chatId, navigate]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (newMessage.trim() === '' || !currentUser) return;
+    if (newMessage.trim() === '' || !currentUser || !chatPartner || !currentUserData) return;
 
-    const chatRef = ref(database, `chat/${chatId}`);
-    push(chatRef, {
-        senderId: currentUser.uid,
+    const senderId = currentUser.uid;
+    const receiverId = chatPartner.uid;
+    
+    const newMessageObj = {
+        senderId: senderId,
         message: newMessage,
         timestamp: serverTimestamp()
-    });
+    };
+    
+    const updates = {};
+    const messageKey = push(ref(database, `chat/${chatId}`)).key;
+    updates[`/chat/${chatId}/${messageKey}`] = newMessageObj;
+    
+    const senderName = `${currentUserData.firstName || ''} ${currentUserData.lastName || ''}`.trim();
+    const partnerName = `${chatPartner.firstName || ''} ${chatPartner.lastName || ''}`.trim();
+
+    updates[`/userChats/${senderId}/${receiverId}/lastMessage`] = newMessage;
+    updates[`/userChats/${senderId}/${receiverId}/lastMessageTime`] = serverTimestamp();
+    updates[`/userChats/${senderId}/${receiverId}/name`] = partnerName;
+
+    updates[`/userChats/${receiverId}/${senderId}/lastMessage`] = newMessage;
+    updates[`/userChats/${receiverId}/${senderId}/lastMessageTime`] = serverTimestamp();
+    updates[`/userChats/${receiverId}/${senderId}/name`] = senderName;
+    updates[`/userChats/${receiverId}/${senderId}/unreadCount`] = increment(1);
+
+    await update(ref(database), updates);
 
     setNewMessage('');
   };
 
-  const chatTitle = chatUser ? `${chatUser.firstName} ${chatUser.lastName}` : 'User';
-  const chatSubtitle = chatUser ? chatUser.role : 'N/A';
-  const isTechnicianChat = chatUser?.role === 'technician';
-  const bookingDetails = location.state?.bookingDetails || {};
+  // FIX: More robust function to determine the chat title based on loading and data state
+  const getChatTitle = () => {
+    if (loading) {
+      return 'Loading User...';
+    }
+    if (chatPartner) {
+      const name = `${chatPartner.firstName || ''} ${chatPartner.lastName || ''}`.trim();
+      return name || 'Unknown User';
+    }
+    return 'Unknown User';
+  };
+
+  const chatTitle = getChatTitle();
 
   return (
     <div className="chat-screen-container">
       <Header />
-      
       <div className="chat-main-content">
-
         <div className="chat-layout">
-          {/* Left Column - Chat */}
           <div className="chat-column">
             <div className="chat-header">
               <div className="technician-info">
-                <div className="tech-avatar">
-                  {chatTitle.charAt(0).toUpperCase()}
-                </div>
-                <div className="tech-details">
-                  <h3>{chatTitle}</h3>
-                  <div className="online-status">
-                    <div className="status-dot"></div>
-                    <span>Online</span>
+                  <div className="tech-avatar">
+                    {chatTitle.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="tech-details">
+                    <h3>{chatTitle}</h3>
+                    {chatPartner && (
+                      <div className="online-status">
+                        <div className="status-dot"></div>
+                        <span>Online</span>
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
             </div>
 
             <div className="chat-messages">
@@ -112,7 +169,9 @@ const ChatScreen = () => {
                 >
                   <div className="message-content">
                     <p>{message.message}</p>
-                    <span className="message-time">{new Date(message.timestamp).toLocaleTimeString()}</span>
+                    <span className="message-time">
+                      {message.timestamp ? new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                    </span>
                   </div>
                 </div>
               ))}
@@ -133,79 +192,46 @@ const ChatScreen = () => {
             </form>
           </div>
 
-          {/* Right Column - Service Details */}
           <div className="details-column">
-            <div className="service-details-card">
-              <h3>{isTechnicianChat ? 'Service Details' : 'Request Details'}</h3>
+            {chatPartner ? (
+              <div className="service-details-card">
+              <h3>Partner Info</h3>
               <div className="service-info">
-                {bookingDetails && (
-                  <>
-                    <div className="info-row">
-                      <span className="label">Service Type:</span>
-                      <span className="value"><strong>{bookingDetails.service || chatSubtitle}</strong></span>
-                    </div>
-                    {bookingDetails.date && (
-                      <div className="info-row">
-                        <span className="label">Scheduled:</span>
-                        <span className="value">{bookingDetails.date}</span>
-                      </div>
-                    )}
-                    {bookingDetails.time && (
-                      <div className="info-row">
-                        <span className="label">Timing:</span>
-                        <span className="value">{bookingDetails.time}</span>
-                      </div>
-                    )}
-                    {bookingDetails.location && (
-                      <div className="info-row">
-                        <span className="label">Location:</span>
-                        <span className="value">{bookingDetails.location}</span>
-                      </div>
-                    )}
-                    {bookingDetails.price && (
-                      <div className="info-row">
-                        <span className="label">Price:</span>
-                        <span className="value">₹{bookingDetails.price}</span>
-                      </div>
-                    )}
-                  </>
-                )}
-                
-                {!bookingDetails && (
-                  <>
-                    <div className="info-row">
-                      <span className="label">Service Type:</span>
-                      <span className="value"><strong>{chatSubtitle}</strong></span>
-                    </div>
-                    <div className="info-row">
-                      <span className="label">Status:</span>
-                      <span className="value">Active</span>
-                    </div>
-                  </>
-                )}
+                  <div className="info-row">
+                    <span className="label">Name:</span>
+                    <span className="value"><strong>{chatTitle}</strong></span>
+                  </div>
+                   <div className="info-row">
+                    <span className="label">Role:</span>
+                    <span className="value">{chatPartner.role || 'User'}</span>
+                  </div>
               </div>
               
-              {isTechnicianChat && chatUser && (
+              {chatPartner.role === 'technician' && (
                 <div className="technician-qualifications">
                   <h4>Technician Info</h4>
                   <ul>
                     <li>Licensed & Insured</li>
                     <li>Background Verified</li>
-                    <li>{chatUser.yearsOfExperience || '5+ years'} Experience</li>
-                    {chatUser.averageRating && (
+                    {chatPartner.averageRating && (
                       <li>
                         <FaStar style={{color: '#fbbf24', marginRight: '5px'}} /> 
-                        {chatUser.averageRating.toFixed(1)} Rating
+                        {`${chatPartner.averageRating.toFixed(1)} Rating`}
                       </li>
                     )}
                   </ul>
                 </div>
               )}
             </div>
+            ) : !loading && (
+              <div className="service-details-card">
+                <h3>Partner Info</h3>
+                <p>Could not load user details.</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
-      
       <Footer />
     </div>
   );

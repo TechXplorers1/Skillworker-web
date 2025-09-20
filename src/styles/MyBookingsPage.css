@@ -177,24 +177,25 @@
       0 0 18px rgba(37, 99, 235, 0.5),
       0 0 10px rgba(29, 78, 216, 0.4) inset;
 }
+/* cancelled */
+#cancelled:checked ~ .glass-glider1 {
+    transform: translateX(200%);
+    background: linear-gradient(135deg, #b91c1c, #dc2626);
+    box-shadow:
+      0 0 18px rgba(220, 38, 38, 0.5),
+      0 0 10px rgba(185, 28, 28, 0.4) inset;
+}
 
 /* Completed */
 #completed:checked ~ .glass-glider1 {
-    transform: translateX(200%);
+    transform: translateX(300%);
     background: linear-gradient(135deg, #4b5563, #6b7280);
     box-shadow:
       0 0 18px rgba(107, 114, 128, 0.5),
       0 0 10px rgba(75, 85, 99, 0.4) inset;
 }
 
-/* Canceled */
-#canceled:checked ~ .glass-glider1 {
-    transform: translateX(300%);
-    background: linear-gradient(135deg, #b91c1c, #dc2626);
-    box-shadow:
-      0 0 18px rgba(220, 38, 38, 0.5),
-      0 0 10px rgba(185, 28, 28, 0.4) inset;
-}
+
 
 /* Bookings List & Cards */
 .bookings-list {
@@ -274,7 +275,7 @@
   color: #0ea5e9;
 }
 
-.status-badge.canceled {
+.status-badge.cancelled {
   background-color: #fef2f2;
   color: #ef4444;
 }

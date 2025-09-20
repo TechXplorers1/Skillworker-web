@@ -19,6 +19,7 @@ const Login = () => {
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleCreateAccount = () => {
     navigate("/signup");
@@ -42,7 +43,7 @@ const Login = () => {
 
     if (!password) {
       newErrors.password = "Password is required.";
-    } 
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -53,56 +54,49 @@ const Login = () => {
     setSuccessMessage("");
     setErrorMessage("");
 
-    if (validateForm()) {
-      try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
+    if (!validateForm()) {
+      return;
+    }
 
-        const dbRef = ref(database);
-        const snapshot = await get(child(dbRef, `users/${user.uid}`));
-        
-        let userRole = "user"; // Default to a standard user role
-        if (snapshot.exists()) {
-          const userData = snapshot.val();
-          userRole = userData.role;
-        }
+    setIsLoading(true);
 
-        // Store role and login status in local storage for access across the app
-        localStorage.setItem("userRole", userRole);
-        localStorage.setItem("isLoggedIn", "true");
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
 
-        setSuccessMessage("Login successful!");
+      const dbRef = ref(database);
+      const snapshot = await get(child(dbRef, `users/${user.uid}`));
 
-        setTimeout(() => {
-          const redirectUrl = localStorage.getItem("redirectAfterLogin");
-          if (redirectUrl) {
-            localStorage.removeItem("redirectAfterLogin");
-            navigate(redirectUrl);
-          } else if (userRole === "admin") {
-            navigate("/dashboard");
-          } else if (userRole === "technician") {
-            navigate("/service-requests");
-          } else {
-            navigate("/");
-          }
-        }, 1500);
-
-      } catch (error) {
-        setErrorMessage("Invalid credentials. Please try again.");
+      let userRole = "user"; 
+      if (snapshot.exists()) {
+        const userData = snapshot.val();
+        userRole = userData.role;
       }
+
+      localStorage.setItem("userRole", userRole);
+      localStorage.setItem("isLoggedIn", "true");
+
+      setSuccessMessage("Login successful!");
+
+      // FIX: All user roles will now be redirected to the homepage after login.
+      setTimeout(() => {
+        navigate("/");
+      }, 1500);
+
+    } catch (error) {
+      setErrorMessage("Invalid credentials. Please try again.");
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="login-container">
       <div className="login-box">
-        {/* Back Arrow */}
         <div className="back-arrow" onClick={handleBack}>
           &#8592;
         </div>
 
         <div className="logo-section">
-          {/* Logo Path */}
           <div className="logo-icon-path"></div>
           <p className="welcome-text">Welcome back</p>
           <p className="signin-text">Sign in to access your account</p>
@@ -147,8 +141,8 @@ const Login = () => {
             Forgot your password?
           </a>
 
-          <button type="submit" className="create-btn">
-            Sign In
+          <button type="submit" className="create-btn" disabled={isLoading}>
+            {isLoading ? "Signing In..." : "Sign In"}
           </button>
         </form>
 

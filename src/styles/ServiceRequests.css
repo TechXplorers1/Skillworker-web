@@ -153,7 +153,7 @@
 }
 
 /* Canceled */
-#canceled:checked ~ .glass-glider2 {
+#cancelled:checked ~ .glass-glider2 {
     transform: translateX(200%);
     background: linear-gradient(135deg, #b91c1c, #dc2626);
     box-shadow:

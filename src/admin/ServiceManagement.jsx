@@ -1,19 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { ref, onValue, set, push, remove } from "firebase/database";
-import { database } from "../firebase";
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import { database, storage } from "../firebase";
 import '../styles/ServiceManagement.css';
 
 const ServiceManagement = () => {
   const [services, setServices] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showStatusConfirm, setShowStatusConfirm] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState(null);
-  const [serviceToToggle, setServiceToToggle] = useState(null);
-  const [showAddService, setShowAddService] = useState(false);
-  const [newService, setNewService] = useState({
-    name: '',
+  
+  // State for the modal
+  const [showServiceModal, setShowServiceModal] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [serviceFormData, setServiceFormData] = useState({
+    id: '',
+    title: '',
     description: '',
-    image: null
+    image: null,
+    imageFile: null
   });
 
   useEffect(() => {
@@ -26,27 +30,23 @@ const ServiceManagement = () => {
           ...servicesData[key]
         }));
         setServices(fetchedServices);
+      } else {
+        setServices([]);
       }
     });
   }, []);
 
-  const confirmStatusChange = (service) => {
-    setServiceToToggle(service);
-    setShowStatusConfirm(true);
+  const handleOpenAddModal = () => {
+    setIsEditing(false);
+    setServiceFormData({ id: '', title: '', description: '', image: null, imageFile: null });
+    setShowServiceModal(true);
   };
 
-  const toggleServiceStatus = () => {
-    if (serviceToToggle) {
-      const serviceRef = ref(database, `services/${serviceToToggle.id}`);
-      set(serviceRef, { ...serviceToToggle, active: !serviceToToggle.active })
-        .then(() => {
-          setShowStatusConfirm(false);
-          setServiceToToggle(null);
-        })
-        .catch(error => {
-          console.error("Failed to toggle service status:", error);
-        });
-    }
+  // FIX: Function to open the modal for editing
+  const handleOpenEditModal = (service) => {
+    setIsEditing(true);
+    setServiceFormData({ ...service, imageFile: null }); // Reset image file on edit
+    setShowServiceModal(true);
   };
 
   const confirmDelete = (service) => {
@@ -62,59 +62,63 @@ const ServiceManagement = () => {
           setShowDeleteConfirm(false);
           setServiceToDelete(null);
         })
-        .catch(error => {
-          console.error("Failed to delete service:", error);
-        });
+        .catch(error => console.error("Failed to delete service:", error));
     }
   };
 
   const cancelAction = () => {
     setShowDeleteConfirm(false);
-    setShowStatusConfirm(false);
     setServiceToDelete(null);
-    setServiceToToggle(null);
   };
-
-  const handleInputChange = (e) => {
+  
+  const handleModalInputChange = (e) => {
     const { name, value } = e.target;
-    setNewService({
-      ...newService,
-      [name]: value
-    });
+    setServiceFormData({ ...serviceFormData, [name]: value });
   };
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // In a real application, you would upload this file to Firebase Storage
-      // and get a URL. For this example, we'll use a placeholder.
-      console.log("Image uploaded:", file.name);
-      setNewService({
-        ...newService,
-        image: 'https://via.placeholder.com/150'
-      });
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        // We show a preview, and store the file for upload on save
+        setServiceFormData({ ...serviceFormData, image: reader.result, imageFile: file });
+      };
+      reader.readAsDataURL(file);
     }
   };
 
-  const addNewService = () => {
-    if (newService.name && newService.description) {
-      const servicesRef = ref(database, "services");
-      const newServiceKey = push(servicesRef).key;
-      set(ref(database, `services/${newServiceKey}`), {
-        id: newServiceKey,
-        title: newService.name,
-        description: newService.description,
-        active: true,
-        image: newService.image
-      })
-      .then(() => {
-        setNewService({ name: '', description: '', image: null });
-        setShowAddService(false);
-      })
-      .catch(error => {
-        console.error("Failed to add new service:", error);
-      });
+  const handleSaveService = async () => {
+    const { id, title, description, image, imageFile } = serviceFormData;
+    if (!title || !description) {
+      alert("Service name and description are required.");
+      return;
     }
+
+    let imageUrl = image; // Keep existing image URL if no new file is uploaded
+    if (imageFile) {
+      // Upload new image to Firebase Storage
+      const imageStorageRef = storageRef(storage, `services/service_${Date.now()}_${imageFile.name}`);
+      const snapshot = await uploadBytes(imageStorageRef, imageFile);
+      imageUrl = await getDownloadURL(snapshot.ref);
+    }
+    
+    const serviceData = {
+        title,
+        description,
+        image: imageUrl,
+        id: isEditing ? id : push(ref(database, 'services')).key,
+    };
+
+    const serviceRef = ref(database, `services/${serviceData.id}`);
+    
+    set(serviceRef, serviceData)
+    .then(() => {
+        setShowServiceModal(false);
+    })
+    .catch(error => {
+        console.error("Failed to save service:", error);
+    });
   };
 
   return (
@@ -124,10 +128,7 @@ const ServiceManagement = () => {
           <h1>Service Management</h1>
           <p>Create and manage service offerings for customers</p>
         </div>
-        <button
-          className="add-service-btn"
-          onClick={() => setShowAddService(true)}
-        >
+        <button className="add-service-btn" onClick={handleOpenAddModal}>
           Add New Service
         </button>
       </div>
@@ -140,7 +141,7 @@ const ServiceManagement = () => {
                 {service.image ? (
                   <img src={service.image} alt={service.title} className="service-img" />
                 ) : (
-                  <span className="placeholder-text">Service Image</span>
+                  <span className="placeholder-text">No Image</span>
                 )}
               </div>
             </div>
@@ -152,31 +153,13 @@ const ServiceManagement = () => {
               </div>
 
               <div className="service-actions">
-                <div className="status-section">
-                  <span className={`status-label ${service.active ? 'active' : 'inactive'}`}>
-                    {service.active ? 'Active' : 'Inactive'}
-                  </span>
-                  <label className="toggle-switch">
-                    <input
-                      type="checkbox"
-                      checked={service.active}
-                      onChange={() => confirmStatusChange(service)}
-                    />
-                    <span className="slider"></span>
-                  </label>
-                </div>
-
                 <div className="action-buttons">
-                  <button className="action-btn edit-btn" title="Edit">
+                  <button className="action-btn edit-btn" title="Edit" onClick={() => handleOpenEditModal(service)}>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
                     </svg>
                   </button>
-                  <button
-                    className="action-btn delete-btn"
-                    onClick={() => confirmDelete(service)}
-                    title="Delete"
-                  >
+                  <button className="action-btn delete-btn" onClick={() => confirmDelete(service)} title="Delete">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                     </svg>
@@ -188,76 +171,38 @@ const ServiceManagement = () => {
         ))}
       </div>
 
-      {showAddService && (
+      {showServiceModal && (
         <div className="modal-overlay">
           <div className="modal">
-            <h2>Add New Service</h2>
+            <h2>{isEditing ? 'Edit Service' : 'Add New Service'}</h2>
             <div className="form-group">
               <label>Service Image</label>
               <div className="image-upload">
                 <div className="image-preview">
-                  {newService.image ? (
-                    <img src={newService.image} alt="Preview" className="preview-img" />
+                  {serviceFormData.image ? (
+                    <img src={serviceFormData.image} alt="Preview" className="preview-img" />
                   ) : (
-                    <div className="upload-placeholder">
-                      <span>No image selected</span>
-                    </div>
+                    <div className="upload-placeholder"><span>No Image</span></div>
                   )}
                 </div>
                 <label className="upload-btn">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    style={{ display: 'none' }}
-                  />
+                  <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
                   Choose Image
                 </label>
               </div>
             </div>
             <div className="form-group">
               <label>Service Name</label>
-              <input
-                type="text"
-                name="name"
-                value={newService.name}
-                onChange={handleInputChange}
-                placeholder="e.g., Plumber, Electrician"
-              />
+              <input type="text" name="title" value={serviceFormData.title} onChange={handleModalInputChange} placeholder="e.g., Plumber, Electrician" />
             </div>
             <div className="form-group">
               <label>Description</label>
-              <textarea
-                name="description"
-                value={newService.description}
-                onChange={handleInputChange}
-                placeholder="Describe the service..."
-                rows="3"
-              />
+              <textarea name="description" value={serviceFormData.description} onChange={handleModalInputChange} placeholder="Describe the service..." rows="3" />
             </div>
             <div className="modal-actions">
-              <button className="cancel-btn" onClick={() => setShowAddService(false)}>
-                Cancel
-              </button>
-              <button className="confirm-btn" onClick={addNewService}>
-                Add Service
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showStatusConfirm && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <h2>Confirm Status Change</h2>
-            <p>Are you sure you want to {serviceToToggle?.active ? 'deactivate' : 'activate'} the "{serviceToToggle?.title}" service?</p>
-            <div className="modal-actions">
-              <button className="cancel-btn" onClick={cancelAction}>
-                Cancel
-              </button>
-              <button className="confirm-btn" onClick={toggleServiceStatus}>
-                Confirm
+              <button className="cancel-btn" onClick={() => setShowServiceModal(false)}>Cancel</button>
+              <button className="confirm-btn" onClick={handleSaveService}>
+                {isEditing ? 'Save Changes' : 'Add Service'}
               </button>
             </div>
           </div>
@@ -270,12 +215,8 @@ const ServiceManagement = () => {
             <h2>Confirm Deletion</h2>
             <p>Are you sure you want to delete the "{serviceToDelete?.title}" service? This action cannot be undone.</p>
             <div className="modal-actions">
-              <button className="cancel-btn" onClick={cancelAction}>
-                Cancel
-              </button>
-              <button className="delete-btn" onClick={deleteService}>
-                Delete
-              </button>
+              <button className="cancel-btn" onClick={cancelAction}>Cancel</button>
+              <button className="confirm-btn delete" onClick={deleteService}>Delete</button>
             </div>
           </div>
         </div>

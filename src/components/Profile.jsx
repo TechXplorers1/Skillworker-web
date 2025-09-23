@@ -12,6 +12,7 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
   const [allServices, setAllServices] = useState([]);
+  const [showPopup, setShowPopup] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -36,11 +37,19 @@ const Profile = () => {
           data.skills = [];
         }
         setUserData(data);
+
+        // Show popup if user is a technician and profile is incomplete
+        if (data.role === "technician" && !data.isProfileComplete) {
+          setShowPopup(true);
+        }
+
       } else {
         setUserData({
           firstName: "", lastName: "", email: "", phone: "", city: "",
           state: "", zipCode: "", dob: "", gender: "", bio: "",
-          role: "user", availableTimings: "", skills: [], experience: ""
+          role: "user", availableTimings: "", skills: [], experience: "",
+          aadharNumber: "", aadharProofUrl: "", // New fields
+          isProfileComplete: false,
         });
       }
     } catch (error) {
@@ -64,6 +73,15 @@ const Profile = () => {
     });
   };
 
+  const checkProfileCompletion = (data) => {
+    return (
+      data.skills && data.skills.length > 0 &&
+      data.phone && data.phone.length > 0 &&
+      data.aadharNumber && data.aadharNumber.length > 0 &&
+      data.aadharProofUrl && data.experience > 0
+    );
+  };
+
   const handleEditToggle = () => setIsEditing(!isEditing);
 
   const handleInputChange = (e) => {
@@ -71,12 +89,22 @@ const Profile = () => {
     setUserData({ ...userData, [name]: value });
   };
 
+  const handleFileChange = (e) => {
+    // In a real application, you would upload this file to Firebase Storage
+    // and save the URL. For this example, we'll just store the file name.
+    const file = e.target.files[0];
+    if (file) {
+      setUserData({ ...userData, aadharProofUrl: file.name });
+    }
+  };
+
   const handleSave = async () => {
     try {
       const user = auth.currentUser;
       if (user) {
+        const isComplete = checkProfileCompletion(userData);
         const userRef = ref(database, 'users/' + user.uid);
-        await update(userRef, userData);
+        await update(userRef, { ...userData, isProfileComplete: isComplete });
         setShowSuccess(true);
         setIsEditing(false);
         setTimeout(() => setShowSuccess(false), 3000);
@@ -95,6 +123,13 @@ const Profile = () => {
       updatedSkills = currentSkills.filter(id => id !== serviceId);
     }
     setUserData({ ...userData, skills: updatedSkills });
+  };
+
+  const handlePopupAction = (action) => {
+    setShowPopup(false);
+    if (action === 'completeNow') {
+      setIsEditing(true);
+    }
   };
 
   if (loading) {
@@ -124,6 +159,12 @@ const Profile = () => {
     return map;
   }, {});
 
+  // Time slots to be used in the dropdown
+  const timeSlots = [
+    'Morning (8:00 AM - 11:00 AM)',
+    'Afternoon (12:00 PM - 3:00 PM)',
+    'Evening (4:00 PM - 7:00 PM)',
+  ];
 
   return (
     <div className="profile-page-container">
@@ -137,6 +178,17 @@ const Profile = () => {
             </svg>
           </div>
           <span>Profile saved successfully!</span>
+        </div>
+      )}
+      {showPopup && isTechnician && (
+        <div className="modal-backdrop">
+          <div className="modal-content">
+            <p className="modal-text">Please fill up your profile to deliver services.</p>
+            <div className="modal-actions">
+              <button className="btn-primary" onClick={() => handlePopupAction('completeNow')}>Complete now</button>
+              <button className="btn-secondary" onClick={() => handlePopupAction('later')}>I'll do it later</button>
+            </div>
+          </div>
         </div>
       )}
       <div className="profile-box">
@@ -182,7 +234,6 @@ const Profile = () => {
             </div>
         </div>
 
-        {/* RESTORED: Address Information Section */}
         <div className="form-section">
             <h3 className="section-title">Address Information</h3>
             <div className="form-grid">
@@ -202,10 +253,14 @@ const Profile = () => {
                     <label htmlFor="zipCode">ZIP Code</label>
                     <input type="text" id="zipCode" name="zipCode" value={userData.zipCode || ""} onChange={handleInputChange} disabled={!isEditing} />
                 </div>
+                {/* Added Country field with default value set to India */}
+                <div>
+                    <label htmlFor="country">Country</label>
+                    <input type="text" id="country" name="country" value="India" disabled />
+                </div>
             </div>
         </div>
 
-        {/* RESTORED: Bio Section */}
         <div className="form-section">
             <h3 className="section-title">Bio</h3>
             <textarea id="bio" name="bio" value={userData.bio || ""} onChange={handleInputChange} disabled={!isEditing} placeholder="Tell us a little about yourself..."></textarea>
@@ -214,7 +269,6 @@ const Profile = () => {
         {isTechnician && (
             <div className="form-section">
                 <h3 className="section-title">Professional Details</h3>
-                {/* RESTORED: Other Professional Fields */}
                 <div className="form-grid">
                      <div>
                         <label htmlFor="experience">Years of Experience</label>
@@ -222,7 +276,42 @@ const Profile = () => {
                     </div>
                      <div>
                         <label htmlFor="availableTimings">Available Timings</label>
-                        <input type="text" id="availableTimings" name="availableTimings" value={userData.availableTimings || ""} onChange={handleInputChange} disabled={!isEditing} placeholder="e.g., 9 AM - 5 PM"/>
+                        {/* Replaced text input with a dropdown for predefined time slots */}
+                        <select
+                          id="availableTimings"
+                          name="availableTimings"
+                          value={userData.availableTimings || ""}
+                          onChange={handleInputChange}
+                          disabled={!isEditing}
+                        >
+                          <option value="">Select a time slot...</option>
+                          {timeSlots.map((slot) => (
+                            <option key={slot} value={slot}>{slot}</option>
+                          ))}
+                        </select>
+                    </div>
+                     <div>
+                        <label htmlFor="aadharNumber">Aadhar Number</label>
+                        <input
+                          type="text"
+                          id="aadharNumber"
+                          name="aadharNumber"
+                          value={userData.aadharNumber || ""}
+                          onChange={handleInputChange}
+                          disabled={!isEditing}
+                          placeholder="Enter 12-digit Aadhar number"
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="aadharProofUrl">Aadhar Proof</label>
+                        <input
+                          type="file"
+                          id="aadharProofUrl"
+                          name="aadharProofUrl"
+                          onChange={handleFileChange}
+                          disabled={!isEditing}
+                        />
+                         {userData.aadharProofUrl && <p className="file-name">{userData.aadharProofUrl}</p>}
                     </div>
                 </div>
                 

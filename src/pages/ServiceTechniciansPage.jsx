@@ -9,8 +9,7 @@ import {
     FaMapMarkerAlt,
     FaFilter
 } from 'react-icons/fa';
-// Correctly import onValue from firebase/database
-import { ref, get, child, onValue } from "firebase/database";
+import { ref, get, child, onValue, push, set } from "firebase/database";
 import { database } from '../firebase';
 import '../styles/ServiceTechniciansPage.css';
 
@@ -147,11 +146,24 @@ const ServiceTechniciansPage = () => {
                         const serviceId = serviceEntry[0];
                         setServiceDetails(serviceEntry[1]);
 
+                        // Filter technicians based on role and skills
                         const technicians = Object.values(usersData).filter(user =>
                             user.role === 'technician' && user.skills && user.skills.includes(serviceId) && user.isActive
                         );
-                        setAllTechnicians(technicians);
-                        setFilteredTechnicians(technicians);
+
+                        // Ensure technician data reflects the latest profile updates
+                        const updatedTechnicians = technicians.map(tech => {
+                          const latestUserData = usersData[tech.uid];
+                          return {
+                            ...latestUserData,
+                            experience: latestUserData.experience || 'N/A',
+                            city: latestUserData.city || 'N/A',
+                            // Other fields you want to ensure are up-to-date
+                          };
+                        });
+                        
+                        setAllTechnicians(updatedTechnicians);
+                        setFilteredTechnicians(updatedTechnicians);
                     } else {
                         setAllTechnicians([]);
                         setFilteredTechnicians([]);
@@ -227,7 +239,9 @@ const ServiceTechniciansPage = () => {
     const handleBookClick = (technician) => {
         const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
         
+        // Store technician data for booking page
         sessionStorage.setItem('selectedTechnician', JSON.stringify(technician));
+        sessionStorage.setItem('serviceName', serviceName);
 
         if (isLoggedIn) {
             navigate(`/booking/${serviceName}/${technician.uid}`);
@@ -304,18 +318,21 @@ const ServiceTechniciansPage = () => {
                                                 <span>{tech.averageRating ? tech.averageRating.toFixed(1) : 'N/A'} ({tech.totalRatings || 0} reviews)</span>
                                             </div>
                                             <div className="tech-details">
-                                                <p><FaClock /> {tech.yearsOfExperience ? `${tech.yearsOfExperience} years` : 'N/A'} experience</p>
-                                                <p><FaMapMarkerAlt /> {tech.city}</p>
+                                                {/* Updated to display years of experience from user data */}
+                                                <p><FaClock /> {tech.experience ? `${tech.experience} years` : 'N/A'} experience</p>
+                                                {/* Updated to display city from user data */}
+                                                <p><FaMapMarkerAlt /> {tech.city || 'N/A'}</p>
                                                 <p className={`tech-status ${tech.isActive ? 'available' : 'busy'}`}>
                                                     {tech.isActive ? 'Available' : 'Busy'}
                                                 </p>
                                             </div>
                                         </div>
-                                        <div className="tech-price">
+                                        {/* Commented out the pricing section */}
+                                        {/* <div className="tech-price">
                                             ₹{tech.price?.amount || 'N/A'}
                                             <br />
                                             per {tech.price?.type || 'N/A'}
-                                        </div>
+                                        </div> */}
                                     </div>
                                     <div className="tech-actions">
                                         <button className="tech-contact-btn chat-btn" onClick={() => handleChatClick(tech.uid)}>

@@ -87,7 +87,6 @@ const MyBookingsPage = () => {
     fetchTechnicianData();
   }, [allBookings]);
   
-  // FIX 1: Reordered the filters as requested
   const statusFilters = ['Active', 'Accepted', 'Cancelled', 'Completed'];
 
   const filteredBookings = allBookings.filter((booking) => {
@@ -97,15 +96,17 @@ const MyBookingsPage = () => {
     let matchesStatus = false;
     const bookingStatus = booking.status ? booking.status.toLowerCase() : 'pending';
 
+    // FIX: Active tab should only show pending requests
     if (activeFilter === 'Active') {
-      matchesStatus = (bookingStatus === 'accepted' || bookingStatus === 'pending');
+      matchesStatus = (bookingStatus === 'pending'); // Only pending bookings in Active tab
+    } else if (activeFilter === 'Accepted') {
+      matchesStatus = (bookingStatus === 'accepted'); // Only accepted bookings in Accepted tab
     } else {
-       // This logic now correctly handles 'Accepted', 'Cancelled', and 'Completed'
       matchesStatus = activeFilter.toLowerCase() === bookingStatus;
     }
     
     const matchesSearch = searchTerm === '' ||
-      booking.serviceName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (booking.serviceName && booking.serviceName.toLowerCase().includes(searchTerm.toLowerCase())) ||
       technicianName.toLowerCase().includes(searchTerm.toLowerCase());
       
     return matchesStatus && matchesSearch;
@@ -234,8 +235,8 @@ const MyBookingsPage = () => {
                   </div>
 
                   <div className="booking-actions">
-                    {/* FIX 2: Added a cancel button for PENDING bookings (which appear in Active) */}
-                    {status === 'pending' && (
+                    {/* FIX: Active tab (pending) shows Cancel button */}
+                    {status === 'pending' && activeFilter === 'Active' && (
                         <button 
                           className="action-btn1 cancel-btn"
                           onClick={() => handleUpdateBookingStatus(booking.id, 'cancelled')}
@@ -244,7 +245,8 @@ const MyBookingsPage = () => {
                         </button>
                     )}
 
-                    {status === 'accepted' && (
+                    {/* FIX: Accepted tab shows Cancel, Chat, and Complete buttons */}
+                    {status === 'accepted' && activeFilter === 'Accepted' && (
                       <>
                         <button 
                           className="action-btn1 cancel-btn"
@@ -261,7 +263,9 @@ const MyBookingsPage = () => {
                         </button>
                       </>
                     )}
-                     {status === 'completed' && (
+                    
+                    {/* FIX: Completed tab shows Review button */}
+                    {status === 'completed' && activeFilter === 'Completed' && (
                         <button className="action-btn1 review-btn">Leave a Review</button>
                     )}
                   </div>

@@ -22,7 +22,7 @@ const TechnicianManagement = () => {
     role: "technician",
     status: "Active",
     bio: "",
-    availableTimings: "9 AM - 5 PM",
+    availableTimings: "",
     skills: []
   });
   const [servicesData, setServicesData] = useState({});
@@ -43,7 +43,14 @@ const TechnicianManagement = () => {
     });
   }, []);
 
-  const availableSkills = Object.values(servicesData).map(s => s.title);
+  // Create a map for easy lookup of service names by their IDs
+  const servicesMap = Object.entries(servicesData).reduce((map, [id, service]) => {
+    map[id] = service.title;
+    return map;
+  }, {});
+  
+  // Create an array of available skills (service names) for the datalist
+  const availableSkillNames = Object.values(servicesData).map(s => s.title);
 
   const filteredTechnicians = technicians.filter(technician => 
     (technician.firstName + ' ' + technician.lastName).toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -90,7 +97,7 @@ const TechnicianManagement = () => {
   };
   
   const cancelActivation = () => {
-    setActivatingUser(null);
+    setActivatingTechnician(null);
   };
 
   const handleAddTechnician = () => {
@@ -109,13 +116,18 @@ const TechnicianManagement = () => {
       role: "technician",
       status: "Active",
       bio: "",
-      availableTimings: "9 AM - 5 PM",
+      availableTimings: "",
       skills: []
     });
   };
 
   const handleEditTechnician = () => {
     if (editingTechnician) {
+      // Map skill names back to their IDs before saving
+      const updatedSkills = editingTechnician.skills.map(skillName =>
+        Object.keys(servicesData).find(id => servicesData[id].title === skillName) || skillName
+      );
+
       const userRef = ref(database, `users/${editingTechnician.uid}`);
       update(userRef, {
         firstName: editingTechnician.firstName,
@@ -127,7 +139,7 @@ const TechnicianManagement = () => {
         country: editingTechnician.country,
         bio: editingTechnician.bio,
         availableTimings: editingTechnician.availableTimings,
-        skills: editingTechnician.skills,
+        skills: updatedSkills,
       })
       .then(() => {
         setEditingTechnician(null);
@@ -155,7 +167,9 @@ const TechnicianManagement = () => {
   };
 
   const openEditPopup = (technician) => {
-    setEditingTechnician({...technician});
+    // Convert skill IDs to names for editing UI
+    const technicianSkills = technician.skills?.map(skillId => servicesMap[skillId] || skillId) || [];
+    setEditingTechnician({...technician, skills: technicianSkills});
     setNewSkill("");
   };
 
@@ -165,18 +179,19 @@ const TechnicianManagement = () => {
       return;
     }
     
+    const skillName = newSkill.trim();
     if (isEdit && editingTechnician) {
-      if (!editingTechnician.skills.includes(newSkill.trim())) {
+      if (!editingTechnician.skills.includes(skillName)) {
         setEditingTechnician({
           ...editingTechnician,
-          skills: [...editingTechnician.skills, newSkill.trim()]
+          skills: [...editingTechnician.skills, skillName]
         });
       }
     } else {
-      if (!newTechnician.skills.includes(newSkill.trim())) {
+      if (!newTechnician.skills.includes(skillName)) {
         setNewTechnician({
           ...newTechnician,
-          skills: [...newTechnician.skills, newSkill.trim()]
+          skills: [...newTechnician.skills, skillName]
         });
       }
     }
@@ -242,7 +257,6 @@ const TechnicianManagement = () => {
         </thead>
         <tbody>
           {filteredTechnicians.map((technician) => {
-            // Corrected code to handle both string and boolean status
             const statusString = typeof technician.status === 'boolean'
               ? (technician.status ? 'Active' : 'Suspended')
               : technician.status;
@@ -274,8 +288,9 @@ const TechnicianManagement = () => {
                 </td>
                 <td>
                   <div className="skills-container">
-                    {technician.skills?.map((skill, index) => (
-                      <span key={index} className="skill-badge">{availableSkills.find(s => s.id === skill)?.title || skill}</span>
+                    {/* Updated to display skill names instead of IDs */}
+                    {technician.skills?.map((skillId, index) => (
+                      <span key={index} className="skill-badge">{servicesMap[skillId] || skillId}</span>
                     ))}
                   </div>
                 </td>
@@ -440,8 +455,9 @@ const TechnicianManagement = () => {
                   placeholder="Add a skill"
                   list="service-options"
                 />
+                {/* Datalist for available service names */}
                 <datalist id="service-options">
-                  {availableSkills.map((skill, index) => (
+                  {availableSkillNames.map((skill, index) => (
                     <option key={index} value={skill} />
                   ))}
                 </datalist>
@@ -588,8 +604,9 @@ const TechnicianManagement = () => {
                   placeholder="Add a skill"
                   list="service-options"
                 />
+                {/* Datalist for available service names */}
                 <datalist id="service-options">
-                  {availableSkills.map((skill, index) => (
+                  {availableSkillNames.map((skill, index) => (
                     <option key={index} value={skill} />
                   ))}
                 </datalist>

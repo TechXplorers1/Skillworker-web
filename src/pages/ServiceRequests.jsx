@@ -50,7 +50,6 @@ const ServiceRequests = () => {
       if (technicianRequestsData) {
         const requestsList = Object.entries(technicianRequestsData)
           .map(([key, booking]) => {
-            // FIX: Safely handle the status property to prevent crashes
             const status = (booking.status || 'pending').toLowerCase();
             let displayStatus;
 
@@ -58,14 +57,17 @@ const ServiceRequests = () => {
               case 'pending':
                 displayStatus = 'requests';
                 break;
+              case 'accepted':
+                displayStatus = 'accepted';
+                break;
               case 'completed':
                 displayStatus = 'history';
                 break;
               case 'cancelled':
-                displayStatus = 'cancelled'; // Corrected from 'canceled'
+                displayStatus = 'cancelled';
                 break;
               default:
-                displayStatus = status; // 'accepted' will pass through
+                displayStatus = status;
             }
             
             return {
@@ -75,7 +77,7 @@ const ServiceRequests = () => {
             };
           });
         
-        requestsList.sort((a, b) => b.timestamp - a.timestamp); // Sort by timestamp
+        requestsList.sort((a, b) => b.timestamp - a.timestamp);
         setAllRequests(requestsList);
       } else {
         setAllRequests([]);
@@ -90,12 +92,11 @@ const ServiceRequests = () => {
     if (allRequests.length === 0) return;
 
     const fetchUserData = async () => {
-      // FIX: Changed from userId to uid to match the database schema
-      const userIds = [...new Set(allRequests.map(r => r.uid))]; 
+      const userIds = [...new Set(allRequests.map(r => r.uid))];
       const userPromises = userIds.map(id => {
-        if (!id) return null; // Avoid fetching if uid is missing
+        if (!id) return null;
         return get(child(ref(database), `users/${id}`));
-      }).filter(Boolean); // Remove null promises
+      }).filter(Boolean);
       
       const userSnapshots = await Promise.all(userPromises);
       const users = {};
@@ -113,12 +114,10 @@ const ServiceRequests = () => {
   const statusFilters = ['requests', 'accepted', 'cancelled', 'history'];
 
   const filteredRequests = allRequests.filter((request) => {
-    // FIX: Changed from userId to uid
-    const user = usersData[request.uid]; 
+    const user = usersData[request.uid];
     const userName = user ? `${user.firstName} ${user.lastName}` : 'Unknown User';
 
     let matchesStatus = false;
-    // Handle cases where request.displayStatus might be undefined
     if (request.displayStatus) {
         matchesStatus = activeFilter === request.displayStatus;
     }
@@ -134,7 +133,6 @@ const ServiceRequests = () => {
     const requestRef = ref(database, `bookings/${requestId}`);
     const updates = { status: status.toLowerCase() };
 
-    // Add timestamps for accepting or completing
     if (status.toLowerCase() === 'accepted') {
         updates.acceptedAt = new Date().toISOString();
     }
@@ -142,10 +140,16 @@ const ServiceRequests = () => {
         updates.completedAt = new Date().toISOString();
     }
 
+    // Optimistic update
+    setAllRequests(currentRequests =>
+      currentRequests.map(r =>
+        r.id === requestId ? { ...r, ...updates, displayStatus: status.toLowerCase() === 'completed' ? 'history' : status.toLowerCase() } : r
+      )
+    );
+
     update(requestRef, updates)
       .catch(error => console.error(`Failed to update status to ${status}:`, error));
   };
-  
 
   if (loading) {
     return <div className="loading-container">Loading service requests...</div>;
@@ -181,7 +185,6 @@ const ServiceRequests = () => {
                     checked={activeFilter === filter}
                     onChange={() => setActiveFilter(filter)}
                   />
-                   {/* Corrected spelling for display */}
                   <label htmlFor={filter}>{filter === 'cancelled' ? 'Cancelled' : filter.charAt(0).toUpperCase() + filter.slice(1)}</label>
                 </React.Fragment>
             ))}
@@ -238,7 +241,7 @@ const ServiceRequests = () => {
                     
                   <div className="description-row">
                     <span className="description-label">Description:</span>
-                    <span className="request-description">{request.description}</span>
+                    <span className="request-description">{request.description || 'No description provided.'}</span>
                   </div>
 
                   {status === 'pending' && (

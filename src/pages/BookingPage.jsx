@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { ref, get, child } from "firebase/database";
-import { database } from '../firebase';
+import { ref, get, child, push, set } from "firebase/database";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth, database } from '../firebase';
 import BookingConfirmationPopup from '../components/BookingConfirmation';
 
 const BookingPage = () => {
@@ -12,40 +13,49 @@ const BookingPage = () => {
 
   const [technician, setTechnician] = useState(null);
   const [serviceDetails, setServiceDetails] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchAllData = async () => {
-      setLoading(true);
-      const dbRef = ref(database);
-      try {
-        const technicianSnapshot = await get(child(dbRef, `users/${technicianId}`));
-        const servicesSnapshot = await get(child(dbRef, 'services'));
-
-        if (technicianSnapshot.exists() && servicesSnapshot.exists()) {
-          const fetchedTechnician = technicianSnapshot.val();
-          setTechnician(fetchedTechnician);
-
-          const servicesData = servicesSnapshot.val();
-          const serviceEntry = Object.values(servicesData).find(s =>
-            s.title?.toLowerCase()?.replace(/\s/g, '-') === serviceName.toLowerCase()
-          );
-
-          if (serviceEntry) {
-            setServiceDetails(serviceEntry);
-          }
-        } else {
-          console.log("No data available for this technician or services.");
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setCurrentUser(user);
+        fetchAllData();
+      } else {
+        navigate("/login");
       }
-    };
+    });
+    return () => unsubscribeAuth();
+  }, [navigate]);
 
-    fetchAllData();
-  }, [technicianId, serviceName]);
+  const fetchAllData = async () => {
+    setLoading(true);
+    const dbRef = ref(database);
+    try {
+      const technicianSnapshot = await get(child(dbRef, `users/${technicianId}`));
+      const servicesSnapshot = await get(child(dbRef, 'services'));
+
+      if (technicianSnapshot.exists() && servicesSnapshot.exists()) {
+        const fetchedTechnician = technicianSnapshot.val();
+        setTechnician(fetchedTechnician);
+
+        const servicesData = servicesSnapshot.val();
+        const serviceEntry = Object.values(servicesData).find(s =>
+          s.title?.toLowerCase()?.replace(/\s/g, '-') === serviceName.toLowerCase()
+        );
+
+        if (serviceEntry) {
+          setServiceDetails(serviceEntry);
+        }
+      } else {
+        console.log("No data available for this technician or services.");
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getInitial = (name) => {
     if (name) {
@@ -66,7 +76,7 @@ const BookingPage = () => {
       d.setDate(today.getDate() + i);
       const label = i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       const sub = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      arr.push({ id: i, label, sub, disabled: i === 2 });
+      arr.push({ id: i, label, sub, disabled: i === 2, date: d.toISOString().split('T')[0] });
     }
     return arr;
   };
@@ -74,36 +84,76 @@ const BookingPage = () => {
   const dates = makeDates();
   const [selectedDateId, setSelectedDateId] = useState(dates[0].id);
   const timeSlots = [
-    { label: 'Morning (8:00 AM - 11:00 AM)', disabled: false },
-    { label: 'Afternoon (12:00 PM - 3:00 PM)', disabled: false },
-    { label: 'Evening (4:00 PM - 7:00 PM)', disabled: false },
+    { label: 'Morning (8:00 AM - 11:00 AM)', value: '8:00 AM - 11:00 AM' },
+    { label: 'Afternoon (12:00 PM - 3:00 PM)', value: '12:00 PM - 3:00 PM' },
+    { label: 'Evening (4:00 PM - 7:00 PM)', value: '4:00 PM - 7:00 PM' },
   ];
-  const [selectedTime, setSelectedTime] = useState('Afternoon (12:00 PM - 3:00 PM)');
+  const [selectedTime, setSelectedTime] = useState(timeSlots[1].label);
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [showPopup, setShowPopup] = useState(false);
   const [bookingId, setBookingId] = useState('');
+  const [creatingBooking, setCreatingBooking] = useState(false);
 
   const selectedDate = dates.find(d => d.id === selectedDateId);
   const subtotal = (technician?.price?.type === 'hourly' ? technician.price.amount * 1 : technician?.price?.amount) || 0;
   const serviceFee = 5;
   const total = subtotal + serviceFee;
 
-  useEffect(() => {
-    if (showPopup) {
-      setBookingId(Math.random().toString(36).substring(2, 10).toUpperCase());
+  const createBooking = async () => {
+    if (!currentUser || !technician || !serviceDetails) {
+      console.error('Missing required data for booking');
+      return null;
     }
-  }, [showPopup]);
+
+    setCreatingBooking(true);
+    try {
+      const bookingsRef = ref(database, 'bookings');
+      const newBookingRef = push(bookingsRef);
+      
+      const bookingData = {
+        id: newBookingRef.key,
+        uid: currentUser.uid,
+        technicianId: technicianId,
+        serviceName: serviceDetails.title,
+        serviceId: Object.keys(serviceDetails)[0], // Get the service ID
+        date: selectedDate.date,
+        timing: timeSlots.find(t => t.label === selectedTime)?.value || selectedTime,
+        address: 'Address to be provided', // You can add an address field to the form
+        description: specialInstructions || 'No special instructions',
+        price: total,
+        status: 'pending',
+        timestamp: Date.now(),
+        createdAt: new Date().toISOString(),
+        customerName: `${currentUser.displayName || 'Customer'}`,
+        technicianName: `${technician.firstName} ${technician.lastName}`
+      };
+
+      await set(newBookingRef, bookingData);
+      console.log('Booking created successfully:', newBookingRef.key);
+      return newBookingRef.key;
+    } catch (error) {
+      console.error('Error creating booking:', error);
+      return null;
+    } finally {
+      setCreatingBooking(false);
+    }
+  };
+
+  const handleConfirmBooking = async () => {
+    if (creatingBooking) return;
+
+    const bookingKey = await createBooking();
+    if (bookingKey) {
+      setBookingId(bookingKey);
+      setShowPopup(true);
+    } else {
+      alert('Failed to create booking. Please try again.');
+    }
+  };
 
   const handleBack = () => navigate(-1);
-  const handleConfirmBooking = () => {
-    // You would implement the Firebase booking creation logic here
-    setShowPopup(true);
-  };
-  const handleViewBooking = () => {
-    navigate('/my-bookings');
-  };
 
-  if (loading || !technician) {
+  if (loading || !technician || !currentUser) {
     return <div>Loading...</div>;
   }
   
@@ -418,9 +468,11 @@ const BookingPage = () => {
           font-size: 14px;
           cursor: pointer;
           border: 1px solid transparent;
+          transition: all 0.2s;
         }
         .btn.primary { background: #0d6efd; color: #fff; }
         .btn.primary:hover { background: #0b5ed7; }
+        .btn.primary:disabled { background: #6c757d; cursor: not-allowed; }
         .btn.outline { background: #ffffff; border-color: #e5e7eb; color: #111827; }
         .btn.outline:hover { background: #f8fafc; }
         .btn.ghost { background: #f3f4f6; color: #111827; }
@@ -467,12 +519,6 @@ const BookingPage = () => {
                   <h2>Service Details</h2>
                   <span className="service-badge">{serviceDetails?.title || 'N/A'}</span>
                 </div>
-                <div className="rate-box">
-                  <div className="rate">&#8377;{technician?.price?.amount || 'N/A'}/{technician?.price?.type === 'hourly' ? 'hr' : 'day'}</div>
-                  <button className="avail-link" type="button">
-                    {technician?.isActive ? 'Available' : 'Unavailable'}
-                  </button>
-                </div>
               </div>
               <div className="pro-row">
                 <div className="avatar">{getInitial(technician?.firstName + ' ' + technician?.lastName)}</div>
@@ -486,7 +532,7 @@ const BookingPage = () => {
                     </div>
                   </div>
                   <div className="pro-meta">
-                    <span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M256 0a256 256 0 1 1 0 512A256 256 0 1 1 256 0zM232 120V256c0 8 4 15.5 10.7 20l96 64c11 7.4 25.5 4.7 32.9-6.3s4.7-25.5-6.3-32.9L280 232V120c0-13.3-10.7-24-24-24s-24 10.7-24 24z" /></svg> {technician?.yearsOfExperience || 'N/A'} experience</span>
+                    <span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M256 0a256 256 0 1 1 0 512A256 256 0 1 1 256 0zM232 120V256c0 8 4 15.5 10.7 20l96 64c11 7.4 25.5 4.7 32.9-6.3s4.7-25.5-6.3-32.9L280 232V120c0-13.3-10.7-24-24-24s-24 10.7-24 24z" /></svg> {technician?.experience || 'N/A'} experience</span>
                     <span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" fill="currentColor"><path d="M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 128a64 64 0 1 1 0 128 64 64 0 1 1 0-128z" /></svg>
                       {technician?.city}</span>
                   </div>
@@ -529,9 +575,8 @@ const BookingPage = () => {
                     <button
                       key={t.label}
                       type="button"
-                      disabled={t.disabled}
-                      onClick={() => !t.disabled && setSelectedTime(t.label)}
-                      className={['chip time-chip', selectedTime === t.label ? 'selected' : '', t.disabled ? 'disabled' : ''].join(' ')}
+                      onClick={() => setSelectedTime(t.label)}
+                      className={['chip time-chip', selectedTime === t.label ? 'selected' : ''].join(' ')}
                     >
                       {t.label}
                     </button>
@@ -590,9 +635,17 @@ const BookingPage = () => {
                 </div>
               </div>
               <div className="actions">
-                <button className="btn primary" onClick={handleConfirmBooking}>
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V96c0-35.3-28.7-64-64-64H64zM337 209L209 337c-9.4 9.4-24.6 9.4-33.9 0l-64-64c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l47 47L303 175c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z" /></svg>
-                  Confirm Booking
+                <button 
+                  className={`btn primary ${creatingBooking ? 'disabled' : ''}`} 
+                  onClick={handleConfirmBooking}
+                  disabled={creatingBooking}
+                >
+                  {creatingBooking ? 'Creating Booking...' : (
+                    <>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V96c0-35.3-28.7-64-64-64H64zM337 209L209 337c-9.4 9.4-24.6 9.4-33.9 0l-64-64c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l47 47L303 175c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z" /></svg>
+                      Confirm Booking
+                    </>
+                  )}
                 </button>
                 <div className="rowed">
                   <button className="btn outline" onClick={handleBack}>

@@ -2,7 +2,7 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Login from './components/Login';
 import Signup from './components/Signup';
-import Homepage from './pages/HomePage';
+import Homepage from './pages/Homepage';
 import ScrollToTop from './components/ScrollToTop';
 import TechnicianRegistrationPrompt from "./components/TechnicianRegistrationPrompt";
 import ServiceTechniciansPage from "./pages/ServiceTechniciansPage";

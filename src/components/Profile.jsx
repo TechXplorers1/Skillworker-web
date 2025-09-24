@@ -13,6 +13,7 @@ const Profile = () => {
   const [userData, setUserData] = useState(null);
   const [allServices, setAllServices] = useState([]);
   const [showPopup, setShowPopup] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -73,12 +74,51 @@ const Profile = () => {
     });
   };
 
+  const validateFields = (data) => {
+    const errors = {};
+    
+    // Phone validation (10 digits)
+    if (data.phone && !/^\d{10}$/.test(data.phone)) {
+      errors.phone = "Phone number must be exactly 10 digits";
+    }
+    
+    // Aadhar validation (12 digits)
+    if (data.aadharNumber && !/^\d{12}$/.test(data.aadharNumber)) {
+      errors.aadharNumber = "Aadhar number must be exactly 12 digits";
+    }
+    
+    // Experience validation (positive number)
+    if (data.experience && (isNaN(data.experience) || data.experience < 0)) {
+      errors.experience = "Experience must be a positive number";
+    }
+    
+    // Available timings validation
+    if (!data.availableTimings) {
+      errors.availableTimings = "Available timings is required";
+    }
+    
+    // Skills validation (at least one)
+    if (!data.skills || data.skills.length === 0) {
+      errors.skills = "At least one skill must be selected";
+    }
+    
+    // Aadhar proof validation
+    if (!data.aadharProofUrl) {
+      errors.aadharProofUrl = "Aadhar proof is required";
+    }
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const checkProfileCompletion = (data) => {
     return (
       data.skills && data.skills.length > 0 &&
-      data.phone && data.phone.length > 0 &&
-      data.aadharNumber && data.aadharNumber.length > 0 &&
-      data.aadharProofUrl && data.experience > 0
+      data.phone && /^\d{10}$/.test(data.phone) &&
+      data.aadharNumber && /^\d{12}$/.test(data.aadharNumber) &&
+      data.aadharProofUrl && 
+      data.experience && data.experience > 0 &&
+      data.availableTimings
     );
   };
 
@@ -86,19 +126,59 @@ const Profile = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setUserData({ ...userData, [name]: value });
+    
+    // Apply restrictions based on field type
+    let processedValue = value;
+    
+    if (name === 'phone') {
+      // Restrict to 10 digits only
+      processedValue = value.replace(/\D/g, '').slice(0, 10);
+    } else if (name === 'aadharNumber') {
+      // Restrict to 12 digits only
+      processedValue = value.replace(/\D/g, '').slice(0, 12);
+    } else if (name === 'experience') {
+      // Restrict to numbers only and positive values
+      processedValue = value.replace(/\D/g, '');
+      if (processedValue && parseInt(processedValue) < 0) {
+        processedValue = '';
+      }
+    }
+    
+    setUserData({ ...userData, [name]: processedValue });
+    
+    // Clear error when user starts typing
+    if (fieldErrors[name]) {
+      setFieldErrors({ ...fieldErrors, [name]: '' });
+    }
   };
 
   const handleFileChange = (e) => {
-    // In a real application, you would upload this file to Firebase Storage
-    // and save the URL. For this example, we'll just store the file name.
     const file = e.target.files[0];
     if (file) {
+      // Basic file validation
+      const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+      if (!validTypes.includes(file.type)) {
+        setFieldErrors({ ...fieldErrors, aadharProofUrl: 'Please upload a valid file (JPEG, PNG, PDF)' });
+        return;
+      }
+      
+      // File size validation (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        setFieldErrors({ ...fieldErrors, aadharProofUrl: 'File size must be less than 5MB' });
+        return;
+      }
+      
       setUserData({ ...userData, aadharProofUrl: file.name });
+      setFieldErrors({ ...fieldErrors, aadharProofUrl: '' });
     }
   };
 
   const handleSave = async () => {
+    // Validate all fields before saving
+    if (!validateFields(userData)) {
+      return;
+    }
+
     try {
       const user = auth.currentUser;
       if (user) {
@@ -123,6 +203,11 @@ const Profile = () => {
       updatedSkills = currentSkills.filter(id => id !== serviceId);
     }
     setUserData({ ...userData, skills: updatedSkills });
+    
+    // Clear skills error when user selects at least one skill
+    if (updatedSkills.length > 0 && fieldErrors.skills) {
+      setFieldErrors({ ...fieldErrors, skills: '' });
+    }
   };
 
   const handlePopupAction = (action) => {
@@ -165,6 +250,9 @@ const Profile = () => {
     'Afternoon (12:00 PM - 3:00 PM)',
     'Evening (4:00 PM - 7:00 PM)',
   ];
+
+  // Function to render mandatory field indicator
+  const MandatoryIndicator = () => <span className="mandatory-indicator">*</span>;
 
   return (
     <div className="profile-page-container">
@@ -215,8 +303,20 @@ const Profile = () => {
                     <input type="email" id="email" name="email" value={userData.email || ""} onChange={handleInputChange} disabled={!isEditing} />
                 </div>
                 <div>
-                    <label htmlFor="phone">Phone Number</label>
-                    <input type="tel" id="phone" name="phone" value={userData.phone || ""} onChange={handleInputChange} disabled={!isEditing} />
+                    <label htmlFor="phone">
+                      Phone Number <MandatoryIndicator />
+                    </label>
+                    <input 
+                      type="tel" 
+                      id="phone" 
+                      name="phone" 
+                      value={userData.phone || ""} 
+                      onChange={handleInputChange} 
+                      disabled={!isEditing}
+                      maxLength="10"
+                      placeholder="Enter 10-digit phone number"
+                    />
+                    {fieldErrors.phone && <span className="field-error">{fieldErrors.phone}</span>}
                 </div>
                  <div>
                     <label htmlFor="dob">Date of Birth</label>
@@ -253,7 +353,6 @@ const Profile = () => {
                     <label htmlFor="zipCode">ZIP Code</label>
                     <input type="text" id="zipCode" name="zipCode" value={userData.zipCode || ""} onChange={handleInputChange} disabled={!isEditing} />
                 </div>
-                {/* Added Country field with default value set to India */}
                 <div>
                     <label htmlFor="country">Country</label>
                     <input type="text" id="country" name="country" value="India" disabled />
@@ -271,12 +370,25 @@ const Profile = () => {
                 <h3 className="section-title">Professional Details</h3>
                 <div className="form-grid">
                      <div>
-                        <label htmlFor="experience">Years of Experience</label>
-                        <input type="number" id="experience" name="experience" value={userData.experience || ""} onChange={handleInputChange} disabled={!isEditing} />
+                        <label htmlFor="experience">
+                          Years of Experience <MandatoryIndicator />
+                        </label>
+                        <input 
+                          type="number" 
+                          id="experience" 
+                          name="experience" 
+                          value={userData.experience || ""} 
+                          onChange={handleInputChange} 
+                          disabled={!isEditing}
+                          min="0"
+                          placeholder="Enter years of experience"
+                        />
+                        {fieldErrors.experience && <span className="field-error">{fieldErrors.experience}</span>}
                     </div>
                      <div>
-                        <label htmlFor="availableTimings">Available Timings</label>
-                        {/* Replaced text input with a dropdown for predefined time slots */}
+                        <label htmlFor="availableTimings">
+                          Available Timings <MandatoryIndicator />
+                        </label>
                         <select
                           id="availableTimings"
                           name="availableTimings"
@@ -289,9 +401,12 @@ const Profile = () => {
                             <option key={slot} value={slot}>{slot}</option>
                           ))}
                         </select>
+                        {fieldErrors.availableTimings && <span className="field-error">{fieldErrors.availableTimings}</span>}
                     </div>
                      <div>
-                        <label htmlFor="aadharNumber">Aadhar Number</label>
+                        <label htmlFor="aadharNumber">
+                          Aadhar Number <MandatoryIndicator />
+                        </label>
                         <input
                           type="text"
                           id="aadharNumber"
@@ -299,23 +414,31 @@ const Profile = () => {
                           value={userData.aadharNumber || ""}
                           onChange={handleInputChange}
                           disabled={!isEditing}
+                          maxLength="12"
                           placeholder="Enter 12-digit Aadhar number"
                         />
+                        {fieldErrors.aadharNumber && <span className="field-error">{fieldErrors.aadharNumber}</span>}
                     </div>
                     <div>
-                        <label htmlFor="aadharProofUrl">Aadhar Proof</label>
+                        <label htmlFor="aadharProofUrl">
+                          Aadhar Proof <MandatoryIndicator />
+                        </label>
                         <input
                           type="file"
                           id="aadharProofUrl"
                           name="aadharProofUrl"
                           onChange={handleFileChange}
                           disabled={!isEditing}
+                          accept=".jpg,.jpeg,.png,.pdf"
                         />
                          {userData.aadharProofUrl && <p className="file-name">{userData.aadharProofUrl}</p>}
+                         {fieldErrors.aadharProofUrl && <span className="field-error">{fieldErrors.aadharProofUrl}</span>}
                     </div>
                 </div>
                 
-                <h4 className="subsection-title">Skills & Specializations</h4>
+                <h4 className="subsection-title">
+                  Skills & Specializations <MandatoryIndicator />
+                </h4>
                 {isEditing ? (
                   <div className="skills-checkbox-grid">
                     {allServices.map(service => (
@@ -330,6 +453,7 @@ const Profile = () => {
                         <label htmlFor={service.id}>{service.title}</label>
                       </div>
                     ))}
+                    {fieldErrors.skills && <span className="field-error">{fieldErrors.skills}</span>}
                   </div>
                 ) : (
                   <div className="skills-grid">

@@ -24,7 +24,7 @@ const Signup = () => {
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false); // Added for loading state
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSignIn = () => {
     navigate("/login");
@@ -76,7 +76,7 @@ const Signup = () => {
       return;
     }
 
-    setIsLoading(true); // Disable button on submit
+    setIsLoading(true);
 
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -88,12 +88,13 @@ const Signup = () => {
       await set(ref(database, 'users/' + user.uid), {
         firstName: firstName || '',
         lastName: lastName || '',
-        fullName: fullName, // Storing full name as well
+        fullName: fullName,
         email: email,
         role: userRole,
         status: "Active",
         createdAt: new Date().toISOString(),
         uid: user.uid,
+        isProfileComplete: userRole === "technician" ? false : true, // Technicians need to complete profile
       });
 
       localStorage.setItem("userRole", userRole);
@@ -102,8 +103,9 @@ const Signup = () => {
       setSuccessMessage("Account created successfully!");
 
       setTimeout(() => {
+        // Redirect technicians to profile page, regular users to homepage
         if (userRole === "technician") {
-          navigate("/become-technician");
+          navigate("/profile");
         } else {
           navigate("/");
         }
@@ -111,7 +113,7 @@ const Signup = () => {
 
     } catch (error) {
       setErrorMessage(error.message);
-      setIsLoading(false); // Re-enable button on error
+      setIsLoading(false);
     }
   };
 

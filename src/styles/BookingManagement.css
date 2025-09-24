@@ -117,25 +117,71 @@
   background-color: #1a252f;
 }
 
-.details-row {
-  background-color: #f8f9fa;
+/* --- POP-UP STYLES --- */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
 }
 
-.booking-details {
-  padding: 15px;
-  background-color: #f8f9fa;
-  border-left: 4px solid #2c3e50;
+.booking-details-popup {
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 500px;
+  position: relative;
+  animation: fadeIn 0.3s;
 }
 
-.booking-details h3 {
-  margin-top: 0;
+.booking-details-popup h3 {
   color: #2c3e50;
-  font-size: 1.1rem;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 10px;
+  margin-top: 0;
+  margin-bottom: 15px;
 }
 
-.booking-details p {
-  margin: 5px 0;
+.booking-details-popup p {
+  margin: 10px 0;
+  font-size: 1rem;
+  line-height: 1.5;
 }
+
+.booking-details-popup strong {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.close-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #999;
+  transition: color 0.2s;
+}
+
+.close-btn:hover {
+  color: #333;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+/* --- END POP-UP STYLES --- */
 
 @media (max-width: 768px) {
   .filters {
@@ -150,5 +196,9 @@
   .bookings-table th,
   .bookings-table td {
     padding: 8px 10px;
+  }
+
+  .booking-details-popup {
+    padding: 20px;
   }
 }

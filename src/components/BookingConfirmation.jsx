@@ -38,7 +38,7 @@ const BookingConfirmationPopup = ({ show, bookingId, technician, serviceDetails,
             </div>
             <div className="details-row">
               <span>Date & Time:</span>
-              <span>{selectedDate?.label}, {selectedTime}</span>
+            <span>{selectedDate?.label || selectedDate}, {selectedTime}</span>
             </div>
             <div className="details-row">
               <span>Estimated Cost:</span>

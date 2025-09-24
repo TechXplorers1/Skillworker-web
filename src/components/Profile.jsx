@@ -4,7 +4,7 @@ import Footer from "./Footer";
 import { ref, get, update, onValue } from "firebase/database";
 import { auth, database } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import "../styles/Profile.css";
+import "../styles/Profile.css"; 
 
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -14,6 +14,27 @@ const Profile = () => {
   const [allServices, setAllServices] = useState([]);
   const [showPopup, setShowPopup] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
+
+  // --- STATE FOR DATE BLOCKING ---
+  const [showDateBlocker, setShowDateBlocker] = useState(false);
+  const [currentBlockerMonth, setCurrentBlockerMonth] = useState(new Date().getMonth());
+  const [currentBlockerYear, setCurrentBlockerYear] = useState(new Date().getFullYear());
+  // ------------------------------------
+
+  // Helper function to create a date object from YYYY-MM-DD treating it as UTC midnight
+  const createUtcDate = (year, month, day) => {
+    // month is 0-indexed in JS, but we want to use 1-indexed input (month)
+    return new Date(Date.UTC(year, month, day));
+  };
+  
+  const getTodayUtc = () => {
+    const today = new Date();
+    // Get YYYY-MM-DD string from today's local date, then parse it as UTC for comparison
+    const todayStr = today.toISOString().split('T')[0]; 
+    const [year, month, day] = todayStr.split('-').map(Number);
+    return createUtcDate(year, month - 1, day);
+  };
+  
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -37,6 +58,10 @@ const Profile = () => {
         if (!data.skills || !Array.isArray(data.skills)) {
           data.skills = [];
         }
+        // Initialize unavailableDates if it doesn't exist
+        if (!data.unavailableDates) {
+          data.unavailableDates = [];
+        }
         setUserData(data);
 
         // Show popup if user is a technician and profile is incomplete
@@ -49,7 +74,8 @@ const Profile = () => {
           firstName: "", lastName: "", email: "", phone: "", city: "",
           state: "", zipCode: "", dob: "", gender: "", bio: "",
           role: "user", availableTimings: "", skills: [], experience: "",
-          aadharNumber: "", aadharProofUrl: "", // New fields
+          aadharNumber: "", aadharProofUrl: "",
+          unavailableDates: [], // Initialize new field
           isProfileComplete: false,
         });
       }
@@ -217,6 +243,104 @@ const Profile = () => {
     }
   };
 
+  // --- DATE BLOCKER LOGIC ---
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+  
+  const getDaysInMonth = (year, month) => {
+    return new Date(year, month + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (year, month) => {
+    return new Date(year, month, 1).getDay();
+  };
+
+  const generateBlockerCalendar = (year, month) => {
+    const daysInMonth = getDaysInMonth(year, month);
+    const firstDay = getFirstDayOfMonth(year, month);
+    const calendar = [];
+    
+    const todayUtc = getTodayUtc();
+
+    for (let i = 0; i < firstDay; i++) {
+      calendar.push({ day: null, date: null });
+    }
+    
+    for (let day = 1; day <= daysInMonth; day++) {
+      // Use month (0-indexed) for Date.UTC
+      const date = createUtcDate(year, month, day); 
+      const dateStr = date.toISOString().split('T')[0];
+      
+      calendar.push({ 
+        day, 
+        date: dateStr,
+        // Check if date is strictly before today (at UTC midnight)
+        isPast: date < todayUtc, 
+        isBlocked: userData?.unavailableDates?.includes(dateStr)
+      });
+    }
+    return calendar;
+  };
+
+  const navigateBlockerMonth = (direction) => {
+    const today = new Date();
+    let newMonth = currentBlockerMonth;
+    let newYear = currentBlockerYear;
+
+    if (direction === 'prev') {
+      newMonth = currentBlockerMonth === 0 ? 11 : currentBlockerMonth - 1;
+      newYear = currentBlockerMonth === 0 ? currentBlockerYear - 1 : currentBlockerYear;
+
+      // Prevent navigating to a month before the current one (local date check is fine here)
+      if (newYear < today.getFullYear() || (newYear === today.getFullYear() && newMonth < today.getMonth())) {
+        return;
+      }
+    } else {
+      newMonth = currentBlockerMonth === 11 ? 0 : currentBlockerMonth + 1;
+      newYear = currentBlockerMonth === 11 ? currentBlockerYear + 1 : currentBlockerYear;
+    }
+    
+    setCurrentBlockerMonth(newMonth);
+    setCurrentBlockerYear(newYear);
+  };
+
+  const handleDateToggle = (dayInfo) => {
+    // Only allow toggling for valid future/present dates
+    if (!dayInfo.date || dayInfo.isPast) return;
+    
+    const unavailableDates = userData.unavailableDates || [];
+    let updatedDates;
+    
+    // Check if the date is currently blocked
+    if (dayInfo.isBlocked) { 
+      // Unblock date
+      updatedDates = unavailableDates.filter(d => d !== dayInfo.date);
+    } else {
+      // Block date
+      updatedDates = [...unavailableDates, dayInfo.date].sort();
+    }
+    
+    // Optimistic UI update and prepare for save
+    setUserData({ ...userData, unavailableDates: updatedDates });
+  };
+  
+  const handleSaveUnavailableDates = async () => {
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        const userRef = ref(database, 'users/' + user.uid);
+        // Save the updated list of unavailable dates
+        await update(userRef, { unavailableDates: userData.unavailableDates || [] });
+        setShowDateBlocker(false);
+      }
+    } catch (error) {
+      console.error("Error saving unavailable dates:", error);
+    }
+  };
+  // ------------------------------------
+
   if (loading) {
     return (
       <div className="profile-page-container">
@@ -250,6 +374,8 @@ const Profile = () => {
     'Afternoon (12:00 PM - 3:00 PM)',
     'Evening (4:00 PM - 7:00 PM)',
   ];
+  
+  const blockerCalendar = generateBlockerCalendar(currentBlockerYear, currentBlockerMonth);
 
   // Function to render mandatory field indicator
   const MandatoryIndicator = () => <span className="mandatory-indicator">*</span>;
@@ -367,7 +493,15 @@ const Profile = () => {
 
         {isTechnician && (
             <div className="form-section">
-                <h3 className="section-title">Professional Details</h3>
+                <div className="profile-header">
+                  <h3 className="section-title">Professional Details</h3>
+                  <div className="availability-blocker-section">
+                      <button className="block-dates-btn" onClick={() => setShowDateBlocker(true)}>
+                        Set My Unavailable Dates
+                      </button>
+                    </div>
+                </div>
+                
                 <div className="form-grid">
                      <div>
                         <label htmlFor="experience">
@@ -467,6 +601,49 @@ const Profile = () => {
             </div>
         )}
       </div>
+
+      {/* --- DATE BLOCKER MODAL --- */}
+      {showDateBlocker && (
+        <div className="modal-backdrop date-blocker-overlay">
+          <div className="modal-content date-blocker-popup" onClick={(e) => e.stopPropagation()}>
+            <h3 className="section-title">Set Unavailable Dates</h3>
+            <p className="modal-text">Click on a date to toggle your unavailability.</p>
+            <div className="calendar-header">
+              <div className="calendar-nav">
+                <button onClick={() => navigateBlockerMonth('prev')}>&larr; Prev</button>
+                <span className="calendar-month">{monthNames[currentBlockerMonth]} {currentBlockerYear}</span>
+                <button onClick={() => navigateBlockerMonth('next')}>Next &rarr;</button>
+              </div>
+            </div>
+            
+            <div className="calendar-grid">
+              {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+                <div key={day} className="calendar-day-header">{day}</div>
+              ))}
+              
+              {blockerCalendar.map((dayInfo, index) => (
+                <div
+                  key={index}
+                  className={`calendar-day ${
+                    dayInfo.day === null ? 'empty' : 
+                    dayInfo.isPast ? 'past' : 
+                    dayInfo.isBlocked ? 'blocked-date' : ''
+                  }`}
+                  onClick={() => handleDateToggle(dayInfo)}
+                >
+                  {dayInfo.day}
+                </div>
+              ))}
+            </div>
+            
+            <div className="modal-actions">
+              <button className="btn-secondary" onClick={handleSaveUnavailableDates}>Save Dates</button>
+              <button className="btn-primary" onClick={() => setShowDateBlocker(false)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Footer/>
     </div>
   );

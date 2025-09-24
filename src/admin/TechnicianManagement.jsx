@@ -32,7 +32,18 @@ const TechnicianManagement = () => {
     onValue(usersRef, (snapshot) => {
       const users = snapshot.val();
       if (users) {
-        const fetchedTechnicians = Object.values(users).filter(user => user.role === "technician");
+        let fetchedTechnicians = Object.values(users).filter(user => user.role === "technician");
+        
+        // --- ADDED SORTING LOGIC ---
+        // Sort by createdAt in descending order (most recent first)
+        fetchedTechnicians.sort((a, b) => {
+          // Assuming createdAt is a sortable string/timestamp, or default to an empty string if null
+          const dateA = a.createdAt || "";
+          const dateB = b.createdAt || "";
+          return dateB.localeCompare(dateA);
+        });
+        // ---------------------------
+
         setTechnicians(fetchedTechnicians);
       }
     });

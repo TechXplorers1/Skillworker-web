@@ -28,7 +28,18 @@ const UserManagement = () => {
     onValue(usersRef, (snapshot) => {
       const users = snapshot.val();
       if (users) {
-        const fetchedUsers = Object.values(users).filter(user => user.role === "user");
+        let fetchedUsers = Object.values(users).filter(user => user.role === "user");
+        
+        // --- ADDED SORTING LOGIC ---
+        // Sort by createdAt in descending order (most recent first)
+        fetchedUsers.sort((a, b) => {
+          // Assuming createdAt is a sortable string/timestamp, or default to an empty string if null
+          const dateA = a.createdAt || "";
+          const dateB = b.createdAt || "";
+          return dateB.localeCompare(dateA);
+        });
+        // ---------------------------
+
         setUsers(fetchedUsers);
       }
     });

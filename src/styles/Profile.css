@@ -66,6 +66,8 @@
   padding: 25px;
   background-color: #f7f7f9;
   border-radius: 12px;
+  /* Ensure position context for relative elements if needed */
+  position: relative; 
 }
 
 .section-title {
@@ -281,3 +283,121 @@ textarea {
     padding: 25px;
   }
 }
+
+/* --- STYLES FOR AVAILABILITY BLOCKER --- */
+
+.availability-blocker-section {
+  /* Removed flex-end and margin-bottom to move it inline with the section content */
+  margin-top: 15px; 
+}
+
+.block-dates-btn {
+  background-color: #e7f0ff; /* Changed color for better distinction */
+  color: #0d6efd;
+  padding: 8px 15px;
+  border: 1px solid #d6e6ff;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
+  font-size: 14px;
+}
+.block-dates-btn:hover {
+  background-color: #d6e6ff;
+}
+
+/* Modal and Backdrop Styles */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent black */
+  z-index: 1050;
+  /* FIX: Ensure display is flex for centering and visibility */
+  display: flex; 
+  justify-content: center;
+  align-items: center;
+  overflow-y: auto;
+}
+
+.modal-content {
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  max-width: 450px;
+  width: 90%;
+  z-index: 1060;
+}
+
+
+/* Blocker Modal Styles */
+.date-blocker-overlay {
+  z-index: 2000;
+}
+.date-blocker-popup {
+  max-width: 550px;
+  padding: 25px;
+}
+.date-blocker-popup .calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+.date-blocker-popup .calendar-nav {
+  display: flex;
+  gap: 10px;
+}
+.date-blocker-popup .calendar-nav button {
+  background: #f3f4f6;
+  border: none;
+  border-radius: 5px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.date-blocker-popup .calendar-month {
+  font-weight: 700;
+}
+.date-blocker-popup .calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  margin-bottom: 15px;
+  padding: 5px;
+}
+.date-blocker-popup .calendar-day-header {
+  text-align: center;
+  font-weight: 600;
+  font-size: 12px;
+  color: #6b7280;
+  padding: 5px;
+}
+.date-blocker-popup .calendar-day {
+  text-align: center;
+  padding: 10px 5px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+  border: 1px solid #eee;
+}
+.date-blocker-popup .calendar-day:hover:not(.past):not(.empty) {
+  background: #f3f4f6;
+}
+
+.blocked-date {
+  background: #fee2e2 !important; /* light red/pink */
+  color: #b91c1c !important; /* dark red text */
+  border: 1px solid #fca5a5 !important;
+  font-weight: 600;
+}
+.past {
+  color: #d1d5db;
+  cursor: not-allowed;
+  border: 1px solid transparent;
+}
+/* --- END STYLES FOR AVAILABILITY BLOCKER --- */

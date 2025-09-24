@@ -5,9 +5,10 @@ import '../styles/BookingManagement.css';
 
 const BookingsManagement = () => {
   const [activeFilter, setActiveFilter] = useState('All Statuses');
-  const [expandedBookings, setExpandedBookings] = useState({});
   const [bookingsData, setBookingsData] = useState([]);
   const [usersData, setUsersData] = useState({});
+  // New state for handling the pop-up
+  const [selectedBooking, setSelectedBooking] = useState(null); 
   
   useEffect(() => {
     const bookingsRef = ref(database, "bookings");
@@ -18,6 +19,15 @@ const BookingsManagement = () => {
           id: key,
           ...bookings[key]
         }));
+        
+        // Sort by createdAt in descending order (most recent first)
+        fetchedBookings.sort((a, b) => {
+          // Assuming createdAt is a sortable string/timestamp, or default to an empty string if null
+          const dateA = a.createdAt || "";
+          const dateB = b.createdAt || "";
+          return dateB.localeCompare(dateA);
+        });
+
         setBookingsData(fetchedBookings);
       }
     });
@@ -30,11 +40,12 @@ const BookingsManagement = () => {
 
   const statusFilters = ['All Statuses', 'pending', 'accepted', 'completed', 'cancelled'];
 
-  const toggleDetails = (id) => {
-    setExpandedBookings(prev => ({
-      ...prev,
-      [id]: !prev[id]
-    }));
+  const showDetailsPopup = (booking) => {
+    setSelectedBooking(booking);
+  };
+
+  const closeDetailsPopup = () => {
+    setSelectedBooking(null);
   };
 
   const filteredBookings = activeFilter === 'All Statuses' 
@@ -71,51 +82,54 @@ const BookingsManagement = () => {
           </thead>
           <tbody>
             {filteredBookings.map(booking => (
-              <React.Fragment key={booking.id}>
-                <tr>
-                  <td>
-                    <div className="customer-info">
-                      <div className="customer-name">{usersData[booking.uid]?.firstName} {usersData[booking.uid]?.lastName}</div>
-                    </div>
-                  </td>
-                  <td>{usersData[booking.technicianId]?.firstName} {usersData[booking.technicianId]?.lastName}</td>
-                  <td>{booking.serviceName}</td>
-                  <td>
-                    <span className={`status-badge ${booking.status?.toLowerCase()}`}>
-                      {booking.status}
-                    </span>
-                  </td>
-                  <td>{booking.date}</td>
-                  <td>
-                    <button 
-                      className="details-btn"
-                      onClick={() => toggleDetails(booking.id)}
-                    >
-                      {expandedBookings[booking.id] ? 'Hide Details' : 'Show Details'}
-                    </button>
-                  </td>
-                </tr>
-                {expandedBookings[booking.id] && (
-                  <tr className="details-row">
-                    <td colSpan="7">
-                      <div className="booking-details">
-                        <h3>Booking ID: {booking.id}</h3>
-                        <p><strong>Booked on:</strong> {booking.createdAt}</p>
-                        <p><strong>User:</strong> {usersData[booking.uid]?.firstName} {usersData[booking.uid]?.lastName}</p>
-                        <p><strong>Technician:</strong> {usersData[booking.technicianId]?.firstName} {usersData[booking.technicianId]?.lastName}</p>
-                        <p><strong>Service:</strong> {booking.serviceName}</p>
-                        <p><strong>Description:</strong> {booking.description}</p>
-                        <p><strong>Date:</strong> {booking.date}</p>
-                        <p><strong>Timing:</strong> {booking.timing}</p>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </React.Fragment>
+              <tr key={booking.id}>
+                <td>
+                  <div className="customer-info">
+                    <div className="customer-name">{usersData[booking.uid]?.firstName} {usersData[booking.uid]?.lastName}</div>
+                  </div>
+                </td>
+                <td>{usersData[booking.technicianId]?.firstName} {usersData[booking.technicianId]?.lastName}</td>
+                <td>{booking.serviceName}</td>
+                <td>
+                  <span className={`status-badge ${booking.status?.toLowerCase()}`}>
+                    {booking.status}
+                  </span>
+                </td>
+                <td>{booking.date}</td>
+                <td>
+                  <button 
+                    className="details-btn"
+                    onClick={() => showDetailsPopup(booking)}
+                  >
+                    Show Details
+                  </button>
+                </td>
+              </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {/* Booking Details Pop-up (Modal) */}
+      {selectedBooking && (
+        <div className="popup-overlay" onClick={closeDetailsPopup}>
+          <div className="booking-details-popup" onClick={e => e.stopPropagation()}>
+            
+            <button className="close-btn" onClick={closeDetailsPopup}>
+              &times;
+            </button>
+            
+            <h3>Booking ID: {selectedBooking.id}</h3>
+            <p><strong>Booked on:</strong> {selectedBooking.createdAt}</p>
+            <p><strong>User:</strong> {usersData[selectedBooking.uid]?.firstName} {usersData[selectedBooking.uid]?.lastName}</p>
+            <p><strong>Technician:</strong> {usersData[selectedBooking.technicianId]?.firstName} {usersData[selectedBooking.technicianId]?.lastName}</p>
+            <p><strong>Service:</strong> {selectedBooking.serviceName}</p>
+            <p><strong>Description:</strong> {selectedBooking.description}</p>
+            <p><strong>Date:</strong> {selectedBooking.date}</p>
+            <p><strong>Timing:</strong> {selectedBooking.timing}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

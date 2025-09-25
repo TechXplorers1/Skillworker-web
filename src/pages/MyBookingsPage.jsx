@@ -181,6 +181,11 @@ const MyBookingsPage = () => {
               const status = booking.status || 'pending';
               const statusClass = status.toLowerCase();
 
+              // Format full address
+              const fullAddress = technician ? 
+                `${technician.address || ''}, ${technician.city || ''}, ${technician.state || ''} - ${technician.zipCode || ''}`.trim() : 
+                'Address not available';
+
               return (
                 <div key={booking.id} className={`booking-card ${statusClass}`}>
                   <div className="booking-card-header">
@@ -219,9 +224,9 @@ const MyBookingsPage = () => {
                       <FaRegClock className="detail-icon" />
                       <span>{booking.timing}</span>
                     </div>
-                    <div className="detail-row">
+                    <div className="detail-row full-address-row">
                       <FaMapMarkerAlt className="detail-icon" />
-                      <span>{booking.address || 'Address not provided'}</span>
+                      <span className="full-address">{fullAddress}</span>
                     </div>
                     <div className="detail-row">
                       <FaRupeeSign className="detail-icon rupee-icon" />

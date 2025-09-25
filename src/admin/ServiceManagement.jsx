@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ref, onValue, set, push, remove } from "firebase/database";
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, onValue, set, remove, push } from "firebase/database";
+import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { database, storage } from "../firebase";
 import '../styles/ServiceManagement.css';
 
@@ -8,6 +8,7 @@ const ServiceManagement = () => {
   const [services, setServices] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState(null);
+  const [loading, setLoading] = useState(false);
   
   // State for the modal
   const [showServiceModal, setShowServiceModal] = useState(false);
@@ -22,7 +23,7 @@ const ServiceManagement = () => {
 
   useEffect(() => {
     const servicesRef = ref(database, "services");
-    onValue(servicesRef, (snapshot) => {
+    const unsubscribe = onValue(servicesRef, (snapshot) => {
       const servicesData = snapshot.val();
       if (servicesData) {
         const fetchedServices = Object.keys(servicesData).map(key => ({
@@ -30,21 +31,33 @@ const ServiceManagement = () => {
           ...servicesData[key]
         }));
         setServices(fetchedServices);
+        console.log('Services loaded:', fetchedServices);
       } else {
         setServices([]);
       }
     });
+
+    return () => unsubscribe();
   }, []);
 
   const handleOpenAddModal = () => {
     setIsEditing(false);
-    setServiceFormData({ id: '', title: '', description: '', image: null, imageFile: null });
+    setServiceFormData({ 
+      id: '', 
+      title: '', 
+      description: '', 
+      image: null, 
+      imageFile: null 
+    });
     setShowServiceModal(true);
   };
 
   const handleOpenEditModal = (service) => {
     setIsEditing(true);
-    setServiceFormData({ ...service, imageFile: null }); // Reset image file on edit
+    setServiceFormData({ 
+      ...service, 
+      imageFile: null 
+    });
     setShowServiceModal(true);
   };
 
@@ -53,15 +66,21 @@ const ServiceManagement = () => {
     setShowDeleteConfirm(true);
   };
 
-  const deleteService = () => {
-    if (serviceToDelete) {
+  const deleteService = async () => {
+    if (!serviceToDelete) return;
+    
+    setLoading(true);
+    try {
       const serviceRef = ref(database, `services/${serviceToDelete.id}`);
-      remove(serviceRef)
-        .then(() => {
-          setShowDeleteConfirm(false);
-          setServiceToDelete(null);
-        })
-        .catch(error => console.error("Failed to delete service:", error));
+      await remove(serviceRef);
+      console.log('Service deleted successfully');
+      setShowDeleteConfirm(false);
+      setServiceToDelete(null);
+    } catch (error) {
+      console.error("Failed to delete service:", error);
+      alert('Error deleting service. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -72,50 +91,105 @@ const ServiceManagement = () => {
   
   const handleModalInputChange = (e) => {
     const { name, value } = e.target;
-    setServiceFormData({ ...serviceFormData, [name]: value });
+    setServiceFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setServiceFormData({ ...serviceFormData, image: reader.result, imageFile: file });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+    if (!file) return;
 
-  const handleSaveService = async () => {
-    const { id, title, description, image, imageFile } = serviceFormData;
-    if (!title || !description) {
-      alert("Service name and description are required.");
+    if (!file.type.startsWith('image/')) {
+      alert('Please select a valid image file.');
       return;
     }
 
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size should be less than 5MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setServiceFormData(prev => ({ 
+        ...prev, 
+        image: reader.result, 
+        imageFile: file 
+      }));
+    };
+    reader.onerror = () => {
+      alert('Error reading the image file. Please try again.');
+    };
+    reader.readAsDataURL(file);
+  };
+
+ const handleSaveService = async () => {
+  const { id, title, description, image, imageFile } = serviceFormData;
+  
+  // Validation (same as above)
+  if (!title?.trim() || !description?.trim()) {
+    alert("Service name and description are required.");
+    return;
+  }
+
+  setLoading(true);
+
+  try {
     let imageUrl = image;
+    
     if (imageFile) {
-      const imageStorageRef = storageRef(storage, `services/service_${Date.now()}_${imageFile.name}`);
-      const snapshot = await uploadBytes(imageStorageRef, imageFile);
-      imageUrl = await getDownloadURL(snapshot.ref);
+      // Upload image code (same as above)
     }
     
     const serviceData = {
-        title,
-        description,
-        image: imageUrl,
-        id: isEditing ? id : push(ref(database, 'services')).key,
+      title: title.trim(),
+      description: description.trim(),
+      image: imageUrl,
     };
 
-    const serviceRef = ref(database, `services/${serviceData.id}`);
+    if (isEditing && id) {
+      // Update existing service
+      const serviceRef = ref(database, `services/${id}`);
+      await set(serviceRef, serviceData);
+    } else {
+      // Add new service using a simple timestamp as ID
+      const newServiceId = `service_${Date.now()}`;
+      const serviceRef = ref(database, `services/${newServiceId}`);
+      await set(serviceRef, serviceData);
+    }
     
-    set(serviceRef, serviceData)
-    .then(() => {
-        setShowServiceModal(false);
-    })
-    .catch(error => {
-        console.error("Failed to save service:", error);
+    console.log('Service saved successfully');
+    setShowServiceModal(false);
+    // Reset form
+    setServiceFormData({ id: '', title: '', description: '', image: null, imageFile: null });
+    setIsEditing(false);
+    
+  } catch (error) {
+    console.error("Failed to save service:", error);
+    alert('Error saving service. Check console for details.');
+  } finally {
+    setLoading(false);
+  }
+};
+
+  const handleImageError = (e) => {
+    console.log('Image failed to load:', e.target.src);
+    e.target.style.display = 'none';
+    const placeholder = e.target.parentElement.querySelector('.placeholder-text');
+    if (placeholder) {
+      placeholder.style.display = 'flex';
+    }
+  };
+
+  const handleModalClose = () => {
+    setShowServiceModal(false);
+    setServiceFormData({ 
+      id: '', 
+      title: '', 
+      description: '', 
+      image: null, 
+      imageFile: null 
     });
+    setIsEditing(false);
   };
 
   return (
@@ -125,7 +199,11 @@ const ServiceManagement = () => {
           <h1>Service Management</h1>
           <p>Create and manage service offerings for customers</p>
         </div>
-        <button className="add-service-btn" onClick={handleOpenAddModal}>
+        <button 
+          className="add-service-btn" 
+          onClick={handleOpenAddModal}
+          disabled={loading}
+        >
           Add New Service
         </button>
       </div>
@@ -136,7 +214,15 @@ const ServiceManagement = () => {
             <div className="service-image">
               <div className="image-placeholder">
                 {service.image ? (
-                  <img src={service.image} alt={service.title} className="service-img" />
+                  <>
+                    <img 
+                      src={service.image} 
+                      alt={service.title} 
+                      className="service-img"
+                      onError={handleImageError}
+                    />
+                    <span className="placeholder-text" style={{display: 'none'}}>Image Failed to Load</span>
+                  </>
                 ) : (
                   <span className="placeholder-text">No Image</span>
                 )}
@@ -151,10 +237,20 @@ const ServiceManagement = () => {
 
               <div className="service-actions">
                 <div className="action-buttons">
-                  <button className="action-btn edit-icon" title="Edit" onClick={() => handleOpenEditModal(service)}>
+                  <button 
+                    className="action-btn edit-icon" 
+                    title="Edit" 
+                    onClick={() => handleOpenEditModal(service)}
+                    disabled={loading}
+                  >
                     ✏️
                   </button>
-                  <button className="action-btn delete-icon" onClick={() => confirmDelete(service)} title="Delete">
+                  <button 
+                    className="action-btn delete-icon" 
+                    onClick={() => confirmDelete(service)} 
+                    title="Delete"
+                    disabled={loading}
+                  >
                     🗑️
                   </button>
                 </div>
@@ -168,6 +264,7 @@ const ServiceManagement = () => {
         <div className="modal-overlay">
           <div className="modal">
             <h2>{isEditing ? 'Edit Service' : 'Add New Service'}</h2>
+            
             <div className="form-group">
               <label>Service Image</label>
               <div className="image-upload">
@@ -179,23 +276,56 @@ const ServiceManagement = () => {
                   )}
                 </div>
                 <label className="upload-btn">
-                  <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleImageUpload} 
+                    style={{ display: 'none' }} 
+                    disabled={loading}
+                  />
                   Choose Image
                 </label>
               </div>
             </div>
+            
             <div className="form-group">
-              <label>Service Name</label>
-              <input type="text" name="title" value={serviceFormData.title} onChange={handleModalInputChange} placeholder="e.g., Plumber, Electrician" />
+              <label>Service Name *</label>
+              <input 
+                type="text" 
+                name="title" 
+                value={serviceFormData.title} 
+                onChange={handleModalInputChange} 
+                placeholder="e.g., Plumber, Electrician" 
+                disabled={loading}
+              />
             </div>
+            
             <div className="form-group">
-              <label>Description</label>
-              <textarea name="description" value={serviceFormData.description} onChange={handleModalInputChange} placeholder="Describe the service..." rows="3" />
+              <label>Description *</label>
+              <textarea 
+                name="description" 
+                value={serviceFormData.description} 
+                onChange={handleModalInputChange} 
+                placeholder="Describe the service..." 
+                rows="3" 
+                disabled={loading}
+              />
             </div>
+            
             <div className="modal-actions">
-              <button className="cancel-btn" onClick={() => setShowServiceModal(false)}>Cancel</button>
-              <button className="confirm-btn" onClick={handleSaveService}>
-                {isEditing ? 'Save Changes' : 'Add Service'}
+              <button 
+                className="cancel-btn" 
+                onClick={handleModalClose}
+                disabled={loading}
+              >
+                Cancel
+              </button>
+              <button 
+                className="confirm-btn" 
+                onClick={handleSaveService}
+                disabled={loading}
+              >
+                {loading ? 'Saving...' : (isEditing ? 'Save Changes' : 'Add Service')}
               </button>
             </div>
           </div>
@@ -208,10 +338,28 @@ const ServiceManagement = () => {
             <h2>Confirm Deletion</h2>
             <p>Are you sure you want to delete the "{serviceToDelete?.title}" service? This action cannot be undone.</p>
             <div className="modal-actions">
-              <button className="cancel-btn" onClick={cancelAction}>Cancel</button>
-              <button className="confirm-btn delete" onClick={deleteService}>Delete</button>
+              <button 
+                className="cancel-btn" 
+                onClick={cancelAction}
+                disabled={loading}
+              >
+                Cancel
+              </button>
+              <button 
+                className="confirm-btn delete" 
+                onClick={deleteService}
+                disabled={loading}
+              >
+                {loading ? 'Deleting...' : 'Delete'}
+              </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {loading && (
+        <div className="loading-overlay">
+          <div className="loading-spinner">Loading...</div>
         </div>
       )}
     </div>

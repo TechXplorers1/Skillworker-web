@@ -4,6 +4,7 @@ import Footer from "./Footer";
 import { ref, get, update, onValue } from "firebase/database";
 import { auth, database } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import { FaPencilAlt, FaTimes, FaSave, FaEdit } from "react-icons/fa"; // Import icons
 import "../styles/Profile.css"; 
 
 const Profile = () => {
@@ -12,7 +13,7 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
   const [allServices, setAllServices] = useState([]);
-  const [showPopup, setShowPopup] = useState(false);
+  // const [showPopup, setShowPopup] = useState(false); // Removed: Popup handled on Home page
   const [fieldErrors, setFieldErrors] = useState({});
 
   // --- STATE FOR DATE BLOCKING ---
@@ -64,15 +65,16 @@ const Profile = () => {
         }
         setUserData(data);
 
-        // Show popup if user is a technician and profile is incomplete
-        if (data.role === "technician" && !data.isProfileComplete) {
-          setShowPopup(true);
-        }
+        // NOTE: Profile popup logic REMOVED from here.
+        // if (data.role === "technician" && !data.isProfileComplete) {
+        //   setShowPopup(true);
+        // }
 
       } else {
         setUserData({
-          firstName: "", lastName: "", email: "", phone: "", city: "",
-          state: "", zipCode: "", dob: "", gender: "", bio: "",
+          firstName: "", lastName: "", email: "", phone: "", 
+          address: "", city: "", state: "", zipCode: "",
+          dob: "", gender: "", bio: "",
           role: "user", availableTimings: "", skills: [], experience: "",
           aadharNumber: "", aadharProofUrl: "",
           unavailableDates: [], // Initialize new field
@@ -108,6 +110,26 @@ const Profile = () => {
       errors.phone = "Phone number must be exactly 10 digits";
     }
     
+    // Address validation (mandatory)
+    if (!data.address || data.address.trim() === "") {
+      errors.address = "Street address is required";
+    }
+    
+    // City validation (mandatory)
+    if (!data.city || data.city.trim() === "") {
+      errors.city = "City is required";
+    }
+    
+    // State validation (mandatory)
+    if (!data.state || data.state.trim() === "") {
+      errors.state = "State is required";
+    }
+    
+    // ZIP Code validation (mandatory, 6 digits)
+    if (!data.zipCode || !/^\d{6}$/.test(data.zipCode)) {
+      errors.zipCode = "ZIP code must be exactly 6 digits";
+    }
+    
     // Aadhar validation (12 digits)
     if (data.aadharNumber && !/^\d{12}$/.test(data.aadharNumber)) {
       errors.aadharNumber = "Aadhar number must be exactly 12 digits";
@@ -141,6 +163,10 @@ const Profile = () => {
     return (
       data.skills && data.skills.length > 0 &&
       data.phone && /^\d{10}$/.test(data.phone) &&
+      data.address && data.address.trim() !== "" &&
+      data.city && data.city.trim() !== "" &&
+      data.state && data.state.trim() !== "" &&
+      data.zipCode && /^\d{6}$/.test(data.zipCode) &&
       data.aadharNumber && /^\d{12}$/.test(data.aadharNumber) &&
       data.aadharProofUrl && 
       data.experience && data.experience > 0 &&
@@ -149,6 +175,13 @@ const Profile = () => {
   };
 
   const handleEditToggle = () => setIsEditing(!isEditing);
+  
+  // const handlePopupAction = (action) => { // Removed: Popup handled on Home page
+  //   // setShowPopup(false); 
+  //   // if (action === 'completeNow') {
+  //   //   setIsEditing(true);
+  //   // }
+  // };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -159,6 +192,9 @@ const Profile = () => {
     if (name === 'phone') {
       // Restrict to 10 digits only
       processedValue = value.replace(/\D/g, '').slice(0, 10);
+    } else if (name === 'zipCode') {
+      // Restrict to 6 digits only
+      processedValue = value.replace(/\D/g, '').slice(0, 6);
     } else if (name === 'aadharNumber') {
       // Restrict to 12 digits only
       processedValue = value.replace(/\D/g, '').slice(0, 12);
@@ -236,12 +272,6 @@ const Profile = () => {
     }
   };
 
-  const handlePopupAction = (action) => {
-    setShowPopup(false);
-    if (action === 'completeNow') {
-      setIsEditing(true);
-    }
-  };
 
   // --- DATE BLOCKER LOGIC ---
   const monthNames = [
@@ -394,22 +424,28 @@ const Profile = () => {
           <span>Profile saved successfully!</span>
         </div>
       )}
-      {showPopup && isTechnician && (
-        <div className="modal-backdrop">
-          <div className="modal-content">
-            <p className="modal-text">Please fill up your profile to deliver services.</p>
-            <div className="modal-actions">
-              <button className="btn-primary" onClick={() => handlePopupAction('completeNow')}>Complete now</button>
-              <button className="btn-secondary" onClick={() => handlePopupAction('later')}>I'll do it later</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Removed technician profile popup from here */}
+      
       <div className="profile-box">
         <div className="profile-header">
             <h1 className="main-title">Profile Management</h1>
-            <button className={`action-btn ${isEditing ? 'save' : 'edit'}`} onClick={isEditing ? handleSave : handleEditToggle}>
-                {isEditing ? "Save Changes" : "Edit Profile"}
+            {/* Action button at top-right for Edit/Cancel */}
+            <button 
+              className={`action-btn ${isEditing ? 'cancel' : 'edit-icon'}`} 
+              onClick={handleEditToggle}
+              title={isEditing ? "Cancel Editing" : "Edit Profile"}
+            >
+                {isEditing ? (
+                  <>
+                    <FaTimes />
+                    <span className="btn-text">&nbsp;Cancel</span>
+                  </>
+                ) : (
+                  <>
+                    <FaEdit />
+                    <span className="btn-text">&nbsp;Edit Profile</span>
+                  </>
+                )}
             </button>
         </div>
 
@@ -461,23 +497,68 @@ const Profile = () => {
         </div>
 
         <div className="form-section">
-            <h3 className="section-title">Address Information</h3>
+            <h3 className="section-title">Address Information <MandatoryIndicator /></h3>
             <div className="form-grid">
                 <div>
-                    <label htmlFor="address">Street Address</label>
-                    <input type="text" id="address" name="address" value={userData.address || ""} onChange={handleInputChange} disabled={!isEditing} />
+                    <label htmlFor="address">
+                      Street Address <MandatoryIndicator />
+                    </label>
+                    <input 
+                      type="text" 
+                      id="address" 
+                      name="address" 
+                      value={userData.address || ""} 
+                      onChange={handleInputChange} 
+                      disabled={!isEditing} 
+                      placeholder="Enter your street address"
+                    />
+                    {fieldErrors.address && <span className="field-error">{fieldErrors.address}</span>}
                 </div>
                  <div>
-                    <label htmlFor="city">City</label>
-                    <input type="text" id="city" name="city" value={userData.city || ""} onChange={handleInputChange} disabled={!isEditing} />
+                    <label htmlFor="city">
+                      City <MandatoryIndicator />
+                    </label>
+                    <input 
+                      type="text" 
+                      id="city" 
+                      name="city" 
+                      value={userData.city || ""} 
+                      onChange={handleInputChange} 
+                      disabled={!isEditing} 
+                      placeholder="Enter your city"
+                    />
+                    {fieldErrors.city && <span className="field-error">{fieldErrors.city}</span>}
                 </div>
                 <div>
-                    <label htmlFor="state">State</label>
-                    <input type="text" id="state" name="state" value={userData.state || ""} onChange={handleInputChange} disabled={!isEditing} />
+                    <label htmlFor="state">
+                      State <MandatoryIndicator />
+                    </label>
+                    <input 
+                      type="text" 
+                      id="state" 
+                      name="state" 
+                      value={userData.state || ""} 
+                      onChange={handleInputChange} 
+                      disabled={!isEditing} 
+                      placeholder="Enter your state"
+                    />
+                    {fieldErrors.state && <span className="field-error">{fieldErrors.state}</span>}
                 </div>
                 <div>
-                    <label htmlFor="zipCode">ZIP Code</label>
-                    <input type="text" id="zipCode" name="zipCode" value={userData.zipCode || ""} onChange={handleInputChange} disabled={!isEditing} />
+                    <label htmlFor="zipCode">
+                      ZIP Code <MandatoryIndicator />
+                    </label>
+                    <input 
+                      type="text" 
+                      id="zipCode" 
+                      name="zipCode" 
+                      value={userData.zipCode || ""} 
+                      onChange={handleInputChange} 
+                      disabled={!isEditing} 
+                      maxLength="6"
+                      placeholder="Enter 6-digit ZIP code"
+                    />
+                    {fieldErrors.zipCode && <span className="field-error">{fieldErrors.zipCode}</span>}
                 </div>
                 <div>
                     <label htmlFor="country">Country</label>
@@ -493,7 +574,8 @@ const Profile = () => {
 
         {isTechnician && (
             <div className="form-section">
-                <div className="profile-header">
+                {/* REMOVED: Redundant profile-header class here */}
+                <div className="professional-details-header">
                   <h3 className="section-title">Professional Details</h3>
                   <div className="availability-blocker-section">
                       <button className="block-dates-btn" onClick={() => setShowDateBlocker(true)}>
@@ -598,6 +680,18 @@ const Profile = () => {
                     )) : <p>No skills selected.</p>}
                   </div>
                 )}
+            </div>
+        )}
+        
+        {/* ACTION BUTTON SECTION at the bottom right */}
+        {isEditing && (
+            <div className="profile-action-footer">
+                <button 
+                    className="action-btn save" 
+                    onClick={handleSave}
+                >
+                    <FaSave />&nbsp;Save Changes
+                </button>
             </div>
         )}
       </div>

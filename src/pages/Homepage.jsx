@@ -3,7 +3,8 @@ import Header from '../components/Header';
 import HeroSection from '../components/HeroSection';
 import Footer from '../components/Footer';
 import { FaStar } from 'react-icons/fa';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+// Image Imports
 import plumberImg from '../assets/plumber.png';
 import electricianImg from '../assets/electrician.png';
 import acMechanicImg from '../assets/ac mechanic.png';
@@ -24,116 +25,61 @@ import { database } from '../firebase'; // Import the database instance
 
 import '../styles/Homepage.css';
 
-const services = [
-  {
-    title: 'Plumber',
-    description: 'Professional plumbing services for leak repairs, pipe fittings, installations, and maintenance.',
-    image: plumberImg,
-    link: 'plumber'
-  },
-  {
-    title: 'Electrician',
-    description: 'Expert electrical work including wiring, installations, repairs, and safety inspections.',
-    image: electricianImg,
-    link: 'electrician'
-  },
-  {
-    title: 'Ac Mechanic',
-    description: 'Air conditioning repair, installation, and maintenance by certified technicians.',
-    image: acMechanicImg,
-    link: 'ac-mechanic'
-  },
-  {
-    title: 'Carpenter',
-    description: 'Custom carpentry, furniture repair, and installation services.',
-    image: carpenterImg,
-    link: 'carpenter'
-  },
-  {
-    title: 'Packers & Movers',
-    description: 'Reliable and efficient packing and moving services for home and office relocations.',
-    image: packersImg,
-    link: 'packers-movers'
-  },
-  {
-    title: 'House cleaners',
-    description: 'Professional cleaning services for residential properties, including deep cleaning and routine maintenance.',
-    image: housecleanersImg,
-    link: 'house-cleaners'
-  },
-  {
-    title: 'laundry',
-    description: 'Expert laundry and dry-cleaning services with pick-up and delivery options.',
-    image: laundryImg,
-    link: 'laundry'
-  },
-  {
-    title: 'Construction cleaners',
-    description: 'Post-construction cleaning services to prepare new or renovated buildings for occupancy.',
-    image: constructioncleanersImg,
-    link: 'contruction-cleaners'
-  },
-  {
-    title: 'surveyors',
-    description: 'Precise land and property surveying services for various purposes.',
-    image: surveyorsImg,
-    link: 'surveyors'
-  },
-  {
-    title: 'camera fiitings',
-    description: 'Installation and maintenance of security cameras and surveillance systems.',
-    image: camerafittingsImg,
-    link: 'camera-fittings'
-  },
-  {
-    title: 'developers',
-    description: 'Software and web development services for custom applications and websites.',
-    image: developersImg,
-    link: 'developers'
-  },
-  {
-    title: 'delivery',
-    description: 'Fast and reliable courier and delivery services for packages and documents.',
-    image: deliveryImg,
-    link: 'delivery'
-  },
-  {
-    title: 'welders',
-    description: 'Skilled welding services for metal fabrication, repair, and construction.',
-    image: welderImg,
-    link: 'welders'
-  },
-  {
-    title: 'private investigators',
-    description: 'Confidential and professional investigative services for personal and corporate needs.',
-    image: privateinvestigatorsImg,
-    link: 'private-investigators'
-  },
-  {
-    title: 'Body Massage',
-    description: 'Relaxing and therapeutic body massage services from certified professionals.',
-    image: bodymassageImg,
-    link: 'body-massage'
-  },
-];
+// Map service titles to their imported images (All keys MUST be lowercase for lookup)
+const serviceImageMap = {
+  'plumber': plumberImg,
+  'electrician': electricianImg,
+  'ac mechanic': acMechanicImg,
+  'carpenter': carpenterImg,
+  'packers & movers': packersImg,
+  'house cleaners': housecleanersImg,
+  'laundry': laundryImg,
+  'construction cleaners': constructioncleanersImg,
+  'surveyors': surveyorsImg,
+  'camera fiitings': camerafittingsImg,
+  'developers': developersImg,
+  'delivery': deliveryImg,
+  'welders': welderImg,
+  'private investigators': privateinvestigatorsImg,
+  'body massage': bodymassageImg,
+};
 
 const Homepage = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('1');
   const [allServices, setAllServices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showTechnicianPopup, setShowTechnicianPopup] = useState(false);
 
   useEffect(() => {
-    // This part is for Firebase, keeping it as is
+    // 1. Check local storage for the technician profile completion flag
+    const showPopupFlag = localStorage.getItem('showProfilePopup');
+    
+    if (showPopupFlag === 'true') {
+      setShowTechnicianPopup(true);
+    }
+
+    // 2. Fetch Services from Firebase Realtime Database
     const servicesRef = ref(database, 'services');
     const unsubscribe = onValue(servicesRef, (snapshot) => {
       const servicesData = snapshot.val();
       if (servicesData) {
-        const fetchedServices = Object.keys(servicesData).map(key => ({
-          id: key,
-          ...servicesData[key],
-          link: servicesData[key].title.toLowerCase().replace(/\s/g, '-')
-        }));
+        const fetchedServices = Object.keys(servicesData).map(key => {
+          const service = servicesData[key];
+          const serviceTitleLower = service.title ? service.title.toLowerCase() : '';
+          
+          // Use the local imported image if the title matches, otherwise use the image URL from DB
+          const imageSource = serviceImageMap[serviceTitleLower] || service.image; 
+          
+          return {
+            id: key,
+            ...service,
+            // Ensure the image source is the local asset if available
+            image: imageSource, 
+            link: serviceTitleLower.replace(/\s/g, '-')
+          };
+        });
         setAllServices(fetchedServices);
       } else {
         setAllServices([]);
@@ -144,12 +90,21 @@ const Homepage = () => {
     return () => unsubscribe();
   }, []);
 
-  const combinedServices = [...services, ...allServices];
-
-  const filteredServices = combinedServices.filter(service =>
+  const handlePopupAction = (action) => {
+    setShowTechnicianPopup(false);
+    localStorage.removeItem('showProfilePopup');
+    
+    if (action === 'completeNow') {
+      navigate('/profile');
+    }
+  };
+  
+  // Filter services based on search query
+  const filteredServices = allServices.filter(service =>
     service.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Pagination logic remains the same
   const displayedServices = activeTab === '1' ? filteredServices.slice(0, 9) : filteredServices.slice(9, 15);
 
   const handleTabChange = (tabValue) => {
@@ -180,6 +135,30 @@ const Homepage = () => {
       <Header />
       <main>
         <HeroSection setSearchQuery={setSearchQuery} />
+        
+        {/* Technician Profile Completion Popup */}
+        {showTechnicianPopup && (
+          <div className="modal-backdrop">
+            <div className="modal-content homepage-popup">
+              <p className="modal-text">👋 Welcome! Please fill up your details to deliver services.</p>
+              <div className="modal-actions">
+                <button 
+                  className="btn-primary" 
+                  onClick={() => handlePopupAction('completeNow')}
+                >
+                  Complete Now
+                </button>
+                <button 
+                  className="btn-secondary" 
+                  onClick={() => handlePopupAction('later')}
+                >
+                  I'll do it later
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Services Section */}
         <section className="services">
           <h2 className="section-title">Explore our Services</h2>
@@ -190,9 +169,13 @@ const Homepage = () => {
                 <div className="service-card" key={service.id || index}>
                   {service.image ? (
                     <img
-                      src={service.image}
+                      src={service.image} 
                       alt={service.title}
                       className="card-image"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'block';
+                      }}
                     />
                   ) : (
                     <div className="card-image-placeholder">
@@ -215,7 +198,7 @@ const Homepage = () => {
             )}
           </div>
           
-          {combinedServices.length > 9 && (
+          {allServices.length > 9 && (
             <div className="radio-input-container">
               <div className="radio-input">
                 <label>

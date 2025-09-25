@@ -1,0 +1,92 @@
+{
+  "-OQZ1aBcDeFgHiJkLmN1": {
+    "description": "Professional plumbing services for leak repairs, pipe fittings, installations, and maintenance.",
+    "id": "-OQZ1aBcDeFgHiJkLmN1",
+    "image": "https://firebasestorage.googleapis.com/v0/b/skill-services-ebc0f.firebasestorage.app/o/services%2Fplumber.png?alt=media",
+    "title": "Plumber"
+  },
+  "-OQZ2bCdEfGhIjKlMnO2": {
+    "description": "Expert electrical work including wiring, installations, repairs, and safety inspections.",
+    "id": "-OQZ2bCdEfGhIjKlMnO2",
+    "image": "https://firebasestorage.googleapis.com/v0/b/skill-services-ebc0f.firebasestorage.app/o/services%2Felectrician.png?alt=media",
+    "title": "Electrician"
+  },
+  "-OQZ5eFgHiJkLmNoPqR5": {
+    "description": "Air conditioning repair, installation, and maintenance by certified technicians.",
+    "id": "-OQZ5eFgHiJkLmNoPqR5",
+    "image": "https://firebasestorage.googleapis.com/v0/b/skill-services-ebc0f.firebasestorage.app/o/services%2Fac%20mechanic.png?alt=media",
+    "title": "Ac Mechanic"
+  },
+  "-OQZ3cDeFgHiJkLmNoP3": {
+    "description": "Custom carpentry, furniture repair, and installation services.",
+    "id": "-OQZ3cDeFgHiJkLmNoP3",
+    "image": "https://firebasestorage.googleapis.com/v0/b/skill-services-ebc0f.firebasestorage.app/o/services%2Fcarpenter.png?alt=media",
+    "title": "Carpenter"
+  },
+  "-OQZ4dEfGhIjKlMnOpQ4": {
+    "description": "Reliable and efficient packing and moving services for home and office relocations.",
+    "id": "-OQZ4dEfGhIjKlMnOpQ4",
+    "image": "https://firebasestorage.googleapis.com/v0/b/skill-services-ebc0f.firebasestorage.app/o/services%2Fpackers%26movers.png?alt=media",
+    "title": "Packers & Movers"
+  },
+  "-OQZ7gHiJkLmNoPqRsT7": {
+    "description": "Professional cleaning services for residential properties, including deep cleaning and routine maintenance.",
+    "id": "-OQZ7gHiJkLmNoPqRsT7",
+    "image": "https://firebasestorage.googleapis.com/v0/b/skill-services-ebc0f.firebasestorage.app/o/services%2FHouse%20cleaners.png?alt=media",
+    "title": "House cleaners"
+  },
+  "-OQZ8hIjKlMnOpQrStU8": {
+    "description": "Expert laundry and dry-cleaning services with pick-up and delivery options.",
+    "id": "-OQZ8hIjKlMnOpQrStU8",
+    "image": "https://firebasestorage.googleapis.com/v0/b/skill-services-ebc0f.firebasestorage.app/o/services%2Flaundry.png?alt=media",
+    "title": "Laundry"
+  },
+  "-OQZ9iJkLmNoPqRsTuV9": {
+    "description": "Post-construction cleaning services to prepare new or renovated buildings for occupancy.",
+    "id": "-OQZ9iJkLmNoPqRsTuV9",
+    "image": "https://firebasestorage.googleapis.com/v0/b/skill-services-ebc0f.firebasestorage.app/o/services%2FConstruction%20cleaners.png?alt=media",
+    "title": "Construction cleaners"
+  },
+  "-OQZAjKlMnOpQrStUvW0": {
+    "description": "Precise land and property surveying services for various purposes.",
+    "id": "-OQZAjKlMnOpQrStUvW0",
+    "image": "https://firebasestorage.googleapis.com/v0/b/skill-services-ebc0f.firebasestorage.app/o/services%2Fsurveyors.png?alt=media",
+    "title": "Surveyors"
+  },
+  "new-service-camera": {
+    "description": "Installation and maintenance of security cameras and surveillance systems.",
+    "id": "new-service-camera",
+    "image": "https://firebasestorage.googleapis.com/v0/b/skill-services-ebc0f.firebasestorage.app/o/services%2Fcamera%20fittings.png?alt=media",
+    "title": "Camera fiitings"
+  },
+  "-OQZDnOpQrStUvWxyZ3": {
+    "description": "Software and web development services for custom applications and websites.",
+    "id": "-OQZDnOpQrStUvWxyZ3",
+    "image": "https://firebasestorage.googleapis.com/v0/b/skill-services-ebc0f.firebasestorage.app/o/services%2FSoftwareDeveloper.png?alt=media",
+    "title": "Developers"
+  },
+  "-OQZCmNoPqRsTuVwXyY2": {
+    "description": "Fast and reliable courier and delivery services for packages and documents.",
+    "id": "-OQZCmNoPqRsTuVwXyY2",
+    "image": "https://firebasestorage.googleapis.com/v0/b/skill-services-ebc0f.firebasestorage.app/o/services%2Fdelivery.png?alt=media",
+    "title": "Delivery"
+  },
+  "-OQZFqRsTuVwXyZaAb5": {
+    "description": "Skilled welding services for metal fabrication, repair, and construction.",
+    "id": "-OQZFqRsTuVwXyZaAb5",
+    "image": "https://firebasestorage.googleapis.com/v0/b/skill-services-ebc0f.firebasestorage.app/o/services%2Fwelder.png?alt=media",
+    "title": "Welders"
+  },
+  "-OQZEoPqRsTuVwXyZa4": {
+    "description": "Confidential and professional investigative services for personal and corporate needs.",
+    "id": "-OQZEoPqRsTuVwXyZa4",
+    "image": "https://firebasestorage.googleapis.com/v0/b/skill-services-ebc0f.firebasestorage.app/o/services%2Fprivate%20investigators.png?alt=media",
+    "title": "Private investigators"
+  },
+  "new-service-body-massage": {
+    "description": "Relaxing and therapeutic body massage services from certified professionals.",
+    "id": "new-service-body-massage",
+    "image": "https://firebasestorage.googleapis.com/v0/b/skill-services-ebc0f.firebasestorage.app/o/services%2FBodyMassage.png?alt=media",
+    "title": "Body Massage"
+  }
+}

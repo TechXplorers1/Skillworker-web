@@ -197,6 +197,12 @@ const ServiceRequests = () => {
             filteredRequests.map((request) => {
               const user = usersData[request.uid];
               const status = request.status || 'pending';
+              
+              // Format full address
+              const fullAddress = user ? 
+                `${user.address || ''}, ${user.city || ''}, ${user.state || ''} - ${user.zipCode || ''}`.trim() : 
+                'Address not available';
+              
               return (
                 <div key={request.id} className={`request-card ${status.toLowerCase()}`}>
                   <div className="request-card-header">
@@ -229,9 +235,9 @@ const ServiceRequests = () => {
                       <FaRegClock className="detail-icon" />
                       <span>{request.timing}</span>
                     </div>
-                    <div className="detail-row">
+                    <div className="detail-row full-address-row">
                         <FaMapMarkerAlt className="detail-icon" />
-                        <span>{request.address || 'Not Provided'}</span>
+                        <span className="full-address">{fullAddress}</span>
                     </div>
                     <div className="detail-row">
                         <FaRupeeSign className="detail-icon rupee-icon" />
@@ -255,23 +261,31 @@ const ServiceRequests = () => {
                     </div>
                   )}
 
-                   {status === 'accepted' && (
+                  {status === 'accepted' && (
                     <div className="request-actions">
-                      <button className="action-btn1 cancel-btn" onClick={() => handleUpdateStatus(request.id, 'cancelled')}>
-                        Cancel
-                      </button>
-                      <button className="action-btn1 chat-btn">Chat</button>
                       <button className="action-btn1 complete-btn" onClick={() => handleUpdateStatus(request.id, 'completed')}>
-                        Complete
+                        Mark as Completed
                       </button>
                     </div>
                   )}
+
+                  {status === 'completed' && (
+                    <div className="completed-info">
+                      <span className="completed-text">Completed on: {new Date(request.completedAt).toLocaleDateString()}</span>
+                    </div>
+                  )}
+
+                  {status === 'cancelled' && (
+                    <div className="cancelled-info">
+                      <span className="cancelled-text">Request was cancelled</span>
+                    </div>
+                  )}
                 </div>
-              )
+              );
             })
           ) : (
-            <div className="no-results-message">
-              <p>No service requests in the "{activeFilter}" category.</p>
+            <div className="no-requests-message">
+              <p>No {activeFilter} found.</p>
             </div>
           )}
         </div>

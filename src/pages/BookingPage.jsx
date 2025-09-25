@@ -153,7 +153,8 @@ const BookingPage = () => {
 
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  // --- UPDATED: Initial selectedDate is null ---
+  const [selectedDate, setSelectedDate] = useState(null); 
 
   const calendar = generateCalendar(currentYear, currentMonth);
 
@@ -189,7 +190,11 @@ const BookingPage = () => {
   };
 
   const getDisplayDate = (dateStr) => {
-    const date = createUtcDate(dateStr); // Use the fixed date creator
+    if (!dateStr) {
+      // --- UPDATED: Return default display when no date is selected ---
+      return { label: 'Choose Date', sub: 'Tap to select' }; 
+    }
+    
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
     
@@ -230,6 +235,9 @@ const BookingPage = () => {
   const subtotal = (technician?.price?.type === 'hourly' ? technician.price.amount * 1 : technician?.price?.amount) || 0;
   const serviceFee = 5;
   const total = subtotal + serviceFee;
+  
+  // Disable button if no date is selected or if the date is blocked
+  const isBookingDisabled = creatingBooking || !selectedDate || technician?.unavailableDates?.includes(selectedDate);
 
   const createBooking = async () => {
     if (!currentUser || !technician || !serviceDetails) {
@@ -279,7 +287,7 @@ const BookingPage = () => {
   };
 
   const handleConfirmBooking = async () => {
-    if (creatingBooking) return;
+    if (isBookingDisabled) return;
 
     const bookingKey = await createBooking();
     if (bookingKey) {
@@ -511,6 +519,10 @@ const BookingPage = () => {
           font-size: 14px;
           cursor: pointer;
           transition: border-color .15s;
+        }
+        .date-chip.no-selection {
+          color: #6b7280;
+          font-style: italic;
         }
         .date-chip:hover {
           border-color: #0d6efd;
@@ -848,11 +860,11 @@ const BookingPage = () => {
                 <h4>Select Date</h4>
                 <div className="date-display">
                   <button 
-                    className="date-chip" 
+                    className={`date-chip ${!selectedDate ? 'no-selection' : ''}`} 
                     onClick={() => setShowCalendarPopup(true)}
                   >
                     <span>{displayDate.label}</span>
-                    <span>{displayDate.sub}</span>
+                    {/* <span>{displayDate.sub}</span> */}
                   </button>
                 </div>
               </div>
@@ -927,7 +939,7 @@ const BookingPage = () => {
               <div className="appt-mini">
                 <div className="mini">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M152 24c0-13.3-10.7-24-24-24s-24 10.7-24 24V64H64C28.7 64 0 92.7 0 128v16 48V448c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V192 144 128c0-35.3-28.7-64-64-64H344V24c0-13.3-10.7-24-24-24s-24 10.7-24 24V64H152V24zM48 192H400V448c0 8.8-7.2 16-16 16H64c-8.8 0-16-7.2-16-16V192z" /></svg>
-                  <span>{displayDate.label}, {displayDate.sub}</span>
+                  <span>{selectedDate ? `${displayDate.label}` : 'No date selected'}</span>
                 </div>
                 <div className="mini">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M464 256A208 208 0 1 1 48 256a208 208 0 1 1 416 0zM0 256a256 256 0 1 0 512 0A256 256 0 1 0 0 256zM232 120V256c0 8 4 15.5 10.7 20l96 64c11 7.4 25.5 4.7 32.9-6.3s4.7-25.5-6.3-32.9L280 232V120c0-13.3-10.7-24-24-24s-24 10.7-24 24z" /></svg>
@@ -936,11 +948,12 @@ const BookingPage = () => {
               </div>
               <div className="actions">
                 <button 
-                  className={`btn primary ${creatingBooking ? 'disabled' : ''}`} 
+                  className={`btn primary ${isBookingDisabled ? 'disabled' : ''}`} 
                   onClick={handleConfirmBooking}
-                  disabled={creatingBooking || technician?.unavailableDates?.includes(selectedDate)}
+                  disabled={isBookingDisabled}
                 >
                   {creatingBooking ? 'Creating Booking...' : (
+                    !selectedDate ? 'Select a Date' :
                     technician?.unavailableDates?.includes(selectedDate) ? 'Unavailable on this Date' :
                     <>
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V96c0-35.3-28.7-64-64-64H64zM337 209L209 337c-9.4 9.4-24.6 9.4-33.9 0l-64-64c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l47 47L303 175c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z" /></svg>
@@ -1027,7 +1040,7 @@ const BookingPage = () => {
     bookingId={bookingId}
     technician={technician}
     serviceDetails={serviceDetails}
-    selectedDate={displayDate} 
+    selectedDate={selectedDate ? displayDate : null} 
     selectedTime={selectedTime}
     total={total}
     onBack={() => setShowPopup(false)}

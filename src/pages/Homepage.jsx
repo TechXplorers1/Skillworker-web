@@ -160,28 +160,34 @@ const Homepage = () => {
         )}
 
         {/* Services Section */}
-        <section className="services">
+        <section className="services fade-in-up">
           <h2 className="section-title">Explore our Services</h2>
           
           <div className="services-grid">
             {displayedServices.length > 0 ? (
               displayedServices.map((service, index) => (
                 <div className="service-card" key={service.id || index}>
-                  {service.image ? (
-                    <img
-                      src={service.image} 
-                      alt={service.title}
-                      className="card-image"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'block';
-                      }}
-                    />
-                  ) : (
-                    <div className="card-image-placeholder">
-                      <p>Image Not Available</p>
-                    </div>
-                  )}
+                  {/* UPDATED STRUCTURE: Added card-image-container and image-mask */}
+                  <div className="card-image-container">
+                    {service.image ? (
+                      <img
+                        src={service.image} 
+                        alt={service.title}
+                        className="card-image"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'block';
+                        }}
+                      />
+                    ) : (
+                      <div className="card-image-placeholder">
+                        <p>Image Not Available</p>
+                      </div>
+                    )}
+                    <div className="image-mask"></div> {/* The dark mask overlay */}
+                  </div>
+                  {/* END UPDATED STRUCTURE */}
+                  
                   <div className="card-content">
                     <h3 className="card-title">{service.title}</h3>
                     <p className="card-description">{service.description}</p>
@@ -230,7 +236,7 @@ const Homepage = () => {
         </section>
 
         {/* Why Choose Us Section */}
-        <section className="why-choose">
+        <section className="why-choose fade-in-up" style={{ animationDelay: '0.2s' }}>
           <div className="why-container">
             <h2 className="why-title">Why Choose SkillWorkers?</h2>
             <p className="why-subtitle">Connecting you with skilled professionals</p>

@@ -170,6 +170,19 @@ textarea {
   resize: vertical;
 }
 
+/* NEW: Blinking animation for mandatory fields */
+@keyframes blink-border {
+  0%, 100% { border-color: #fca5a5; box-shadow: 0 0 0 4px rgba(252, 165, 165, 0.5); }
+  50% { border-color: #ef4444; box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.8); }
+}
+
+.input-blink-error {
+  animation: blink-border 0.6s ease-in-out 3; /* Blinks 3 times over 1.8 seconds */
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.5) !important;
+}
+/* END NEW */
+
 .subsection-title {
   font-size: 16px;
   font-weight: 600;

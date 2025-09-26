@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -9,11 +9,11 @@ import {
     FaMapMarkerAlt,
     FaFilter
 } from 'react-icons/fa';
-import { ref, get, child, onValue, push, set } from "firebase/database";
-import { database } from '../firebase';
+import { ref, get, child, onValue } from "firebase/database";
+import { database, auth } from '../firebase';
 import '../styles/ServiceTechniciansPage.css';
 
-// Hero images (fixed references)
+// Hero images
 import plumberHeroImg from '../assets/plumber.png';
 import electricianHeroImg from '../assets/electrician.png';
 import acMechanicHeroImg from '../assets/ac mechanic.png';
@@ -30,83 +30,23 @@ import constructioncleanersHeroImg from '../assets/Construction cleaners.png';
 import laundryHeroImg from '../assets/laundry.png';
 import deliveryHeroImg from '../assets/delivery.png';
 
-// Hero banner data
-const serviceHeroData = {
-    plumber: {
-        title: 'Plumber',
-        description: 'Professional plumbing services for leak repairs, pipe fittings, installations, and maintenance.',
-        image: plumberHeroImg
-    },
-    electrician: {
-        title: 'Electrician',
-        description: 'Expert electrical work including wiring, installations, repairs, and safety inspections.',
-        image: electricianHeroImg
-    },
-    'ac-mechanic': {
-        title: 'AC Mechanic',
-        description: 'Air conditioning repair, installation, and maintenance by certified technicians.',
-        image: acMechanicHeroImg
-    },
-    carpenter: {
-        title: 'Carpenter',
-        description: 'Custom carpentry, furniture repair, and installation services.',
-        image: carpenterHeroImg
-    },
-    'packers-movers': {
-        title: 'Packers & Movers',
-        description: 'Reliable and efficient packing and moving services for home and office relocations.',
-        image: packersHeroImg
-    },
-    'house-cleaners': {
-        title: 'House cleaners',
-        description: 'Professional cleaning services for residential properties, including deep cleaning and routine maintenance.',
-        image: housecleanersHeroImg
-    },
-    laundry: {
-        title: 'Laundry',
-        description: 'Expert laundry and dry-cleaning services with pick-up and delivery options.',
-        image: laundryHeroImg
-    },
-    'contruction-cleaners': {
-        title: 'Construction Cleaners',
-        description: 'Post-construction cleaning services to prepare new or renovated buildings for occupancy.',
-        image: constructioncleanersHeroImg
-    },
-    surveyors: {
-        title: 'Surveyors',
-        description: 'Precise land and property surveying services for various purposes.',
-        image: surveyorsImg
-    },
-    'camera-fittings': {
-        title: 'Camera Fittings',
-        description: 'Installation and maintenance of security cameras and surveillance systems.',
-        image: camerafittingsHeroImg
-    },
-    developers: {
-        title: 'Developers',
-        description: 'Software and web development services for custom applications and websites.',
-        image: developersHeroImg
-    },
-    delivery: {
-        title: 'Delivery',
-        description: 'Fast and reliable courier and delivery services for packages and documents.',
-        image: deliveryHeroImg
-    },
-    welders: {
-        title: 'Welders',
-        description: 'Skilled welding services for metal fabrication, repair, and construction.',
-        image: welderHeroImg
-    },
-    'private-investigators': {
-        title: 'Private Investigators',
-        description: 'Confidential and professional investigative services for personal and corporate needs.',
-        image: privateinvestigatorsHeroImg
-    },
-    'body-massage': {
-        title: 'Spa(BodyCare)',
-        description: 'Relaxing and therapeutic body massage services from certified professionals.',
-        image: bodymassageHeroImg
-    }
+// Map service slugs to local images
+const serviceImageMap = {
+    'plumber': plumberHeroImg,
+    'electrician': electricianHeroImg,
+    'ac-mechanic': acMechanicHeroImg,
+    'carpenter': carpenterHeroImg,
+    'packers-movers': packersHeroImg,
+    'house-cleaners': housecleanersHeroImg,
+    'laundry': laundryHeroImg,
+    'contruction-cleaners': constructioncleanersHeroImg,
+    'surveyors': surveyorsImg,
+    'camera-fittings': camerafittingsHeroImg,
+    'developers': developersHeroImg,
+    'delivery': deliveryHeroImg,
+    'welders': welderHeroImg,
+    'private-investigators': privateinvestigatorsHeroImg,
+    'body-massage': bodymassageHeroImg
 };
 
 const ServiceTechniciansPage = () => {
@@ -116,86 +56,34 @@ const ServiceTechniciansPage = () => {
     const [allTechnicians, setAllTechnicians] = useState([]);
     const [filteredTechnicians, setFilteredTechnicians] = useState([]);
     const [serviceDetails, setServiceDetails] = useState(null);
+    const [serviceId, setServiceId] = useState(null);
+    const [activeBookings, setActiveBookings] = useState({}); 
+
+    // Filter states
     const [selectedRating, setSelectedRating] = useState('All Ratings');
     const [selectedHourlyPrice, setSelectedHourlyPrice] = useState('All');
     const [selectedDaylyPrice, setSelectedDaylyPrice] = useState('All');
     const [selectedAvailability, setSelectedAvailability] = useState('All Availability');
+    
+    // Popup states
     const [showPopup, setShowPopup] = useState(false);
     const [selectedTechnicianId, setSelectedTechnicianId] = useState(null);
 
-    const heroData = serviceHeroData[serviceName];
+    const localHeroImage = serviceImageMap[serviceName];
 
-    useEffect(() => {
-        const fetchAllData = async () => {
-            const dbRef = ref(database);
-            try {
-                const [usersSnapshot, servicesSnapshot] = await Promise.all([
-                    get(child(dbRef, 'users')),
-                    get(child(dbRef, 'services'))
-                ]);
-
-                const usersData = usersSnapshot.val();
-                const servicesData = servicesSnapshot.val();
-
-                if (usersData && servicesData) {
-                    const serviceEntry = Object.entries(servicesData).find(([key, service]) =>
-                        service.title.toLowerCase().replace(/\s/g, '-') === serviceName
-                    );
-
-                    if (serviceEntry) {
-                        const serviceId = serviceEntry[0];
-                        setServiceDetails(serviceEntry[1]);
-
-                        // Filter technicians based on role and skills
-                        const technicians = Object.values(usersData).filter(user =>
-                            user.role === 'technician' && user.skills && user.skills.includes(serviceId) && user.isActive
-                        );
-
-                        // Ensure technician data reflects the latest profile updates
-                        const updatedTechnicians = technicians.map(tech => {
-                          const latestUserData = usersData[tech.uid];
-                          return {
-                            ...latestUserData,
-                            experience: latestUserData.experience || 'N/A',
-                            city: latestUserData.city || 'N/A',
-                            // Other fields you want to ensure are up-to-date
-                          };
-                        });
-                        
-                        setAllTechnicians(updatedTechnicians);
-                        setFilteredTechnicians(updatedTechnicians);
-                    } else {
-                        setAllTechnicians([]);
-                        setFilteredTechnicians([]);
-                    }
-                } else {
-                    console.log("No data available");
-                }
-            } catch (error) {
-                console.error(error);
-            }
-        };
-
-        const unsubscribe = onValue(ref(database, 'users'), () => {
-          fetchAllData();
-        });
-
-        return () => unsubscribe();
-    }, [serviceName]);
-
-    useEffect(() => {
-        handleApplyFilters();
-    }, [selectedRating, selectedHourlyPrice, selectedDaylyPrice, selectedAvailability, allTechnicians]);
-
-    const handleApplyFilters = () => {
-        let newFilteredList = [...allTechnicians];
+    // ✅ central filtering function
+    const handleApplyFilters = useCallback((techniciansToFilter = allTechnicians) => {
+        let newFilteredList = [...techniciansToFilter];
 
         if (selectedRating !== 'All Ratings') {
             const minRating = parseFloat(selectedRating.replace('+ Stars', ''));
             newFilteredList = newFilteredList.filter((tech) => parseFloat(tech.averageRating) >= minRating);
         }
 
-        if (selectedHourlyPrice !== 'All') {
+        const isHourlyFilterSet = selectedHourlyPrice !== 'All' && selectedDaylyPrice === 'All';
+        const isDaylyFilterSet = selectedDaylyPrice !== 'All' && selectedHourlyPrice === 'All';
+        
+        if (isHourlyFilterSet) {
             const hourlyPriceRange = selectedHourlyPrice.split('-');
             const minPrice = parseInt(hourlyPriceRange[0].replace('₹', ''), 10);
             const maxPrice = hourlyPriceRange[1] ? parseInt(hourlyPriceRange[1].replace('/hour', ''), 10) : Infinity;
@@ -205,7 +93,7 @@ const ServiceTechniciansPage = () => {
             );
         }
 
-        if (selectedDaylyPrice !== 'All') {
+        if (isDaylyFilterSet) {
             const daylyPriceRange = selectedDaylyPrice.split('-');
             const minPrice = parseInt(daylyPriceRange[0].replace('₹', ''), 10);
             const maxPrice = daylyPriceRange[1] ? parseInt(daylyPriceRange[1].replace('/day', ''), 10) : Infinity;
@@ -215,13 +103,6 @@ const ServiceTechniciansPage = () => {
             );
         }
         
-        if (selectedDaylyPrice !== 'All' && selectedHourlyPrice === 'All') {
-          newFilteredList = newFilteredList.filter((tech) => tech.price?.type === 'dayly');
-        }
-        if (selectedHourlyPrice !== 'All' && selectedDaylyPrice === 'All') {
-          newFilteredList = newFilteredList.filter((tech) => tech.price?.type === 'hourly');
-        }
-
         if (selectedAvailability !== 'All Availability') {
             if (selectedAvailability === 'Available Now' || selectedAvailability === 'Available Today') {
                 newFilteredList = newFilteredList.filter((tech) => tech.isActive);
@@ -229,7 +110,112 @@ const ServiceTechniciansPage = () => {
         }
 
         setFilteredTechnicians(newFilteredList);
+    }, [allTechnicians, selectedRating, selectedHourlyPrice, selectedDaylyPrice, selectedAvailability]);
+
+    // Helper → check if booking is still active
+    const isActiveBooking = (booking) => {
+        return booking.status && booking.status !== 'completed' && booking.status !== 'cancelled';
     };
+
+    // --- track active bookings ---
+    useEffect(() => {
+        const bookingsRef = ref(database, 'bookings');
+        
+        const unsubscribeBookings = onValue(bookingsRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const bookingsData = snapshot.val();
+                const activeBookingsMap = {};
+                
+                Object.values(bookingsData).forEach(booking => {
+                    if (isActiveBooking(booking) && booking.technicianId) {
+                        activeBookingsMap[booking.technicianId] = true;
+                    }
+                });
+                
+                setActiveBookings(activeBookingsMap);
+            } else {
+                setActiveBookings({});
+            }
+        }, (error) => {
+            console.error("Error fetching bookings:", error);
+        });
+
+        return () => unsubscribeBookings();
+    }, []);
+
+    // --- fetch service details ---
+    useEffect(() => {
+        const dbRef = ref(database);
+
+        get(child(dbRef, 'services'))
+            .then((snapshot) => {
+                if (snapshot.exists()) {
+                    const servicesData = snapshot.val();
+                    const serviceEntry = Object.entries(servicesData).find(([key, service]) =>
+                        service.title.toLowerCase().replace(/\s/g, '-') === serviceName
+                    );
+
+                    if (serviceEntry) {
+                        const sId = serviceEntry[0];
+                        const dbServiceDetails = serviceEntry[1];
+
+                        setServiceId(sId);
+                        setServiceDetails({
+                            ...dbServiceDetails,
+                            image: localHeroImage || dbServiceDetails.image
+                        });
+                    } else {
+                        setServiceId(null);
+                        setServiceDetails(null);
+                    }
+                }
+            })
+            .catch(error => console.error("Error fetching services:", error));
+    }, [serviceName, localHeroImage]);
+
+    // --- fetch technicians live ---
+    useEffect(() => {
+        if (!serviceId) return;
+
+        const currentUserId = auth.currentUser ? auth.currentUser.uid : null;
+        const usersRef = ref(database, 'users');
+
+        const unsubscribe = onValue(usersRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const usersData = snapshot.val();
+
+                const technicians = Object.values(usersData).filter(user =>
+                    user.role === 'technician' && 
+                    user.skills && 
+                    user.skills.includes(serviceId) && 
+                    user.isActive &&
+                    user.uid !== currentUserId &&
+                    !activeBookings[user.uid] // ✅ hide booked technicians
+                );
+
+                const updatedTechnicians = technicians.map(tech => ({
+                    ...tech,
+                    experience: tech.experience || 'N/A',
+                    city: tech.city || 'N/A',
+                }));
+                
+                setAllTechnicians(updatedTechnicians);
+                handleApplyFilters(updatedTechnicians);
+            } else {
+                setAllTechnicians([]);
+                handleApplyFilters([]);
+            }
+        }, (error) => {
+            console.error("Error fetching technicians:", error);
+        });
+
+        return () => unsubscribe();
+    }, [serviceId, activeBookings, handleApplyFilters]);
+
+    // re-apply filters when filter state changes
+    useEffect(() => {
+        handleApplyFilters();
+    }, [selectedRating, selectedHourlyPrice, selectedDaylyPrice, selectedAvailability, handleApplyFilters]);
 
     const handleChatClick = (technicianId) => {
         setSelectedTechnicianId(technicianId);
@@ -239,7 +225,6 @@ const ServiceTechniciansPage = () => {
     const handleBookClick = (technician) => {
         const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
         
-        // Store technician data for booking page
         sessionStorage.setItem('selectedTechnician', JSON.stringify(technician));
         sessionStorage.setItem('serviceName', serviceName);
 
@@ -255,12 +240,12 @@ const ServiceTechniciansPage = () => {
         <div className="technicians-page-container">
             <Header />
             <main className="tech-main-content">
-                {heroData && (
-                    <section className="service-hero-banner" style={{ backgroundImage: `url(${heroData.image})` }}>
+                {serviceDetails && (
+                    <section className="service-hero-banner" style={{ backgroundImage: `url(${serviceDetails.image})` }}>
                         <div className="hero-overlay"></div>
                         <div className="hero-content">
-                            <h1 className="banner-title">{heroData.title} Services</h1>
-                            <p className="banner-description">{heroData.description}</p>
+                            <h1 className="banner-title">{serviceDetails.title} Services</h1>
+                            <p className="banner-description">{serviceDetails.description}</p>
                         </div>
                     </section>
                 )}
@@ -294,7 +279,7 @@ const ServiceTechniciansPage = () => {
                                 <option>Available Now</option>
                                 <option>Available Today</option>
                             </select>
-                            <button className="apply-filter-btn" onClick={handleApplyFilters}>Apply Filters</button>
+                            <button className="apply-filter-btn" onClick={() => handleApplyFilters()}>Apply Filters</button>
                         </div>
                     </div>
                 </section>
@@ -318,21 +303,13 @@ const ServiceTechniciansPage = () => {
                                                 <span>{tech.averageRating ? tech.averageRating.toFixed(1) : 'N/A'} ({tech.totalRatings || 0} reviews)</span>
                                             </div>
                                             <div className="tech-details">
-                                                {/* Updated to display years of experience from user data */}
                                                 <p><FaClock /> {tech.experience ? `${tech.experience} years` : 'N/A'} experience</p>
-                                                {/* Updated to display city from user data */}
                                                 <p><FaMapMarkerAlt /> {tech.city || 'N/A'}</p>
                                                 <p className={`tech-status ${tech.isActive ? 'available' : 'busy'}`}>
                                                     {tech.isActive ? 'Available' : 'Busy'}
                                                 </p>
                                             </div>
                                         </div>
-                                        {/* Commented out the pricing section */}
-                                        {/* <div className="tech-price">
-                                            ₹{tech.price?.amount || 'N/A'}
-                                            <br />
-                                            per {tech.price?.type || 'N/A'}
-                                        </div> */}
                                     </div>
                                     <div className="tech-actions">
                                         <button className="tech-contact-btn chat-btn" onClick={() => handleChatClick(tech.uid)}>

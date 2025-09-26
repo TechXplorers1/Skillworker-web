@@ -38,8 +38,9 @@ main {
 }
 
 .services-grid {
+  /* Min width remains 380px for wide cards */
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
   gap: 20px;
   margin-bottom: 20px;
 }
@@ -66,9 +67,33 @@ main {
   box-shadow: 0 8px 12px rgba(0, 0, 0, 0.1);
 }
 
+/* Image container for masking/overlay */
+.card-image-container {
+  position: relative;
+  width: 100%;
+  height: 200px; /* Fixed height for the container */
+  overflow: hidden;
+}
+
+/* Mask overlay */
+.image-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.3); /* 30% black overlay */
+  z-index: 1;
+  transition: background-color 0.3s ease;
+}
+
+.service-card:hover .image-mask {
+    background-color: rgba(0, 0, 0, 0.45); /* Slight darkening on hover */
+}
+
 .card-image-placeholder {
   width: 100%;
-  height: 120px;
+  height: 100%; /* Set to 100% of the container height (200px) */
   background-color: #f0f0f0;
   display: flex;
   justify-content: center;
@@ -80,37 +105,45 @@ main {
 
 .card-image {
   width: 100%;
-  height: 100px; /* Reduced image height for a more compact card */
+  height: 100%; /* Set to 100% of the container height (200px) */
   object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.service-card:hover .card-image {
+    transform: scale(1.05); /* Subtle zoom effect on hover */
 }
 
 .card-content {
-  padding: 15px;
-  /* Removed flex properties to prevent unwanted growth */
+  /* REDUCED PADDING: From 15px to 10px */
+  padding: 10px;
 }
 
 .card-title {
   font-size: 1.2rem;
   font-weight: 600;
-  margin-bottom: 8px;
+  /* REDUCED MARGIN: From 8px to 6px */
+  margin-bottom: 6px;
   color: #1e293b;
 }
 
 .card-description {
   font-size: 0.9rem;
   color: #64748b;
-  margin-bottom: 15px;
-  height: 3em; /* Added a fixed height to make all descriptions the same size */
-  overflow: hidden; /* Hides overflow to prevent text from pushing the card height */
+  /* REDUCED MARGIN: From 15px to 10px */
+  margin-bottom: 10px;
+  height: 3em; 
+  overflow: hidden; 
 }
 
 .card-info {
-  display: flex;
+  display: none; /* NEW: Hidden as it's not being used and creates whitespace */
+  /* Keeping original styles just in case it's re-enabled, but display: none removes the space */
   justify-content: space-between;
   align-items: center;
   font-size: 0.85rem;
   color: #64748b;
-  margin-bottom: 15px;
+  margin-bottom: 0; /* Changed from 15px to 0 to minimize leftover space */
 }
 
 .rating {
@@ -150,7 +183,7 @@ main {
 
 .no-results-found {
   text-align: center;
-  grid-column: 1 / -1; /* This makes the message span all columns */
+  grid-column: 1 / -1; 
   margin: 50px 0;
   font-size: 1.2rem;
   color: #666;

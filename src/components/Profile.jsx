@@ -15,6 +15,8 @@ const Profile = () => {
   const [allServices, setAllServices] = useState([]);
   // const [showPopup, setShowPopup] = useState(false); // Removed: Popup handled on Home page
   const [fieldErrors, setFieldErrors] = useState({});
+  // NEW STATE: To control the blinking animation on mandatory fields
+  const [blinkingField, setBlinkingField] = useState(null); 
 
   // --- STATE FOR DATE BLOCKING ---
   const [showDateBlocker, setShowDateBlocker] = useState(false);
@@ -102,61 +104,57 @@ const Profile = () => {
     });
   };
 
+  // UPDATED: Return the name of the first field that fails validation
   const validateFields = (data) => {
     const errors = {};
+    let firstErrorField = null;
     
+    // Define a helper to check and set the first error
+    const checkError = (name, condition, message) => {
+        if (condition) {
+            errors[name] = message;
+            if (!firstErrorField) {
+                firstErrorField = name;
+            }
+        }
+    };
+
     // Phone validation (10 digits)
-    if (data.phone && !/^\d{10}$/.test(data.phone)) {
-      errors.phone = "Phone number must be exactly 10 digits";
-    }
+    checkError('phone', !data.phone || !/^\d{10}$/.test(data.phone), "Phone number must be exactly 10 digits");
     
     // Address validation (mandatory)
-    if (!data.address || data.address.trim() === "") {
-      errors.address = "Street address is required";
-    }
+    checkError('address', !data.address || data.address.trim() === "", "Street address is required");
     
     // City validation (mandatory)
-    if (!data.city || data.city.trim() === "") {
-      errors.city = "City is required";
-    }
+    checkError('city', !data.city || data.city.trim() === "", "City is required");
     
     // State validation (mandatory)
-    if (!data.state || data.state.trim() === "") {
-      errors.state = "State is required";
-    }
+    checkError('state', !data.state || data.state.trim() === "", "State is required");
     
     // ZIP Code validation (mandatory, 6 digits)
-    if (!data.zipCode || !/^\d{6}$/.test(data.zipCode)) {
-      errors.zipCode = "ZIP code must be exactly 6 digits";
-    }
+    checkError('zipCode', !data.zipCode || !/^\d{6}$/.test(data.zipCode), "ZIP code must be exactly 6 digits");
     
-    // Aadhar validation (12 digits)
-    if (data.aadharNumber && !/^\d{12}$/.test(data.aadharNumber)) {
-      errors.aadharNumber = "Aadhar number must be exactly 12 digits";
-    }
-    
-    // Experience validation (positive number)
-    if (data.experience && (isNaN(data.experience) || data.experience < 0)) {
-      errors.experience = "Experience must be a positive number";
-    }
-    
-    // Available timings validation
-    if (!data.availableTimings) {
-      errors.availableTimings = "Available timings is required";
-    }
-    
-    // Skills validation (at least one)
-    if (!data.skills || data.skills.length === 0) {
-      errors.skills = "At least one skill must be selected";
-    }
-    
-    // Aadhar proof validation
-    if (!data.aadharProofUrl) {
-      errors.aadharProofUrl = "Aadhar proof is required";
+    // Technician-specific validations
+    if (data.role === "technician") {
+        // Experience validation (mandatory, positive number or zero)
+        checkError('experience', !data.experience || isNaN(data.experience) || parseInt(data.experience) < 0, "Experience must be a positive number or zero");
+        
+        // Available timings validation (mandatory)
+        checkError('availableTimings', !data.availableTimings, "Available timings is required");
+        
+        // Aadhar validation (mandatory, 12 digits)
+        checkError('aadharNumber', !data.aadharNumber || !/^\d{12}$/.test(data.aadharNumber), "Aadhar number must be exactly 12 digits");
+        
+        // Aadhar proof validation (mandatory)
+        checkError('aadharProofUrl', !data.aadharProofUrl, "Aadhar proof is required");
+
+        // Skills validation (at least one)
+        checkError('skills', !data.skills || data.skills.length === 0, "At least one skill must be selected");
     }
 
     setFieldErrors(errors);
-    return Object.keys(errors).length === 0;
+    // Return the name of the first error field, or null if validation passes
+    return firstErrorField; 
   };
 
   const checkProfileCompletion = (data) => {
@@ -169,7 +167,7 @@ const Profile = () => {
       data.zipCode && /^\d{6}$/.test(data.zipCode) &&
       data.aadharNumber && /^\d{12}$/.test(data.aadharNumber) &&
       data.aadharProofUrl && 
-      data.experience && data.experience > 0 &&
+      data.experience && data.experience >= 0 && // Check for positive or zero
       data.availableTimings
     );
   };
@@ -199,48 +197,72 @@ const Profile = () => {
       // Restrict to 12 digits only
       processedValue = value.replace(/\D/g, '').slice(0, 12);
     } else if (name === 'experience') {
-      // Restrict to numbers only and positive values
+      // Restrict to numbers only and positive values or zero
       processedValue = value.replace(/\D/g, '');
-      if (processedValue && parseInt(processedValue) < 0) {
-        processedValue = '';
-      }
     }
     
     setUserData({ ...userData, [name]: processedValue });
     
-    // Clear error when user starts typing
+    // Clear error when user starts typing and stop blinking
     if (fieldErrors[name]) {
       setFieldErrors({ ...fieldErrors, [name]: '' });
+      if (blinkingField === name) {
+          setBlinkingField(null);
+      }
     }
   };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
+    const name = e.target.name;
+
     if (file) {
       // Basic file validation
       const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
       if (!validTypes.includes(file.type)) {
-        setFieldErrors({ ...fieldErrors, aadharProofUrl: 'Please upload a valid file (JPEG, PNG, PDF)' });
+        setFieldErrors({ ...fieldErrors, [name]: 'Please upload a valid file (JPEG, PNG, PDF)' });
         return;
       }
       
       // File size validation (5MB max)
       if (file.size > 5 * 1024 * 1024) {
-        setFieldErrors({ ...fieldErrors, aadharProofUrl: 'File size must be less than 5MB' });
+        setFieldErrors({ ...fieldErrors, [name]: 'File size must be less than 5MB' });
         return;
       }
       
-      setUserData({ ...userData, aadharProofUrl: file.name });
-      setFieldErrors({ ...fieldErrors, aadharProofUrl: '' });
+      setUserData({ ...userData, [name]: file.name });
+      setFieldErrors({ ...fieldErrors, [name]: '' });
+      if (blinkingField === name) {
+          setBlinkingField(null);
+      }
+    } else {
+        // This clears the file name if the user clears the file input
+        setUserData({ ...userData, [name]: "" });
     }
   };
 
+  // UPDATED: Scroll to the first invalid field and make it blink
   const handleSave = async () => {
     // Validate all fields before saving
-    if (!validateFields(userData)) {
+    const firstErrorField = validateFields(userData);
+
+    if (firstErrorField) {
+      // Validation failed. Scroll to and highlight the first error field.
+      const element = document.getElementById(firstErrorField);
+      
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Set the state to start the blinking animation
+        setBlinkingField(firstErrorField);
+        
+        // Remove the blinking class after the animation is done (e.g., 2 seconds)
+        setTimeout(() => setBlinkingField(null), 2000);
+      }
       return;
     }
 
+    // Validation passed, proceed with save
     try {
       const user = auth.currentUser;
       if (user) {
@@ -266,9 +288,14 @@ const Profile = () => {
     }
     setUserData({ ...userData, skills: updatedSkills });
     
-    // Clear skills error when user selects at least one skill
-    if (updatedSkills.length > 0 && fieldErrors.skills) {
-      setFieldErrors({ ...fieldErrors, skills: '' });
+    // Clear skills error when user selects at least one skill and stop blinking
+    if (updatedSkills.length > 0) {
+      if (fieldErrors.skills) {
+          setFieldErrors({ ...fieldErrors, skills: '' });
+      }
+      if (blinkingField === 'skills') {
+          setBlinkingField(null);
+      }
     }
   };
 
@@ -403,6 +430,7 @@ const Profile = () => {
     'Morning (8:00 AM - 11:00 AM)',
     'Afternoon (12:00 PM - 3:00 PM)',
     'Evening (4:00 PM - 7:00 PM)',
+    'Ok With Any Time Slot'
   ];
   
   const blockerCalendar = generateBlockerCalendar(currentBlockerYear, currentBlockerMonth);
@@ -477,6 +505,8 @@ const Profile = () => {
                       disabled={!isEditing}
                       maxLength="10"
                       placeholder="Enter 10-digit phone number"
+                      // NEW: Apply blinking class
+                      className={blinkingField === 'phone' ? 'input-blink-error' : ''}
                     />
                     {fieldErrors.phone && <span className="field-error">{fieldErrors.phone}</span>}
                 </div>
@@ -497,7 +527,7 @@ const Profile = () => {
         </div>
 
         <div className="form-section">
-            <h3 className="section-title">Address Information <MandatoryIndicator /></h3>
+            <h3 className="section-title">Address Information</h3>
             <div className="form-grid">
                 <div>
                     <label htmlFor="address">
@@ -511,6 +541,8 @@ const Profile = () => {
                       onChange={handleInputChange} 
                       disabled={!isEditing} 
                       placeholder="Enter your street address"
+                      // NEW: Apply blinking class
+                      className={blinkingField === 'address' ? 'input-blink-error' : ''}
                     />
                     {fieldErrors.address && <span className="field-error">{fieldErrors.address}</span>}
                 </div>
@@ -526,6 +558,8 @@ const Profile = () => {
                       onChange={handleInputChange} 
                       disabled={!isEditing} 
                       placeholder="Enter your city"
+                       // NEW: Apply blinking class
+                      className={blinkingField === 'city' ? 'input-blink-error' : ''}
                     />
                     {fieldErrors.city && <span className="field-error">{fieldErrors.city}</span>}
                 </div>
@@ -541,6 +575,8 @@ const Profile = () => {
                       onChange={handleInputChange} 
                       disabled={!isEditing} 
                       placeholder="Enter your state"
+                       // NEW: Apply blinking class
+                      className={blinkingField === 'state' ? 'input-blink-error' : ''}
                     />
                     {fieldErrors.state && <span className="field-error">{fieldErrors.state}</span>}
                 </div>
@@ -557,6 +593,8 @@ const Profile = () => {
                       disabled={!isEditing} 
                       maxLength="6"
                       placeholder="Enter 6-digit ZIP code"
+                       // NEW: Apply blinking class
+                      className={blinkingField === 'zipCode' ? 'input-blink-error' : ''}
                     />
                     {fieldErrors.zipCode && <span className="field-error">{fieldErrors.zipCode}</span>}
                 </div>
@@ -598,6 +636,8 @@ const Profile = () => {
                           disabled={!isEditing}
                           min="0"
                           placeholder="Enter years of experience"
+                           // NEW: Apply blinking class
+                          className={blinkingField === 'experience' ? 'input-blink-error' : ''}
                         />
                         {fieldErrors.experience && <span className="field-error">{fieldErrors.experience}</span>}
                     </div>
@@ -611,6 +651,8 @@ const Profile = () => {
                           value={userData.availableTimings || ""}
                           onChange={handleInputChange}
                           disabled={!isEditing}
+                          // NEW: Apply blinking class
+                          className={blinkingField === 'availableTimings' ? 'input-blink-error' : ''}
                         >
                           <option value="">Select a time slot...</option>
                           {timeSlots.map((slot) => (
@@ -632,6 +674,8 @@ const Profile = () => {
                           disabled={!isEditing}
                           maxLength="12"
                           placeholder="Enter 12-digit Aadhar number"
+                           // NEW: Apply blinking class
+                          className={blinkingField === 'aadharNumber' ? 'input-blink-error' : ''}
                         />
                         {fieldErrors.aadharNumber && <span className="field-error">{fieldErrors.aadharNumber}</span>}
                     </div>
@@ -646,17 +690,19 @@ const Profile = () => {
                           onChange={handleFileChange}
                           disabled={!isEditing}
                           accept=".jpg,.jpeg,.png,.pdf"
+                          // NOTE: The file input itself is hard to style and blink, 
+                          // but the error message is clear. We scroll to it.
                         />
                          {userData.aadharProofUrl && <p className="file-name">{userData.aadharProofUrl}</p>}
-                         {fieldErrors.aadharProofUrl && <span className="field-error">{fieldErrors.aadharProofUrl}</span>}
+                         {fieldErrors.aadharProofUrl && <span className="field-error" id="aadharProofUrl-error">{fieldErrors.aadharProofUrl}</span>}
                     </div>
                 </div>
                 
-                <h4 className="subsection-title">
+                <h4 className="subsection-title" id="skills-section-title">
                   Skills & Specializations <MandatoryIndicator />
                 </h4>
                 {isEditing ? (
-                  <div className="skills-checkbox-grid">
+                  <div className={`skills-checkbox-grid ${blinkingField === 'skills' ? 'input-blink-error' : ''}`} id="skills">
                     {allServices.map(service => (
                       <div key={service.id} className="skill-checkbox-item">
                         <input 

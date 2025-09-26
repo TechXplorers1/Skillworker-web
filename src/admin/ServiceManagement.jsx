@@ -238,7 +238,7 @@ const ServiceManagement = () => {
               <div className="service-actions">
                 <div className="action-buttons">
                   <button 
-                    className="action-btn edit-icon" 
+                    className="action-btn-s edit-icon" 
                     title="Edit" 
                     onClick={() => handleOpenEditModal(service)}
                     disabled={loading}
@@ -246,7 +246,7 @@ const ServiceManagement = () => {
                     ✏️
                   </button>
                   <button 
-                    className="action-btn delete-icon" 
+                    className="action-btn-s delete-icon" 
                     onClick={() => confirmDelete(service)} 
                     title="Delete"
                     disabled={loading}

@@ -143,12 +143,19 @@ const ServiceRequests = () => {
     // Optimistic update
     setAllRequests(currentRequests =>
       currentRequests.map(r =>
-        r.id === requestId ? { ...r, ...updates, displayStatus: status.toLowerCase() === 'completed' ? 'history' : status.toLowerCase() } : r
+        r.id === requestId ? { ...r, ...updates, displayStatus: status.toLowerCase() === 'completed' ? 'history' : status.toLowerCase() === 'cancelled' ? 'cancelled' : status.toLowerCase() } : r
       )
     );
 
     update(requestRef, updates)
       .catch(error => console.error(`Failed to update status to ${status}:`, error));
+  };
+
+  const handleChat = (requestId) => {
+    // Placeholder for actual chat navigation/logic
+    console.log(`Navigating to chat for request ID: ${requestId}`);
+    // You would typically navigate to a chat screen here, e.g.:
+    // navigate(`/chat/${requestId}`);
   };
 
   if (loading) {
@@ -262,7 +269,13 @@ const ServiceRequests = () => {
                   )}
 
                   {status === 'accepted' && (
-                    <div className="request-actions">
+                    <div className="request-actions accepted-actions">
+                      <button className="action-btn1 decline-btn" onClick={() => handleUpdateStatus(request.id, 'cancelled')}>
+                        Cancel
+                      </button>
+                      <button className="action-btn1 chat-btn" onClick={() => handleChat(request.id)}>
+                        Chat
+                      </button>
                       <button className="action-btn1 complete-btn" onClick={() => handleUpdateStatus(request.id, 'completed')}>
                         Mark as Completed
                       </button>

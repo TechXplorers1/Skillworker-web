@@ -13,7 +13,7 @@ import { ref, get, child, onValue } from "firebase/database";
 import { database, auth } from '../firebase';
 import '../styles/ServiceTechniciansPage.css';
 
-// Hero images
+// Hero images (assuming these imports are correct)
 import plumberHeroImg from '../assets/plumber.png';
 import electricianHeroImg from '../assets/electrician.png';
 import acMechanicHeroImg from '../assets/ac mechanic.png';
@@ -57,8 +57,7 @@ const ServiceTechniciansPage = () => {
     const [filteredTechnicians, setFilteredTechnicians] = useState([]);
     const [serviceDetails, setServiceDetails] = useState(null);
     const [serviceId, setServiceId] = useState(null);
-    const [activeBookings, setActiveBookings] = useState({}); 
-
+    
     // Filter states
     const [selectedRating, setSelectedRating] = useState('All Ratings');
     const [selectedHourlyPrice, setSelectedHourlyPrice] = useState('All');
@@ -71,7 +70,6 @@ const ServiceTechniciansPage = () => {
 
     const localHeroImage = serviceImageMap[serviceName];
 
-    // ✅ central filtering function
     const handleApplyFilters = useCallback((techniciansToFilter = allTechnicians) => {
         let newFilteredList = [...techniciansToFilter];
 
@@ -111,39 +109,7 @@ const ServiceTechniciansPage = () => {
 
         setFilteredTechnicians(newFilteredList);
     }, [allTechnicians, selectedRating, selectedHourlyPrice, selectedDaylyPrice, selectedAvailability]);
-
-    // Helper → check if booking is still active
-    const isActiveBooking = (booking) => {
-        return booking.status && booking.status !== 'completed' && booking.status !== 'cancelled';
-    };
-
-    // --- track active bookings ---
-    useEffect(() => {
-        const bookingsRef = ref(database, 'bookings');
-        
-        const unsubscribeBookings = onValue(bookingsRef, (snapshot) => {
-            if (snapshot.exists()) {
-                const bookingsData = snapshot.val();
-                const activeBookingsMap = {};
-                
-                Object.values(bookingsData).forEach(booking => {
-                    if (isActiveBooking(booking) && booking.technicianId) {
-                        activeBookingsMap[booking.technicianId] = true;
-                    }
-                });
-                
-                setActiveBookings(activeBookingsMap);
-            } else {
-                setActiveBookings({});
-            }
-        }, (error) => {
-            console.error("Error fetching bookings:", error);
-        });
-
-        return () => unsubscribeBookings();
-    }, []);
-
-    // --- fetch service details ---
+    
     useEffect(() => {
         const dbRef = ref(database);
 
@@ -183,14 +149,15 @@ const ServiceTechniciansPage = () => {
         const unsubscribe = onValue(usersRef, (snapshot) => {
             if (snapshot.exists()) {
                 const usersData = snapshot.val();
-
+                
+                // --- THE ONLY CHANGE IS HERE ---
+                // The `user.isActive` filter has been removed.
+                // Now, both active (green dot) and inactive (red dot) technicians will be shown.
                 const technicians = Object.values(usersData).filter(user =>
                     user.role === 'technician' && 
                     user.skills && 
                     user.skills.includes(serviceId) && 
-                    user.isActive &&
-                    user.uid !== currentUserId &&
-                    !activeBookings[user.uid] // ✅ hide booked technicians
+                    user.uid !== currentUserId
                 );
 
                 const updatedTechnicians = technicians.map(tech => ({
@@ -210,9 +177,8 @@ const ServiceTechniciansPage = () => {
         });
 
         return () => unsubscribe();
-    }, [serviceId, activeBookings, handleApplyFilters]);
+    }, [serviceId, handleApplyFilters]);
 
-    // re-apply filters when filter state changes
     useEffect(() => {
         handleApplyFilters();
     }, [selectedRating, selectedHourlyPrice, selectedDaylyPrice, selectedAvailability, handleApplyFilters]);
@@ -295,6 +261,8 @@ const ServiceTechniciansPage = () => {
                             {filteredTechnicians.map((tech) => (
                                 <div className="technician-card" key={tech.uid}>
                                     <div className="card-header">
+                                        {/* The dot correctly reflects the tech.isActive status from Firebase */}
+                                        <div className={`activity-dot ${tech.isActive ? 'available' : 'booked'}`}></div>
                                         <img src={tech.profileImage} alt={tech.firstName} className="tech-image" />
                                         <div className="tech-info">
                                             <h3 className="tech-name">{tech.firstName} {tech.lastName}</h3>
@@ -315,6 +283,7 @@ const ServiceTechniciansPage = () => {
                                         <button className="tech-contact-btn chat-btn" onClick={() => handleChatClick(tech.uid)}>
                                             <FaCommentDots /> Chat
                                         </button>
+                                        {/* This button is always enabled, allowing users to book anyone */}
                                         <button className="tech-contact-btn book-btn" onClick={() => handleBookClick(tech)}>
                                             Book Now
                                         </button>

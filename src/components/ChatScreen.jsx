@@ -17,74 +17,116 @@ const ChatScreen = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [currentUserData, setCurrentUserData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const messagesEndRef = useRef(null);
 
+  // Validate chatId on component mount
   useEffect(() => {
+    if (!chatId) {
+      setError("Invalid chat ID");
+      setLoading(false);
+      return;
+    }
+    
+    if (typeof chatId !== 'string' || !chatId.includes('_')) {
+      setError("Invalid chat format");
+      setLoading(false);
+      return;
+    }
+  }, [chatId]);
+
+  useEffect(() => {
+    if (!chatId || error) return;
+
     const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
       if (!user) {
         navigate('/login');
         return;
       }
-      setCurrentUser(user);
-
-      // Fetch current user's full profile data
-      const currentUserRef = ref(database, `users/${user.uid}`);
-      get(currentUserRef).then(snapshot => {
-        if(snapshot.exists()) {
-          setCurrentUserData(snapshot.val());
-        }
-      });
-
-      // 1. Find the partner's ID from the userChats node
-      const userChatsRef = ref(database, `userChats/${user.uid}`);
-      get(userChatsRef).then((snapshot) => {
-        if (snapshot.exists()) {
-          const chats = snapshot.val();
-          const chatPartnerId = Object.keys(chats).find(
-            partnerId => chats[partnerId].chatId === chatId
-          );
-
-          if (chatPartnerId) {
-            // 2. Fetch the chat partner's details using the found ID
-            const partnerRef = ref(database, `users/${chatPartnerId}`);
-            onValue(partnerRef, (partnerSnapshot) => {
-              if (partnerSnapshot.exists()) {
-                setChatPartner(partnerSnapshot.val());
-              }
-              // Data is loaded, whether partner exists or not
-              setLoading(false);
-            });
-          } else {
-            // FIX: If no partner is found for this chat, stop loading
-            setLoading(false);
-          }
-        } else {
-            // FIX: If the user has no chats, stop loading
-            setLoading(false);
-        }
-      });
       
-      // 3. Set up a listener for new messages
-      const chatRef = ref(database, `chat/${chatId}`);
-      const unsubscribeChat = onValue(chatRef, (snapshot) => {
-          const chatData = snapshot.val();
-          if (chatData) {
-              const loadedMessages = Object.values(chatData).map((msg, index) => ({
-                  id: Object.keys(chatData)[index],
-                  ...msg
-              }));
-              loadedMessages.sort((a, b) => a.timestamp - b.timestamp);
-              setMessages(loadedMessages);
-          } else {
-              setMessages([]);
-          }
-      });
+      setCurrentUser(user);
+      setLoading(true);
+      setError(null);
 
-      return () => unsubscribeChat();
+      try {
+        // Fetch current user's full profile data
+        const currentUserRef = ref(database, `users/${user.uid}`);
+        const currentUserSnapshot = await get(currentUserRef);
+        if (currentUserSnapshot.exists()) {
+          setCurrentUserData(currentUserSnapshot.val());
+        }
+
+        // Extract partner ID from chatId - with better validation
+        console.log("Chat ID:", chatId);
+        const userIds = chatId.split('_');
+        console.log("User IDs from chatId:", userIds);
+        
+        if (userIds.length !== 2) {
+          throw new Error("Invalid chat ID format. Expected 2 user IDs separated by underscore.");
+        }
+        
+        const partnerId = userIds.find(id => id !== user.uid);
+        console.log("Current User ID:", user.uid);
+        console.log("Partner ID:", partnerId);
+
+        if (!partnerId) {
+          throw new Error("Could not determine the chat partner from the chatId.");
+        }
+
+        // Fetch partner data
+        const partnerRef = ref(database, `users/${partnerId}`);
+        const partnerSnapshot = await get(partnerRef);
+        if (partnerSnapshot.exists()) {
+          setChatPartner({ 
+            ...partnerSnapshot.val(), 
+            uid: partnerId 
+          });
+        } else {
+          throw new Error("Partner data not found in database.");
+        }
+
+        // Clear unread messages for current user
+        const userChatMetadataRef = ref(database, `userChats/${user.uid}/${partnerId}`);
+        await update(userChatMetadataRef, { unreadCount: 0 });
+
+        // Listen for messages - try different database structures
+        const chatMessagesRef = ref(database, `chats/${chatId}/messages`);
+        
+        const unsubscribeChat = onValue(chatMessagesRef, (snapshot) => {
+          const chatData = snapshot.val();
+          console.log("Chat data received:", chatData);
+          
+          if (chatData) {
+            const loadedMessages = Object.entries(chatData).map(([key, msg]) => ({
+              id: key,
+              ...msg
+            }));
+            
+            // Sort by timestamp
+            loadedMessages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+            setMessages(loadedMessages);
+            console.log("Loaded messages:", loadedMessages);
+          } else {
+            setMessages([]);
+            console.log("No messages found in chat");
+          }
+          setLoading(false);
+        }, (error) => {
+          console.error("Error listening to messages:", error);
+          setError("Failed to load messages");
+          setLoading(false);
+        });
+
+        return () => unsubscribeChat();
+      } catch (error) {
+        console.error("Error loading chat:", error);
+        setError(error.message);
+        setLoading(false);
+      }
     });
 
     return () => unsubscribeAuth();
-  }, [chatId, navigate]);
+  }, [chatId, navigate, error]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -92,51 +134,98 @@ const ChatScreen = () => {
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (newMessage.trim() === '' || !currentUser || !chatPartner || !currentUserData) return;
+    
+    if (newMessage.trim() === '' || !currentUser || !chatPartner || !currentUserData) {
+      console.log("Cannot send message - missing requirements");
+      return;
+    }
+
+    if (!chatId) {
+      setError("No chat ID available");
+      return;
+    }
 
     const senderId = currentUser.uid;
     const receiverId = chatPartner.uid;
     
     const newMessageObj = {
-        senderId: senderId,
-        message: newMessage,
-        timestamp: serverTimestamp()
+      senderId: senderId,
+      message: newMessage.trim(),
+      timestamp: serverTimestamp()
     };
     
-    const updates = {};
-    const messageKey = push(ref(database, `chat/${chatId}`)).key;
-    updates[`/chat/${chatId}/${messageKey}`] = newMessageObj;
+    console.log("Sending message:", newMessageObj);
     
-    const senderName = `${currentUserData.firstName || ''} ${currentUserData.lastName || ''}`.trim();
-    const partnerName = `${chatPartner.firstName || ''} ${chatPartner.lastName || ''}`.trim();
+    try {
+      const updates = {};
+      
+      // Push message to chats structure
+      const messageRef = push(ref(database, `chats/${chatId}/messages`));
+      updates[`chats/${chatId}/messages/${messageRef.key}`] = newMessageObj;
+      
+      // Update user chats metadata
+      const senderName = `${currentUserData.firstName || ''} ${currentUserData.lastName || ''}`.trim() || 'User';
+      const partnerName = `${chatPartner.firstName || ''} ${chatPartner.lastName || ''}`.trim() || 'Partner';
 
-    updates[`/userChats/${senderId}/${receiverId}/lastMessage`] = newMessage;
-    updates[`/userChats/${senderId}/${receiverId}/lastMessageTime`] = serverTimestamp();
-    updates[`/userChats/${senderId}/${receiverId}/name`] = partnerName;
+      // For sender
+      updates[`userChats/${senderId}/${receiverId}/lastMessage`] = newMessage.trim();
+      updates[`userChats/${senderId}/${receiverId}/lastMessageTime`] = serverTimestamp();
+      updates[`userChats/${senderId}/${receiverId}/name`] = partnerName;
+      updates[`userChats/${senderId}/${receiverId}/chatId`] = chatId;
 
-    updates[`/userChats/${receiverId}/${senderId}/lastMessage`] = newMessage;
-    updates[`/userChats/${receiverId}/${senderId}/lastMessageTime`] = serverTimestamp();
-    updates[`/userChats/${receiverId}/${senderId}/name`] = senderName;
-    updates[`/userChats/${receiverId}/${senderId}/unreadCount`] = increment(1);
+      // For receiver
+      updates[`userChats/${receiverId}/${senderId}/lastMessage`] = newMessage.trim();
+      updates[`userChats/${receiverId}/${senderId}/lastMessageTime`] = serverTimestamp();
+      updates[`userChats/${receiverId}/${senderId}/name`] = senderName;
+      updates[`userChats/${receiverId}/${senderId}/chatId`] = chatId;
+      updates[`userChats/${receiverId}/${senderId}/unreadCount`] = increment(1);
 
-    await update(ref(database), updates);
-
-    setNewMessage('');
+      console.log("Database updates:", updates);
+      
+      await update(ref(database), updates);
+      setNewMessage('');
+      console.log("Message sent successfully");
+    } catch (error) {
+      console.error("Error sending message:", error);
+      setError("Failed to send message: " + error.message);
+    }
   };
 
-  // FIX: More robust function to determine the chat title based on loading and data state
   const getChatTitle = () => {
-    if (loading) {
-      return 'Loading User...';
-    }
+    if (loading) return 'Loading...';
+    if (error) return 'Error';
     if (chatPartner) {
       const name = `${chatPartner.firstName || ''} ${chatPartner.lastName || ''}`.trim();
       return name || 'Unknown User';
     }
-    return 'Unknown User';
+    return 'Chat Partner';
   };
 
-  const chatTitle = getChatTitle();
+  if (error) {
+    return (
+      <div className="chat-screen-container">
+        <Header />
+        <div className="error-container">
+          <h3>Error Loading Chat</h3>
+          <p>{error}</p>
+          <button onClick={() => navigate('/message-box')} className="back-button">
+            Back to Messages
+          </button>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="chat-screen-container">
+        <Header />
+        <div className="loading-container">Loading chat...</div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="chat-screen-container">
@@ -146,35 +235,42 @@ const ChatScreen = () => {
           <div className="chat-column">
             <div className="chat-header">
               <div className="technician-info">
-                  <div className="tech-avatar">
-                    {chatTitle.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="tech-details">
-                    <h3>{chatTitle}</h3>
-                    {chatPartner && (
-                      <div className="online-status">
-                        <div className="status-dot"></div>
-                        <span>Online</span>
-                      </div>
-                    )}
+                <div className="tech-avatar">
+                  {getChatTitle().charAt(0).toUpperCase()}
+                </div>
+                <div className="tech-details">
+                  <h3>{getChatTitle()}</h3>
+                  <div className="online-status">
+                    <div className="status-dot"></div>
+                    <span>Online</span>
                   </div>
                 </div>
+              </div>
             </div>
 
             <div className="chat-messages">
-              {messages.map((message) => (
-                <div 
-                  key={message.id} 
-                  className={`message ${message.senderId === currentUser?.uid ? 'user-message' : 'technician-message'}`}
-                >
-                  <div className="message-content">
-                    <p>{message.message}</p>
-                    <span className="message-time">
-                      {message.timestamp ? new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                    </span>
+              {messages.length > 0 ? (
+                messages.map((message) => (
+                  <div 
+                    key={message.id} 
+                    className={`message ${message.senderId === currentUser?.uid ? 'user-message' : 'technician-message'}`}
+                  >
+                    <div className="message-content">
+                      <p>{message.message}</p>
+                      <span className="message-time">
+                        {message.timestamp 
+                          ? new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                          : 'Sending...'
+                        }
+                      </span>
+                    </div>
                   </div>
+                ))
+              ) : (
+                <div className="no-messages">
+                  <p>No messages yet. Start the conversation!</p>
                 </div>
-              ))}
+              )}
               <div ref={messagesEndRef} />
             </div>
 
@@ -185,8 +281,13 @@ const ChatScreen = () => {
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 className="message-input"
+                disabled={!chatPartner}
               />
-              <button type="submit" className="send-button">
+              <button 
+                type="submit" 
+                className="send-button"
+                disabled={!chatPartner || newMessage.trim() === ''}
+              >
                 <FaPaperPlane />
               </button>
             </form>
@@ -195,35 +296,37 @@ const ChatScreen = () => {
           <div className="details-column">
             {chatPartner ? (
               <div className="service-details-card">
-              <h3>Partner Info</h3>
-              <div className="service-info">
+                <h3>Partner Info</h3>
+                <div className="service-info">
                   <div className="info-row">
                     <span className="label">Name:</span>
-                    <span className="value"><strong>{chatTitle}</strong></span>
+                    <span className="value"><strong>{getChatTitle()}</strong></span>
                   </div>
-                   <div className="info-row">
+                  <div className="info-row">
                     <span className="label">Role:</span>
                     <span className="value">{chatPartner.role || 'User'}</span>
                   </div>
-              </div>
-              
-              {chatPartner.role === 'technician' && (
-                <div className="technician-qualifications">
-                  <h4>Technician Info</h4>
-                  <ul>
-                    <li>Licensed & Insured</li>
-                    <li>Background Verified</li>
-                    {chatPartner.averageRating && (
+                  {/* <div className="info-row">
+                    <span className="label">Chat ID:</span>
+                    <span className="value" style={{fontSize: '12px'}}>{chatId}</span>
+                  </div> */}
+                </div>
+                
+                {chatPartner.role === 'technician' && chatPartner.averageRating && (
+                  <div className="technician-qualifications">
+                    <h4>Technician Info</h4>
+                    <ul>
+                      <li>Licensed & Insured</li>
+                      <li>Background Verified</li>
                       <li>
                         <FaStar style={{color: '#fbbf24', marginRight: '5px'}} /> 
                         {`${chatPartner.averageRating.toFixed(1)} Rating`}
                       </li>
-                    )}
-                  </ul>
-                </div>
-              )}
-            </div>
-            ) : !loading && (
+                    </ul>
+                  </div>
+                )}
+              </div>
+            ) : (
               <div className="service-details-card">
                 <h3>Partner Info</h3>
                 <p>Could not load user details.</p>

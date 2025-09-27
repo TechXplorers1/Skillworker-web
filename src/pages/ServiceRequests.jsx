@@ -10,7 +10,7 @@ import {
   FaStar,
   FaCalendarAlt,
 } from 'react-icons/fa';
-import { ref, onValue, update, query, orderByChild, equalTo, get, child } from "firebase/database";
+import { ref, onValue, update, query, orderByChild, equalTo, get, child, set } from "firebase/database";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, database } from '../firebase';
 import '../styles/ServiceRequests.css';
@@ -140,7 +140,6 @@ const ServiceRequests = () => {
         updates.completedAt = new Date().toISOString();
     }
 
-    // Optimistic update
     setAllRequests(currentRequests =>
       currentRequests.map(r =>
         r.id === requestId ? { ...r, ...updates, displayStatus: status.toLowerCase() === 'completed' ? 'history' : status.toLowerCase() === 'cancelled' ? 'cancelled' : status.toLowerCase() } : r
@@ -150,13 +149,39 @@ const ServiceRequests = () => {
     update(requestRef, updates)
       .catch(error => console.error(`Failed to update status to ${status}:`, error));
   };
+  
+  // --- NEW: Function to handle chat initiation ---
+  const handleChat = async (request) => {
+    if (!currentTechnician || !request.uid) return;
+    
+    const technicianId = currentTechnician.uid;
+    const customerId = request.uid;
+    const chatId = [technicianId, customerId].sort().join('_');
 
-  const handleChat = (requestId) => {
-    // Placeholder for actual chat navigation/logic
-    console.log(`Navigating to chat for request ID: ${requestId}`);
-    // You would typically navigate to a chat screen here, e.g.:
-    // navigate(`/chat/${requestId}`);
+    const chatRef = ref(database, `userChats/${technicianId}/${customerId}`);
+    const chatSnap = await get(chatRef);
+
+    if (!chatSnap.exists()) {
+      const customer = usersData[customerId];
+      const technicianName = currentTechnician.displayName || `${currentTechnician.firstName || ''} ${currentTechnician.lastName || ''}`.trim() || 'Technician';
+
+      const chatMetadata = {
+        chatId: chatId,
+        lastMessage: "Chat started",
+        lastMessageTime: Date.now(),
+        unreadCount: 0,
+      };
+
+      const updates = {};
+      updates[`/userChats/${technicianId}/${customerId}`] = { ...chatMetadata, name: `${customer.firstName} ${customer.lastName}` };
+      updates[`/userChats/${customerId}/${technicianId}`] = { ...chatMetadata, name: technicianName };
+      
+      await update(ref(database), updates);
+    }
+    
+    navigate(`/chat/${chatId}`);
   };
+
 
   if (loading) {
     return <div className="loading-container">Loading service requests...</div>;
@@ -204,8 +229,6 @@ const ServiceRequests = () => {
             filteredRequests.map((request) => {
               const user = usersData[request.uid];
               const status = request.status || 'pending';
-              
-              // Format full address
               const fullAddress = user ? 
                 `${user.address || ''}, ${user.city || ''}, ${user.state || ''} - ${user.zipCode || ''}`.trim() : 
                 'Address not available';
@@ -273,7 +296,8 @@ const ServiceRequests = () => {
                       <button className="action-btn1 decline-btn" onClick={() => handleUpdateStatus(request.id, 'cancelled')}>
                         Cancel
                       </button>
-                      <button className="action-btn1 chat-btn" onClick={() => handleChat(request.id)}>
+                      {/* --- UPDATED onClick handler --- */}
+                      <button className="action-btn1 chat-btn" onClick={() => handleChat(request)}>
                         Chat
                       </button>
                       <button className="action-btn1 complete-btn" onClick={() => handleUpdateStatus(request.id, 'completed')}>

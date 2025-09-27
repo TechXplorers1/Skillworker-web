@@ -10,7 +10,7 @@ import {
   FaStar,
   FaCalendarAlt,
 } from 'react-icons/fa';
-import { ref, onValue, update, query, orderByChild, equalTo, get, child } from "firebase/database";
+import { ref, onValue, update, query, orderByChild, equalTo, get, child, set } from "firebase/database";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, database } from '../firebase';
 import '../styles/MyBookingsPage.css';
@@ -96,11 +96,10 @@ const MyBookingsPage = () => {
     let matchesStatus = false;
     const bookingStatus = booking.status ? booking.status.toLowerCase() : 'pending';
 
-    // FIX: Active tab should only show pending requests
     if (activeFilter === 'Active') {
-      matchesStatus = (bookingStatus === 'pending'); // Only pending bookings in Active tab
+      matchesStatus = (bookingStatus === 'pending');
     } else if (activeFilter === 'Accepted') {
-      matchesStatus = (bookingStatus === 'accepted'); // Only accepted bookings in Accepted tab
+      matchesStatus = (bookingStatus === 'accepted');
     } else {
       matchesStatus = activeFilter.toLowerCase() === bookingStatus;
     }
@@ -122,7 +121,6 @@ const MyBookingsPage = () => {
         updates.completedAt = new Date().toISOString();
     }
     
-    // Optimistic update for instant UI feedback
     setAllBookings(currentBookings =>
       currentBookings.map(b =>
         b.id === bookingId ? { ...b, ...updates } : b
@@ -132,6 +130,39 @@ const MyBookingsPage = () => {
     update(bookingRef, updates)
       .catch(error => console.error(`Failed to update booking to ${status}:`, error));
   };
+  
+  // --- NEW: Function to handle chat initiation ---
+  const handleChat = async (booking) => {
+    if (!currentUser || !booking.technicianId) return;
+
+    const customerId = currentUser.uid;
+    const technicianId = booking.technicianId;
+    const chatId = [customerId, technicianId].sort().join('_');
+
+    const chatRef = ref(database, `userChats/${customerId}/${technicianId}`);
+    const chatSnap = await get(chatRef);
+
+    if (!chatSnap.exists()) {
+      const technician = techniciansData[technicianId];
+      const customerName = currentUser.displayName || `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() || 'Customer';
+      
+      const chatMetadata = {
+        chatId: chatId,
+        lastMessage: "Chat started",
+        lastMessageTime: Date.now(),
+        unreadCount: 0,
+      };
+
+      const updates = {};
+      updates[`/userChats/${customerId}/${technicianId}`] = { ...chatMetadata, name: `${technician.firstName} ${technician.lastName}` };
+      updates[`/userChats/${technicianId}/${customerId}`] = { ...chatMetadata, name: customerName };
+      
+      await update(ref(database), updates);
+    }
+    
+    navigate(`/chat/${chatId}`);
+  };
+
 
   if (loading) {
     return <div className="loading-container">Loading your bookings...</div>;
@@ -181,7 +212,6 @@ const MyBookingsPage = () => {
               const status = booking.status || 'pending';
               const statusClass = status.toLowerCase();
 
-              // Format full address
               const fullAddress = technician ? 
                 `${technician.address || ''}, ${technician.city || ''}, ${technician.state || ''} - ${technician.zipCode || ''}`.trim() : 
                 'Address not available';
@@ -240,7 +270,6 @@ const MyBookingsPage = () => {
                   </div>
 
                   <div className="booking-actions">
-                    {/* FIX: Active tab (pending) shows Cancel button */}
                     {status === 'pending' && activeFilter === 'Active' && (
                         <button 
                           className="action-btn1 cancel-btn"
@@ -250,7 +279,6 @@ const MyBookingsPage = () => {
                         </button>
                     )}
 
-                    {/* FIX: Accepted tab shows Cancel, Chat, and Complete buttons */}
                     {status === 'accepted' && activeFilter === 'Accepted' && (
                       <>
                         <button 
@@ -259,7 +287,8 @@ const MyBookingsPage = () => {
                         >
                           Cancel
                         </button>
-                        <button className="action-btn1 chat-btn">Chat</button>
+                        {/* --- ADDED onClick handler --- */}
+                        <button className="action-btn1 chat-btn" onClick={() => handleChat(booking)}>Chat</button>
                         <button 
                           className="action-btn1 complete-btn"
                           onClick={() => handleUpdateBookingStatus(booking.id, 'completed')}
@@ -269,7 +298,6 @@ const MyBookingsPage = () => {
                       </>
                     )}
                     
-                    {/* FIX: Completed tab shows Review button */}
                     {status === 'completed' && activeFilter === 'Completed' && (
                         <button className="action-btn1 review-btn">Leave a Review</button>
                     )}

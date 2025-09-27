@@ -171,7 +171,31 @@
 .card-header {
   display: flex;
   align-items: flex-start;
+  position: relative; /* ADDED: This is necessary for positioning the dot */
 }
+
+/* --- NEW STYLES FOR ACTIVITY DOT --- */
+.activity-dot {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  z-index: 2;
+}
+
+.activity-dot.available {
+  background-color: #28a745; /* Green for available */
+}
+
+.activity-dot.booked {
+  background-color: #dc3545; /* Red for booked */
+}
+/* --- END OF NEW STYLES --- */
+
 
 .tech-image {
   width: 80px;
@@ -275,6 +299,13 @@
 
 .book-btn:hover {
   background: #16a34a;
+}
+
+/* --- ADDED: Style for disabled book button --- */
+.tech-contact-btn.book-btn:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.7;
 }
 
 /* No results message */

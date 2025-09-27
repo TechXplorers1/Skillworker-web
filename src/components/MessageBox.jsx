@@ -17,28 +17,22 @@ const MessageBox = () => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
         setCurrentUser(user);
-        // Path to the current user's chat list
         const userChatsRef = ref(database, `userChats/${user.uid}`);
         
         const unsubscribeChats = onValue(userChatsRef, (snapshot) => {
           const chatsData = snapshot.val();
           if (chatsData) {
-            // Directly map over the chat data, no extra fetching needed
             const fetchedChats = Object.entries(chatsData).map(([partnerId, chatDetails]) => ({
               partnerId: partnerId,
               chatId: chatDetails.chatId,
-              partnerName: chatDetails.name || 'Unknown User', // Use the name from userChats
+              partnerName: chatDetails.name || 'Unknown User',
               lastMessage: chatDetails.lastMessage || '',
-              time: chatDetails.lastMessageTime ? new Date(chatDetails.lastMessageTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
+              lastMessageTime: chatDetails.lastMessageTime,
               unread: chatDetails.unreadCount || 0
             }));
 
-            // Sort chats by the most recent message
-            fetchedChats.sort((a, b) => {
-                const timeA = a.lastMessageTime || 0;
-                const timeB = b.lastMessageTime || 0;
-                return timeB - timeA;
-            });
+            // Sort chats by the most recent message timestamp
+            fetchedChats.sort((a, b) => b.lastMessageTime - a.lastMessageTime);
             
             setChatList(fetchedChats);
           } else {
@@ -57,8 +51,12 @@ const MessageBox = () => {
   }, [navigate]);
 
   const openChat = (chat) => {
-    // Navigate using the unique chatId
     navigate(`/chat/${chat.chatId}`);
+  };
+
+  const formatTime = (timestamp) => {
+      if (!timestamp) return '';
+      return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   if (loading) {
@@ -88,7 +86,7 @@ const MessageBox = () => {
                 <div className="info">
                   <div className="top-row">
                     <span className="name">{chat.partnerName}</span>
-                    <span className="time">{chat.time}</span>
+                    <span className="time">{formatTime(chat.lastMessageTime)}</span>
                   </div>
                   <div className="text">{chat.lastMessage || "No messages yet."}</div>
                 </div>

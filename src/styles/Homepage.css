@@ -52,19 +52,86 @@ main {
   }
 }
 
-.service-card {
-  background: #fff;
+/* --- NEW 3D Book Hover Effect Styles --- */
+
+/* The main container for the 3D effect */
+.service-card-flipper {
+  position: relative;
+  width: 100%;
+  height: 340px;
+  /* UPDATED: From whitesmoke to a glassy, semi-transparent dark background */
+  background: rgba(30, 30, 30, 0.65);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px); /* For Safari browser support */
+  border: 1px solid rgba(255, 255, 255, 0.1); /* Adds a subtle edge to the glass */
   border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 1px 1px 12px rgba(0,0,0,0.2);
+  transform-style: preserve-3d;
+  perspective: 2000px;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
-.service-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.1);
+/* The front cover of the book */
+.card-cover {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #fff;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.6s ease-in-out, box-shadow 0.6s ease-in-out;
+  transform-origin: left; /* Flips from the left edge */
+  box-shadow: 1px 1px 12px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  backface-visibility: hidden; /* Hides the mirrored back when flipping */
+  z-index: 10;
+}
+
+/* The hover effect that triggers the flip */
+.service-card-flipper:hover .card-cover {
+  transform: rotateY(-135deg);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+}
+
+/* The content revealed on the "inside page" */
+.card-back {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+  gap: 15px;
+  /* ADDED: Set default text color to white for contrast */
+  color: #fff; 
+}
+
+.card-back .card-title {
+  font-size: 1.3rem;
+  /* Color will now be inherited from .card-back */
+}
+
+.card-back p {
+  font-size: 1rem;
+  /* UPDATED: A slightly dimmer white for the paragraph text */
+  color: rgba(255, 255, 255, 0.85); 
+}
+
+/* Make sure the existing styles for image and content still apply */
+.card-cover .card-content {
+  flex-grow: 1; /* Allows content to fill space below image */
+  padding: 15px; /* Restoring original padding */
+}
+
+/* We removed the button from the cover, so we can hide its old space */
+.card-cover .btn {
+  display: none;
 }
 
 /* Image container for masking/overlay */
@@ -87,7 +154,7 @@ main {
   transition: background-color 0.3s ease;
 }
 
-.service-card:hover .image-mask {
+.service-card-flipper:hover .image-mask {
     background-color: rgba(0, 0, 0, 0.45); /* Slight darkening on hover */
 }
 
@@ -110,7 +177,7 @@ main {
   transition: transform 0.5s ease;
 }
 
-.service-card:hover .card-image {
+.service-card-flipper:hover .card-image {
     transform: scale(1.05); /* Subtle zoom effect on hover */
 }
 

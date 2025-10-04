@@ -13,11 +13,12 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
   const [allServices, setAllServices] = useState([]);
-  // const [showPopup, setShowPopup] = useState(false); // Removed: Popup handled on Home page
   const [fieldErrors, setFieldErrors] = useState({});
-  // NEW STATE: To control the blinking animation on mandatory fields
   const [blinkingField, setBlinkingField] = useState(null); 
 
+  // --- NEW STATE: For the technician activity toggle ---
+  const [isTechnicianActive, setIsTechnicianActive] = useState(false);
+  
   // --- STATE FOR DATE BLOCKING ---
   const [showDateBlocker, setShowDateBlocker] = useState(false);
   const [currentBlockerMonth, setCurrentBlockerMonth] = useState(new Date().getMonth());
@@ -67,10 +68,10 @@ const Profile = () => {
         }
         setUserData(data);
 
-        // NOTE: Profile popup logic REMOVED from here.
-        // if (data.role === "technician" && !data.isProfileComplete) {
-        //   setShowPopup(true);
-        // }
+        // MOVED LOGIC: Set the technician's active status from fetched data
+        if (data.role === 'technician') {
+          setIsTechnicianActive(data.isActive || false);
+        }
 
       } else {
         setUserData({
@@ -156,6 +157,22 @@ const Profile = () => {
     // Return the name of the first error field, or null if validation passes
     return firstErrorField; 
   };
+  
+  // NEW: Handler for the technician activity toggle switch
+  const handleToggleStatus = async () => {
+    const newStatus = !isTechnicianActive;
+    const user = auth.currentUser;
+    if (user && userData?.role === 'technician') {
+      try {
+        const userRef = ref(database, `users/${user.uid}`);
+        await update(userRef, { isActive: newStatus });
+        setIsTechnicianActive(newStatus);
+      } catch (error) {
+        console.error("Failed to update technician status:", error);
+      }
+    }
+  };
+
 
   const checkProfileCompletion = (data) => {
     return (
@@ -173,13 +190,6 @@ const Profile = () => {
   };
 
   const handleEditToggle = () => setIsEditing(!isEditing);
-  
-  // const handlePopupAction = (action) => { // Removed: Popup handled on Home page
-  //   // setShowPopup(false); 
-  //   // if (action === 'completeNow') {
-  //   //   setIsEditing(true);
-  //   // }
-  // };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -452,29 +462,66 @@ const Profile = () => {
           <span>Profile saved successfully!</span>
         </div>
       )}
-      {/* Removed technician profile popup from here */}
       
       <div className="profile-box">
         <div className="profile-header">
             <h1 className="main-title">Profile Management</h1>
-            {/* Action button at top-right for Edit/Cancel */}
-            <button 
-              className={`action-btn ${isEditing ? 'cancel' : 'edit-icon'}`} 
-              onClick={handleEditToggle}
-              title={isEditing ? "Cancel Editing" : "Edit Profile"}
-            >
-                {isEditing ? (
-                  <>
-                    <FaTimes />
-                    <span className="btn-text">&nbsp;Cancel</span>
-                  </>
-                ) : (
-                  <>
-                    <FaEdit />
-                    <span className="btn-text">&nbsp;Edit Profile</span>
-                  </>
-                )}
-            </button>
+            <div className="profile-header-actions">
+              {/* --- NEW: Activity Toggle for Technicians --- */}
+              {isTechnician && (
+                 <div className="cyber-toggle-wrapper-profile">
+                    <input className="cyber-toggle-checkbox" id="cyber-toggle-profile" type="checkbox" checked={isTechnicianActive} onChange={handleToggleStatus} />
+                    <label className="cyber-toggle" htmlFor="cyber-toggle-profile">
+                      <div className="cyber-toggle-track">
+                        <div className="cyber-toggle-track-glow" />
+                        <div className="cyber-toggle-track-dots">
+                          <span className="cyber-toggle-track-dot" />
+                          <span className="cyber-toggle-track-dot" />
+                          <span className="cyber-toggle-track-dot" />
+                        </div>
+                      </div>
+                      <div className="cyber-toggle-thumb">
+                        <div className="cyber-toggle-thumb-shadow" />
+                        <div className="cyber-toggle-thumb-highlight" />
+                        <div className="cyber-toggle-thumb-icon">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M16.5 12c0-2.48-2.02-4.5-4.5-4.5s-4.5 2.02-4.5 4.5 2.02 4.5 4.5 4.5 4.5-2.02 4.5-4.5zm-4.5 7.5c-4.14 0-7.5-3.36-7.5-7.5s3.36-7.5 7.5-7.5 7.5 3.36 7.5 7.5-3.36 7.5-7.5 7.5zm0-16.5c-4.97 0-9 4.03-9 9h-3l3.89 3.89.07.14 4.04-4.03h-3c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42c1.63 1.63 3.87 2.64 6.36 2.64 4.97 0 9-4.03 9-9s-4.03-9-9-9z" />
+                          </svg>
+                        </div>
+                      </div>
+                      <div className="cyber-toggle-particles">
+                        <span className="cyber-toggle-particle" />
+                        <span className="cyber-toggle-particle" />
+                        <span className="cyber-toggle-particle" />
+                        <span className="cyber-toggle-particle" />
+                      </div>
+                    </label>
+                    <div className="cyber-toggle-labels">
+                      <span className="cyber-toggle-label-off">OFFLINE</span>
+                      <span className="cyber-toggle-label-on">ONLINE</span>
+                    </div>
+                  </div>
+              )}
+              {/* --- END of Activity Toggle --- */}
+
+              <button 
+                className={`action-btn ${isEditing ? 'cancel' : 'edit-icon'}`} 
+                onClick={handleEditToggle}
+                title={isEditing ? "Cancel Editing" : "Edit Profile"}
+              >
+                  {isEditing ? (
+                    <>
+                      <FaTimes />
+                      <span className="btn-text">&nbsp;Cancel</span>
+                    </>
+                  ) : (
+                    <>
+                      <FaEdit />
+                      <span className="btn-text">&nbsp;Edit Profile</span>
+                    </>
+                  )}
+              </button>
+            </div>
         </div>
 
         <div className="form-section">
@@ -505,7 +552,6 @@ const Profile = () => {
                       disabled={!isEditing}
                       maxLength="10"
                       placeholder="Enter 10-digit phone number"
-                      // NEW: Apply blinking class
                       className={blinkingField === 'phone' ? 'input-blink-error' : ''}
                     />
                     {fieldErrors.phone && <span className="field-error">{fieldErrors.phone}</span>}
@@ -541,7 +587,6 @@ const Profile = () => {
                       onChange={handleInputChange} 
                       disabled={!isEditing} 
                       placeholder="Enter your street address"
-                      // NEW: Apply blinking class
                       className={blinkingField === 'address' ? 'input-blink-error' : ''}
                     />
                     {fieldErrors.address && <span className="field-error">{fieldErrors.address}</span>}
@@ -558,7 +603,6 @@ const Profile = () => {
                       onChange={handleInputChange} 
                       disabled={!isEditing} 
                       placeholder="Enter your city"
-                       // NEW: Apply blinking class
                       className={blinkingField === 'city' ? 'input-blink-error' : ''}
                     />
                     {fieldErrors.city && <span className="field-error">{fieldErrors.city}</span>}
@@ -575,7 +619,6 @@ const Profile = () => {
                       onChange={handleInputChange} 
                       disabled={!isEditing} 
                       placeholder="Enter your state"
-                       // NEW: Apply blinking class
                       className={blinkingField === 'state' ? 'input-blink-error' : ''}
                     />
                     {fieldErrors.state && <span className="field-error">{fieldErrors.state}</span>}
@@ -593,7 +636,6 @@ const Profile = () => {
                       disabled={!isEditing} 
                       maxLength="6"
                       placeholder="Enter 6-digit ZIP code"
-                       // NEW: Apply blinking class
                       className={blinkingField === 'zipCode' ? 'input-blink-error' : ''}
                     />
                     {fieldErrors.zipCode && <span className="field-error">{fieldErrors.zipCode}</span>}
@@ -612,7 +654,6 @@ const Profile = () => {
 
         {isTechnician && (
             <div className="form-section">
-                {/* REMOVED: Redundant profile-header class here */}
                 <div className="professional-details-header">
                   <h3 className="section-title">Professional Details</h3>
                   <div className="availability-blocker-section">
@@ -636,7 +677,6 @@ const Profile = () => {
                           disabled={!isEditing}
                           min="0"
                           placeholder="Enter years of experience"
-                           // NEW: Apply blinking class
                           className={blinkingField === 'experience' ? 'input-blink-error' : ''}
                         />
                         {fieldErrors.experience && <span className="field-error">{fieldErrors.experience}</span>}
@@ -651,7 +691,6 @@ const Profile = () => {
                           value={userData.availableTimings || ""}
                           onChange={handleInputChange}
                           disabled={!isEditing}
-                          // NEW: Apply blinking class
                           className={blinkingField === 'availableTimings' ? 'input-blink-error' : ''}
                         >
                           <option value="">Select a time slot...</option>
@@ -674,7 +713,6 @@ const Profile = () => {
                           disabled={!isEditing}
                           maxLength="12"
                           placeholder="Enter 12-digit Aadhar number"
-                           // NEW: Apply blinking class
                           className={blinkingField === 'aadharNumber' ? 'input-blink-error' : ''}
                         />
                         {fieldErrors.aadharNumber && <span className="field-error">{fieldErrors.aadharNumber}</span>}
@@ -690,8 +728,6 @@ const Profile = () => {
                           onChange={handleFileChange}
                           disabled={!isEditing}
                           accept=".jpg,.jpeg,.png,.pdf"
-                          // NOTE: The file input itself is hard to style and blink, 
-                          // but the error message is clear. We scroll to it.
                         />
                          {userData.aadharProofUrl && <p className="file-name">{userData.aadharProofUrl}</p>}
                          {fieldErrors.aadharProofUrl && <span className="field-error" id="aadharProofUrl-error">{fieldErrors.aadharProofUrl}</span>}
@@ -729,7 +765,6 @@ const Profile = () => {
             </div>
         )}
         
-        {/* ACTION BUTTON SECTION at the bottom right */}
         {isEditing && (
             <div className="profile-action-footer">
                 <button 
@@ -742,7 +777,6 @@ const Profile = () => {
         )}
       </div>
 
-      {/* --- DATE BLOCKER MODAL --- */}
       {showDateBlocker && (
         <div className="modal-backdrop date-blocker-overlay">
           <div className="modal-content date-blocker-popup" onClick={(e) => e.stopPropagation()}>

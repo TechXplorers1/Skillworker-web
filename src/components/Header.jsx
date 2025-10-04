@@ -26,7 +26,8 @@ const Header = () => {
   const location = useLocation();
   const [user, setUser] = useState(null);
   const [userData, setUserData] = useState(null);
-  const [isTechnicianActive, setIsTechnicianActive] = useState(false);
+  // REMOVED: isTechnicianActive state is now in Profile.jsx
+  // const [isTechnicianActive, setIsTechnicianActive] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
@@ -39,9 +40,10 @@ const Header = () => {
           if (snapshot.exists()) {
             const data = snapshot.val();
             setUserData(data);
-            if (data.role === 'technician') {
-              setIsTechnicianActive(data.isActive || false);
-            }
+            // REMOVED: This logic is now handled in Profile.jsx
+            // if (data.role === 'technician') {
+            //   setIsTechnicianActive(data.isActive || false);
+            // }
           } else {
             setUserData({
               fullName: firebaseUser.displayName || firebaseUser.email,
@@ -74,6 +76,7 @@ const Header = () => {
 
   const handleLogout = async () => {
     try {
+      // This is a good safety measure to keep: set technician to inactive on logout.
       if (userData?.role === 'technician' && user) {
         const userRef = ref(database, `users/${user.uid}`);
         await update(userRef, { isActive: false });
@@ -112,18 +115,7 @@ const Header = () => {
     navigate("/dashboard");
   };
 
-  const handleToggleStatus = async () => {
-    const newStatus = !isTechnicianActive;
-    if (user) {
-      try {
-        const userRef = ref(database, `users/${user.uid}`);
-        await update(userRef, { isActive: newStatus });
-        setIsTechnicianActive(newStatus);
-      } catch (error) {
-        console.error("Failed to update technician status:", error);
-      }
-    }
-  };
+  // REMOVED: handleToggleStatus function is now in Profile.jsx
   
   const getAvatarLetter = () => {
     if (userData?.fullName) {
@@ -155,44 +147,7 @@ const Header = () => {
         <h2 className="header-logo">SkillWorkers</h2>
       </div>
 
-      {user && userData?.role === "technician" && (
-        <div className="header-center">
-           {/* --- NEW CYBER TOGGLE SWITCH --- */}
-          <div className="cyber-toggle-wrapper">
-            <input className="cyber-toggle-checkbox" id="cyber-toggle" type="checkbox" checked={isTechnicianActive} onChange={handleToggleStatus} />
-            <label className="cyber-toggle" htmlFor="cyber-toggle">
-              <div className="cyber-toggle-track">
-                <div className="cyber-toggle-track-glow" />
-                <div className="cyber-toggle-track-dots">
-                  <span className="cyber-toggle-track-dot" />
-                  <span className="cyber-toggle-track-dot" />
-                  <span className="cyber-toggle-track-dot" />
-                </div>
-              </div>
-              <div className="cyber-toggle-thumb">
-                <div className="cyber-toggle-thumb-shadow" />
-                <div className="cyber-toggle-thumb-highlight" />
-                <div className="cyber-toggle-thumb-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                    <path d="M16.5 12c0-2.48-2.02-4.5-4.5-4.5s-4.5 2.02-4.5 4.5 2.02 4.5 4.5 4.5 4.5-2.02 4.5-4.5zm-4.5 7.5c-4.14 0-7.5-3.36-7.5-7.5s3.36-7.5 7.5-7.5 7.5 3.36 7.5 7.5-3.36 7.5-7.5 7.5zm0-16.5c-4.97 0-9 4.03-9 9h-3l3.89 3.89.07.14 4.04-4.03h-3c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42c1.63 1.63 3.87 2.64 6.36 2.64 4.97 0 9-4.03 9-9s-4.03-9-9-9z" />
-                  </svg>
-                </div>
-              </div>
-              <div className="cyber-toggle-particles">
-                <span className="cyber-toggle-particle" />
-                <span className="cyber-toggle-particle" />
-                <span className="cyber-toggle-particle" />
-                <span className="cyber-toggle-particle" />
-              </div>
-            </label>
-            <div className="cyber-toggle-labels">
-              <span className="cyber-toggle-label-off">OFF</span>
-              <span className="cyber-toggle-label-on">ON</span>
-            </div>
-          </div>
-           {/* --- END OF CYBER TOGGLE SWITCH --- */}
-        </div>
-      )}
+      {/* REMOVED: The entire header-center section containing the toggle switch */}
 
       <div className="header-right">
         {user ? (
@@ -257,4 +212,3 @@ const Header = () => {
 };
 
 export default Header;
-

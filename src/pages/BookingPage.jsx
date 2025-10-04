@@ -39,6 +39,35 @@ const parseTime = (timeStr) => {
     return { hours, minutes };
 };
 
+// --- NEW HELPER FUNCTION TO FILTER SLOTS BASED ON TECHNICIAN PREFERENCE ---
+const getFilteredTimeSlots = (allSlots, preference) => {
+    // If no preference is set or it's 'any slot', return all slots
+    if (!preference || preference === 'Ok With Any Time Slot') {
+        return allSlots;
+    }
+
+    // Filter slots based on the preference string
+    return allSlots.filter(slot => {
+        const { hours } = parseTime(slot);
+        
+        if (preference.includes('Morning')) {
+            // Morning: 8:00 AM up to (but not including) 12:00 PM
+            return hours >= 8 && hours < 12;
+        }
+        if (preference.includes('Afternoon')) {
+            // Afternoon: 12:00 PM up to (but not including) 4:00 PM
+            return hours >= 12 && hours < 16;
+        }
+        if (preference.includes('Evening')) {
+            // Evening: 4:00 PM up to and including 7:00 PM
+            return hours >= 16 && hours <= 19;
+        }
+
+        // If preference is something unexpected, return no slots by default
+        return false; 
+    });
+};
+
 
 const BookingPage = () => {
     const { serviceName, technicianId } = useParams();
@@ -51,16 +80,33 @@ const BookingPage = () => {
     const [loading, setLoading] = useState(true);
     const [showCalendarPopup, setShowCalendarPopup] = useState(false);
     const [bookedSlots, setBookedSlots] = useState([]);
-    const [selectedDate, setSelectedDate] = useState(null); 
+    const [selectedDate, setSelectedDate] = useState(null);
     const [selectedTime, setSelectedTime] = useState(null);
     const [specialInstructions, setSpecialInstructions] = useState('');
+    const [instructionsError, setInstructionsError] = useState('');
     const [showPopup, setShowPopup] = useState(false);
     const [bookingId, setBookingId] = useState('');
     const [creatingBooking, setCreatingBooking] = useState(false);
     const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
 
-    const timeSlots = generateTimeSlots();
+    const handleInstructionsChange = (e) => {
+        const value = e.target.value;
+        const hasTenConsecutiveDigits = /\d{10}/.test(value);
+
+        if (hasTenConsecutiveDigits) {
+            setInstructionsError('Error: Sharing phone numbers in the instructions is not allowed.');
+        } else {
+            setSpecialInstructions(value);
+            if (instructionsError) {
+                setInstructionsError('');
+            }
+        }
+    };
+
+    // --- LOGIC UPDATED HERE: Filter slots based on technician preference ---
+    const allTimeSlots = generateTimeSlots();
+    const availableTimeSlots = getFilteredTimeSlots(allTimeSlots, technician?.availableTimings);
 
     // Helper function to create a date object from YYYY-MM-DD treating it as UTC midnight
     const createUtcDate = (dateStr) => {
@@ -73,7 +119,7 @@ const BookingPage = () => {
         const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
             if (user) {
                 setCurrentUser(user);
-                fetchServiceData(); 
+                fetchServiceData();
             } else {
                 navigate("/login");
             }
@@ -100,7 +146,7 @@ const BookingPage = () => {
         });
         return () => unsubscribeTechnician();
     }, [technicianId]);
-    
+
     useEffect(() => {
         if (!technicianId || !selectedDate) {
             setBookedSlots([]);
@@ -109,8 +155,8 @@ const BookingPage = () => {
 
         const bookingsRef = ref(database, 'bookings');
         const bookingsQuery = query(
-            bookingsRef, 
-            orderByChild('technicianId'), 
+            bookingsRef,
+            orderByChild('technicianId'),
             equalTo(technicianId)
         );
 
@@ -146,7 +192,8 @@ const BookingPage = () => {
                     setServiceDetails(serviceEntry);
                 }
             }
-        } catch (error) {
+        } catch (error)
+        {
             console.error("Error fetching data:", error);
         }
     };
@@ -165,25 +212,25 @@ const BookingPage = () => {
     // Calendar functionality
     const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
     const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
-    
+
     const generateCalendar = (year, month) => {
         const daysInMonth = getDaysInMonth(year, month);
         const firstDay = getFirstDayOfMonth(year, month);
         const calendar = [];
-        const blockedDates = technician?.unavailableDates || []; 
-        
+        const blockedDates = technician?.unavailableDates || [];
+
         for (let i = 0; i < firstDay; i++) calendar.push({ day: null, date: null });
-        
+
         for (let day = 1; day <= daysInMonth; day++) {
             const date = createUtcDate(`${year}-${month + 1}-${day}`);
             const dateStr = date.toISOString().split('T')[0];
 
-            calendar.push({ 
-                day, 
+            calendar.push({
+                day,
                 date: dateStr,
                 isToday: isToday(date),
                 isPast: isPastDate(date),
-                isBlocked: blockedDates.includes(dateStr) 
+                isBlocked: blockedDates.includes(dateStr)
             });
         }
         return calendar;
@@ -191,9 +238,9 @@ const BookingPage = () => {
 
     const isToday = (date) => {
         const today = new Date();
-        return date.getUTCFullYear() === today.getFullYear() && 
-               date.getUTCMonth() === today.getMonth() && 
-               date.getUTCDate() === today.getDate();
+        return date.getUTCFullYear() === today.getFullYear() &&
+            date.getUTCMonth() === today.getMonth() &&
+            date.getUTCDate() === today.getDate();
     };
 
     const isPastDate = (date) => {
@@ -201,7 +248,7 @@ const BookingPage = () => {
         const todayUtc = createUtcDate(today.toISOString().split('T')[0]);
         return createUtcDate(date.toISOString().split('T')[0]) < todayUtc;
     };
-    
+
     const calendar = generateCalendar(currentYear, currentMonth);
     const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
@@ -231,8 +278,8 @@ const BookingPage = () => {
     };
 
     const getDisplayDate = (dateStr) => {
-        if (!dateStr) return { label: 'Choose Date', sub: 'Tap to select' }; 
-        
+        if (!dateStr) return { label: 'Choose Date', sub: 'Tap to select' };
+
         const todayStr = new Date().toISOString().split('T')[0];
         const tomorrow = new Date();
         tomorrow.setDate(new Date().getDate() + 1);
@@ -242,17 +289,17 @@ const BookingPage = () => {
 
         if (dateStr === todayStr) return { label: 'Today', sub: '' };
         if (dateStr === tomorrowStr) return { label: 'Tomorrow', sub: '' };
-        
-        const displayDate = new Date(dateStr + 'T00:00:00Z'); 
+
+        const displayDate = new Date(dateStr + 'T00:00:00Z');
         return { label: displayDate.toLocaleDateString('en-US', displayOptions), sub: '' };
     };
 
     const displayDate = getDisplayDate(selectedDate);
-    
+
     const subtotal = (technician?.price?.type === 'hourly' ? technician.price.amount * 1 : technician?.price?.amount) || 0;
     const serviceFee = 5;
     const total = subtotal + serviceFee;
-    
+
     const isBookingDisabled = creatingBooking || !selectedDate || !selectedTime || technician?.unavailableDates?.includes(selectedDate);
 
     const createBooking = async () => {
@@ -271,7 +318,7 @@ const BookingPage = () => {
         try {
             const bookingsRef = ref(database, 'bookings');
             const newBookingRef = push(bookingsRef);
-            
+
             const bookingData = {
                 id: newBookingRef.key,
                 uid: currentUser.uid,
@@ -317,7 +364,7 @@ const BookingPage = () => {
     const handleBack = () => navigate(-1);
 
     if (loading || !technician || !currentUser) return <div>Loading...</div>;
-  
+
     return (
         <div className="booking-page-container">
             <Header />
@@ -360,7 +407,6 @@ const BookingPage = () => {
                     border-color: #e5e7eb;
                 }
 
-                /* --- NEW: Style for the placeholder message --- */
                 .time-placeholder {
                   padding: 20px;
                   text-align: center;
@@ -475,7 +521,7 @@ const BookingPage = () => {
                 <div className="booking-layout">
                     <div className="left-col">
                         <div className="card service-details">
-                             <div className="service-head">
+                            <div className="service-head">
                                 <div className="service-title">
                                     <h2>Service Details</h2>
                                     <span className="service-badge">{serviceDetails?.title || 'N/A'}</span>
@@ -495,61 +541,67 @@ const BookingPage = () => {
                                     <div className="pro-meta">
                                         <span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M256 0a256 256 0 1 1 0 512A256 256 0 1 1 256 0zM232 120V256c0 8 4 15.5 10.7 20l96 64c11 7.4 25.5 4.7 32.9-6.3s4.7-25.5-6.3-32.9L280 232V120c0-13.3-10.7-24-24-24s-24 10.7-24 24z" /></svg> {technician?.experience || 'N/A'} experience</span>
                                         <span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" fill="currentColor"><path d="M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 128a64 64 0 1 1 0 128 64 64 0 1 1 0-128z" /></svg> {technician?.city}</span>
-                                        <span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M48 64C21.5 64 0 85.5 0 112c0 15.1 7.1 29.3 19.2 38.4L236.8 313.6c11.4 8.5 27 8.5 38.4 0L492.8 150.4c12.1-9.1 19.2-23.3 19.2-38.4c0-26.5-21.5-48-48-48H48zM0 176V384c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V176L294.4 339.2c-22.8 17.1-54 17.1-76.8 0L0 176z"/></svg> {technician?.email || 'N/A'}</span>
+                                        <span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M48 64C21.5 64 0 85.5 0 112c0 15.1 7.1 29.3 19.2 38.4L236.8 313.6c11.4 8.5 27 8.5 38.4 0L492.8 150.4c12.1-9.1 19.2-23.3 19.2-38.4c0-26.5-21.5-48-48-48H48zM0 176V384c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V176L294.4 339.2c-22.8 17.1-54 17.1-76.8 0L0 176z" /></svg> {technician?.email || 'N/A'}</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div className="card date-time">
                             <h2 className="section-title">Select Date & Time</h2>
                             <div className="subsection">
                                 <h4>Select Date</h4>
                                 <div className="date-display">
-                                    <button 
-                                        className={`date-chip ${!selectedDate ? 'no-selection' : ''}`} 
+                                    <button
+                                        className={`date-chip ${!selectedDate ? 'no-selection' : ''}`}
                                         onClick={() => setShowCalendarPopup(true)}
                                     >
                                         <span>{displayDate.label}</span>
                                     </button>
                                 </div>
                             </div>
-                            
-                            {/* --- LOGIC UPDATED HERE --- */}
+
+                            {/* --- JSX UPDATED HERE --- */}
                             <div className="subsection">
                                 <h4>Available Times</h4>
                                 {selectedDate ? (
-                                    <div className="times-grid">
-                                        {timeSlots.map(time => {
-                                            const isBooked = bookedSlots.includes(time);
-                                            let isPast = false;
-                                            
-                                            const todayStr = new Date().toISOString().split('T')[0];
-                                            if (selectedDate === todayStr) {
-                                                const now = new Date();
-                                                const slotTime = parseTime(time);
-                                                
-                                                const slotDateTime = new Date();
-                                                slotDateTime.setHours(slotTime.hours, slotTime.minutes, 0, 0);
+                                    availableTimeSlots.length > 0 ? (
+                                        <div className="times-grid">
+                                            {availableTimeSlots.map(time => {
+                                                const isBooked = bookedSlots.includes(time);
+                                                let isPast = false;
 
-                                                isPast = now > slotDateTime;
-                                            }
+                                                const todayStr = new Date().toISOString().split('T')[0];
+                                                if (selectedDate === todayStr) {
+                                                    const now = new Date();
+                                                    const slotTime = parseTime(time);
 
-                                            const isDisabled = isBooked || isPast;
-                                            
-                                            return (
-                                                <button
-                                                    key={time}
-                                                    type="button"
-                                                    onClick={() => !isDisabled && setSelectedTime(time)}
-                                                    className={`chip time-chip ${selectedTime === time ? 'selected' : ''} ${isBooked ? 'booked' : ''} ${isPast ? 'past' : ''}`}
-                                                    disabled={isDisabled}
-                                                >
-                                                    {isBooked ? 'Booked' : time}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
+                                                    const slotDateTime = new Date();
+                                                    slotDateTime.setHours(slotTime.hours, slotTime.minutes, 0, 0);
+
+                                                    isPast = now > slotDateTime;
+                                                }
+
+                                                const isDisabled = isBooked || isPast;
+
+                                                return (
+                                                    <button
+                                                        key={time}
+                                                        type="button"
+                                                        onClick={() => !isDisabled && setSelectedTime(time)}
+                                                        className={`chip time-chip ${selectedTime === time ? 'selected' : ''} ${isBooked ? 'booked' : ''} ${isPast ? 'past' : ''}`}
+                                                        disabled={isDisabled}
+                                                    >
+                                                        {isBooked ? 'Booked' : time}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <div className="time-placeholder">
+                                            <p>This technician has no available slots in their preferred time range for this day.</p>
+                                        </div>
+                                    )
                                 ) : (
                                     <div className="time-placeholder">
                                         <p>Please select a date to view available time slots.</p>
@@ -557,17 +609,19 @@ const BookingPage = () => {
                                 )}
                             </div>
 
+
                             <div className="subsection">
                                 <h4>Special Instructions (Optional)</h4>
                                 <textarea
                                     className="instructions-input"
                                     placeholder="Any specific requirements or details about the job..."
                                     value={specialInstructions}
-                                    onChange={(e) => setSpecialInstructions(e.target.value)}
+                                    onChange={handleInstructionsChange}
                                 />
+                                {instructionsError && <p style={{ color: '#b91c1c', fontSize: '13px', marginTop: '5px' }}>{instructionsError}</p>}
                             </div>
                         </div>
-                        
+
                         <div className="card included">
                             <h3>What's included:</h3>
                             <p>Professional {serviceDetails?.title || 'N/A'} repair and maintenance service</p>
@@ -588,10 +642,10 @@ const BookingPage = () => {
                                     <span>&#8377;{technician?.price?.amount || 'N/A'}/{technician?.price?.type === 'hourly' ? 'hr' : 'day'}</span>
                                 </div>
                                 {technician?.price?.type === 'hourly' && (
-                                <div className="row">
-                                    <span>Estimated Hours</span>
-                                    <span>1 hour</span>
-                                </div>
+                                    <div className="row">
+                                        <span>Estimated Hours</span>
+                                        <span>1 hour</span>
+                                    </div>
                                 )}
                                 <div className="row">
                                     <span>Subtotal</span>
@@ -620,20 +674,20 @@ const BookingPage = () => {
                                 </div>
                             </div>
                             <div className="actions">
-                                <button 
-                                    className={`btn primary ${isBookingDisabled ? 'disabled' : ''}`} 
+                                <button
+                                    className={`btn primary ${isBookingDisabled ? 'disabled' : ''}`}
                                     onClick={handleConfirmBooking}
                                     disabled={isBookingDisabled}
                                 >
-                                    {creatingBooking ? 'Creating Booking...' : 
-                                     !selectedDate ? 'Select a Date' :
-                                     !selectedTime ? 'Select a Time Slot' :
-                                    (
-                                        <>
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V96c0-35.3-28.7-64-64-64H64zM337 209L209 337c-9.4 9.4-24.6 9.4-33.9 0l-64-64c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l47 47L303 175c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z" /></svg>
-                                        Confirm Booking
-                                        </>
-                                    )}
+                                    {creatingBooking ? 'Creating Booking...' :
+                                        !selectedDate ? 'Select a Date' :
+                                            !selectedTime ? 'Select a Time Slot' :
+                                                (
+                                                    <>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V96c0-35.3-28.7-64-64-64H64zM337 209L209 337c-9.4 9.4-24.6 9.4-33.9 0l-64-64c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l47 47L303 175c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z" /></svg>
+                                                        Confirm Booking
+                                                    </>
+                                                )}
                                 </button>
                                 <div className="rowed">
                                     <button className="btn outline" onClick={handleBack}>
@@ -641,7 +695,7 @@ const BookingPage = () => {
                                         Back
                                     </button>
                                     <button className="btn ghost" onClick={() => navigate('/')}>
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" fill="currentColor"><path d="M575.8 255.5c0 18-15 32.1-32 32.1h-32l.7 160.2c0 2.7-.2 5.4-.5 8.1V472c0 22.1-17.9 40-40 40H456c-1.1 0-2.2 0-3.3-.1c-1.4 .1-2.8 .1-4.2 .1H416 392c-22.1 0-40-17.9-40-40V448 384c0-17.7-14.3-32-32-32H256c-17.7 0-32 14.3-32 32v64 24c0 22.1-17.9 40-40 40H160 128.1c-1.5 0-3-.1-4.5-.2c-1.2 .1-2.4 .2-3.6 .2H104c-22.1 0-40-17.9-40-40V360c0-.9 0-1.9 .1-2.8V287.6H32c-18 0-32-14-32-32.1c0-9 3-17 10-24L266.4 8c7-7 15-8 22-8s15 2 21 7L564.8 231.5c8 7 12 15 11 24z"/></svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" fill="currentColor"><path d="M575.8 255.5c0 18-15 32.1-32 32.1h-32l.7 160.2c0 2.7-.2 5.4-.5 8.1V472c0 22.1-17.9 40-40 40H456c-1.1 0-2.2 0-3.3-.1c-1.4 .1-2.8 .1-4.2 .1H416 392c-22.1 0-40-17.9-40-40V448 384c0-17.7-14.3-32-32-32H256c-17.7 0-32 14.3-32 32v64 24c0 22.1-17.9 40-40 40H160 128.1c-1.5 0-3-.1-4.5-.2c-1.2 .1-2.4 .2-3.6 .2H104c-22.1 0-40-17.9-40-40V360c0-.9 0-1.9 .1-2.8V287.6H32c-18 0-32-14-32-32.1c0-9 3-17 10-24L266.4 8c7-7 15-8 22-8s15 2 21 7L564.8 231.5c8 7 12 15 11 24z" /></svg>
                                         Home
                                     </button>
                                 </div>
@@ -696,7 +750,7 @@ const BookingPage = () => {
                     bookingId={bookingId}
                     technician={technician}
                     serviceDetails={serviceDetails}
-                    selectedDate={selectedDate ? displayDate : null} 
+                    selectedDate={selectedDate ? displayDate : null}
                     selectedTime={selectedTime}
                     total={total}
                     onBack={() => setShowPopup(false)}

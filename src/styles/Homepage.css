@@ -52,14 +52,13 @@ main {
   }
 }
 
-/* --- NEW 3D Book Hover Effect Styles --- */
+/* --- UPDATED 3D Book Hover Effect Styles --- */
 
 /* The main container for the 3D effect */
 .service-card-flipper {
   position: relative;
   width: 100%;
   height: 340px;
-  /* UPDATED: From whitesmoke to a glassy, semi-transparent dark background */
   background: rgba(30, 30, 30, 0.65);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px); /* For Safari browser support */
@@ -101,6 +100,34 @@ main {
 
 /* The content revealed on the "inside page" */
 .card-back {
+  /* NEW: This is now the container for the background image */
+  position: relative; /* Crucial for positioning the overlay */
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  overflow: hidden; /* Ensures the background image respects the border radius */
+  color: #fff;
+  
+  /* Background image properties */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* NEW: The overlay creates the shaded/masked effect over the image */
+.card-back-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  
+  /* This is the mask color and transparency */
+  background-color: rgba(10, 20, 30, 0.8); 
+  backdrop-filter: blur(3px); /* Adds a frosted glass effect */
+  -webkit-backdrop-filter: blur(3px);
+  
+  /* Flex properties to center the content */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -108,18 +135,15 @@ main {
   text-align: center;
   padding: 20px;
   gap: 15px;
-  /* ADDED: Set default text color to white for contrast */
-  color: #fff; 
 }
 
 .card-back .card-title {
   font-size: 1.3rem;
-  /* Color will now be inherited from .card-back */
+  color: #fff; /* Ensures title text is white */
 }
 
 .card-back p {
   font-size: 1rem;
-  /* UPDATED: A slightly dimmer white for the paragraph text */
   color: rgba(255, 255, 255, 0.85); 
 }
 
@@ -242,6 +266,7 @@ main {
   text-decoration: none;
   font-weight: 600;
   transition: background 0.3s ease;
+  max-width: 200px; /* Give the button a max-width on the back of the card */
 }
 
 .btn:hover {

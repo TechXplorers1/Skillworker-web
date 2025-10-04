@@ -169,11 +169,17 @@ const Homepage = () => {
       // The main container for the 3D effect
       <div className="service-card-flipper" key={service.id || index}>
         
-        {/* This is the "inside" of the book, revealed on hover */}
-        <div className="card-back">
-          <h3 className="card-title">{service.title}</h3>
-          <p>Ready to find a professional?</p>
-          <Link to={`/services/${service.link}`} className="btn">View Technicians</Link>
+        {/* UPDATED: This is the "inside" of the book, with a background image */}
+        <div 
+          className="card-back"
+          style={{ backgroundImage: `url(${service.image})` }}
+        >
+          {/* This overlay creates the shaded/masked effect */}
+          <div className="card-back-overlay">
+            <h3 className="card-title">{service.title}</h3>
+            <p>Ready to find a professional?</p>
+            <Link to={`/services/${service.link}`} className="btn">View Technicians</Link>
+          </div>
         </div>
 
         {/* This is the "cover" of the book that flips */}
@@ -200,7 +206,6 @@ const Homepage = () => {
           <div className="card-content">
             <h3 className="card-title">{service.title}</h3>
             <p className="card-description">{service.description}</p>
-            {/* The button is now on the back, so we can remove it from the cover */}
           </div>
         </div>
 

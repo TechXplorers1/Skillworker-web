@@ -104,7 +104,6 @@ const BookingPage = () => {
         }
     };
 
-    // --- LOGIC UPDATED HERE: Filter slots based on technician preference ---
     const allTimeSlots = generateTimeSlots();
     const availableTimeSlots = getFilteredTimeSlots(allTimeSlots, technician?.availableTimings);
 
@@ -147,6 +146,8 @@ const BookingPage = () => {
         return () => unsubscribeTechnician();
     }, [technicianId]);
 
+    // --- LOGIC UPDATED HERE ---
+    // This effect now checks the status and timestamp of bookings.
     useEffect(() => {
         if (!technicianId || !selectedDate) {
             setBookedSlots([]);
@@ -161,19 +162,62 @@ const BookingPage = () => {
         );
 
         const unsubscribeBookings = onValue(bookingsQuery, (snapshot) => {
+            const now = Date.now();
+            const TEN_MINUTES_IN_MS = 10 * 60 * 1000;
             const slots = [];
+
             if (snapshot.exists()) {
                 snapshot.forEach(childSnapshot => {
                     const booking = childSnapshot.val();
+
                     if (booking.date === selectedDate) {
-                        slots.push(booking.timing);
+                        const status = (booking.status || 'pending').toLowerCase();
+                        const timestamp = booking.timestamp;
+
+                        // A slot is booked if it's 'accepted' OR if it's 'pending'
+                        // and was created less than 10 minutes ago.
+                        const isAccepted = status === 'accepted';
+                        const isRecentPending = status === 'pending' && (now - timestamp < TEN_MINUTES_IN_MS);
+
+                        if (isAccepted || isRecentPending) {
+                            slots.push(booking.timing);
+                        }
                     }
                 });
             }
             setBookedSlots(slots);
         });
 
-        return () => unsubscribeBookings();
+        // Set up an interval to re-check pending slots every minute
+        // This ensures that expired pending slots will become available without a page refresh
+        const interval = setInterval(() => {
+            // This is a way to trigger a re-render and re-evaluation of the booked slots
+            // by creating a new date object, which will be different from the previous one
+            // if we were to pass it as a dependency. Here, we just re-run the logic.
+            const now = Date.now();
+            const TEN_MINUTES_IN_MS = 10 * 60 * 1000;
+            const currentSlots = [];
+            if (snapshot.exists()) {
+                 snapshot.forEach(childSnapshot => {
+                    const booking = childSnapshot.val();
+                    if (booking.date === selectedDate) {
+                        const status = (booking.status || 'pending').toLowerCase();
+                        const timestamp = booking.timestamp;
+                        const isAccepted = status === 'accepted';
+                        const isRecentPending = status === 'pending' && (now - timestamp < TEN_MINUTES_IN_MS);
+                        if (isAccepted || isRecentPending) {
+                           currentSlots.push(booking.timing);
+                        }
+                    }
+                 });
+            }
+            setBookedSlots(currentSlots);
+        }, 60000); // Re-check every 60 seconds
+
+        return () => {
+            unsubscribeBookings();
+            clearInterval(interval); // Clean up interval on component unmount or dependency change
+        };
 
     }, [technicianId, selectedDate]);
 
@@ -561,7 +605,6 @@ const BookingPage = () => {
                                 </div>
                             </div>
 
-                            {/* --- JSX UPDATED HERE --- */}
                             <div className="subsection">
                                 <h4>Available Times</h4>
                                 {selectedDate ? (

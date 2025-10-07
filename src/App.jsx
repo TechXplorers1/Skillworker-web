@@ -19,6 +19,7 @@ import BookingManagement from "./admin/BookingManagement";
 import ServiceManagement from "./admin/ServiceManagement";
 import Settings from "./admin/Settings";
 import Dashboard from "./admin/Dashboard";
+import ForgotPassword from "./components/ForgotPassword";
 
 const App = () => {
      return (
@@ -39,10 +40,11 @@ const App = () => {
                 <Route path="/service-requests" element={<ServiceRequests />} />
                 <Route path="/user-management" element={<UserManagement />} />
                  <Route path="/booking-management" element={<BookingManagement />} />
-                   <Route path="/technician-management" element={<TechnicianManagement />} />
+                <Route path="/technician-management" element={<TechnicianManagement />} />
                    <Route path="/service-management" element={<ServiceManagement />} />
                    <Route path="/settings" element={<Settings />} />
                 <Route path="/dashboard" element={<Dashboard />} />
+                   <Route path="/forgot-password" element={<ForgotPassword />} />
             </Routes>
         </>
     );

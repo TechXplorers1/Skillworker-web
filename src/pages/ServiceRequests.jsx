@@ -150,7 +150,6 @@ const ServiceRequests = () => {
       .catch(error => console.error(`Failed to update status to ${status}:`, error));
   };
   
-  // --- NEW: Function to handle chat initiation ---
   const handleChat = async (request) => {
     if (!currentTechnician || !request.uid) return;
     
@@ -233,6 +232,39 @@ const ServiceRequests = () => {
                 `${user.address || ''}, ${user.city || ''}, ${user.state || ''} - ${user.zipCode || ''}`.trim() : 
                 'Address not available';
               
+              // --- UPDATED LOGIC FOR BUTTON ENABLING & HOVER TEXT ---
+              let serviceStartTime = null;
+              const now = new Date();
+              let isChatDisabled = true;
+              let isCompleteDisabled = true;
+              let chatTitle = 'Chat is available 1 hour before the service starts.';
+              let completeTitle = 'Completion can be marked after the service starts.';
+
+              if (request.date && request.timing) {
+                const startTimeStr = request.timing.split(' - ')[0];
+                const fullDateTimeStr = `${request.date} ${startTimeStr}`;
+                serviceStartTime = new Date(fullDateTimeStr);
+                
+                if (!isNaN(serviceStartTime.valueOf())) {
+                    const chatActivationTime = new Date(serviceStartTime.getTime() - 60 * 60 * 1000); // 1 hour before
+                    
+                    isChatDisabled = now < chatActivationTime;
+                    isCompleteDisabled = now < serviceStartTime;
+                    
+                    const chatTimeFormatted = chatActivationTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    const serviceTimeFormatted = serviceStartTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                    chatTitle = isChatDisabled 
+                        ? `Chat will be available 1 hour before service (from ${chatTimeFormatted})` 
+                        : 'Click to chat with the customer';
+                    
+                    completeTitle = isCompleteDisabled 
+                        ? `This can be marked complete after the service begins (at ${serviceTimeFormatted})` 
+                        : 'Click to mark this service as completed';
+                }
+              }
+              // --- END OF UPDATED LOGIC ---
+
               return (
                 <div key={request.id} className={`request-card ${status.toLowerCase()}`}>
                   <div className="request-card-header">
@@ -296,11 +328,20 @@ const ServiceRequests = () => {
                       <button className="action-btn1 decline-btn" onClick={() => handleUpdateStatus(request.id, 'cancelled')}>
                         Cancel
                       </button>
-                      {/* --- UPDATED onClick handler --- */}
-                      <button className="action-btn1 chat-btn" onClick={() => handleChat(request)}>
+                      <button 
+                        className="action-btn1 chat-btn" 
+                        onClick={() => handleChat(request)}
+                        disabled={isChatDisabled}
+                        title={chatTitle}
+                      >
                         Chat
                       </button>
-                      <button className="action-btn1 complete-btn" onClick={() => handleUpdateStatus(request.id, 'completed')}>
+                      <button 
+                        className="action-btn1 complete-btn" 
+                        onClick={() => handleUpdateStatus(request.id, 'completed')}
+                        disabled={isCompleteDisabled}
+                        title={completeTitle}
+                      >
                         Mark as Completed
                       </button>
                     </div>

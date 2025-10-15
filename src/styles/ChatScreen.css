@@ -447,7 +447,33 @@
 .book-btn:hover {
   background-color: #16a34a;
 }
+/* Add these styles to the existing ChatScreen.css */
 
+.system-message .message-content {
+  background-color: #fee2e2;
+  color: #dc2626;
+  padding: 0.6rem 1rem;
+  font-size: 0.9rem;
+  text-align: center;
+  border-radius: 8px;
+  max-width: 80%;
+  margin: 0.5rem auto;
+}
+
+/* Enhanced disabled state for message input */
+.message-input:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+  color: #999;
+  border-color: #e0e0e0;
+}
+
+.send-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
 /* Responsive design */
 @media (max-width: 968px) {
   .chat-layout {

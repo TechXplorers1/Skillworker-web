@@ -165,12 +165,14 @@
 }
 
 .system-message .message-content {
-  background-color: #fef3c7;
-  color: #92400e;
+  background-color: #fee2e2;
+  color: #dc2626;
   padding: 0.6rem 1rem;
   font-size: 0.9rem;
   text-align: center;
   border-radius: 8px;
+  max-width: 80%;
+  margin: 0.5rem auto;
 }
 
 .message-time {
@@ -182,10 +184,12 @@
 
 .user-message .message-time {
   text-align: right;
+  color: rgba(255, 255, 255, 0.8); /* Lighter color for white background */
 }
 
 .technician-message .message-time {
   text-align: left;
+  color: #666; /* Darker color for light background */
 }
 
 .message-input-form {
@@ -215,6 +219,8 @@
 .message-input:disabled {
   background-color: #f5f5f5;
   cursor: not-allowed;
+  color: #999;
+  border-color: #e0e0e0;
 }
 
 .send-button {
@@ -242,6 +248,113 @@
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+}
+
+/* NEW: Image Attachment Button */
+.attach-button {
+  background: #f0f0f0;
+  color: #007bff;
+  border: 1px solid #ddd;
+  border-radius: 50%;
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.attach-button:hover:not(:disabled) {
+  background: #e0e0e0;
+}
+
+.attach-button:disabled {
+  color: #999;
+  background: #f5f5f5;
+  cursor: not-allowed;
+}
+
+/* NEW: Image Preview Area */
+.image-preview-area {
+    position: relative;
+    padding: 0.5rem 1.5rem;
+    background: #f0f0f0;
+    border-top: 1px solid #eaeaea;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.image-preview {
+    max-width: 100px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+
+.remove-image-btn {
+    position: absolute;
+    top: 5px;
+    right: 15px;
+    background: #d32f2f;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.remove-image-btn:hover {
+    background: #c62828;
+}
+
+/* NEW: Image in Message Bubbles */
+.uploaded-image {
+    max-width: 100%;
+    max-height: 250px; 
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    display: block;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.uploaded-image:hover {
+    opacity: 0.9;
+}
+
+.technician-message .uploaded-image {
+    border: 1px solid #ccc;
+}
+.user-message .uploaded-image {
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Adjust padding for messages containing only an image */
+.message.has-image .message-content {
+    padding: 0.5rem; /* Reduced padding for image messages */
+}
+
+.message.has-image .message-content p {
+    margin-top: 0.5rem;
+    margin-bottom: 0;
+}
+
+.message.has-image .message-content p:first-child {
+    margin-top: 0;
+}
+
+.image-link {
+    display: block; /* Ensure the link wraps the image correctly */
 }
 
 /* Right Column - Details */
@@ -474,6 +587,91 @@
   transform: none;
   box-shadow: none;
 }
+
+/* Add these styles to your existing CSS file */
+
+/* Enhanced error message styling */
+.system-message .message-content {
+  background-color: #fee2e2;
+  color: #dc2626;
+  padding: 0.6rem 1rem;
+  font-size: 0.9rem;
+  text-align: center;
+  border-radius: 8px;
+  max-width: 80%;
+  margin: 0.5rem auto;
+}
+
+/* Improved disabled states */
+.message-input:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+  color: #999;
+  border-color: #e0e0e0;
+}
+
+.send-button:disabled,
+.attach-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.attach-button:disabled {
+  background: #f5f5f5;
+  color: #999;
+  border-color: #e0e0e0;
+}
+
+/* Image preview area improvements */
+.image-preview-area {
+  position: relative;
+  padding: 0.5rem 1.5rem;
+  background: #f0f0f0;
+  border-top: 1px solid #eaeaea;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.image-preview {
+  max-width: 100px;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.remove-image-btn {
+  position: absolute;
+  top: 5px;
+  right: 15px;
+  background: #d32f2f;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.remove-image-btn:hover:not(:disabled) {
+  background: #c62828;
+}
+
+.remove-image-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* Keep all your existing CSS styles below */
+/* ... rest of your existing CSS ... */
 /* Responsive design */
 @media (max-width: 968px) {
   .chat-layout {

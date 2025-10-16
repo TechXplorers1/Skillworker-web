@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { FaPaperPlane, FaStar } from 'react-icons/fa';
+import { FaPaperPlane, FaStar, FaImage, FaTimes } from 'react-icons/fa';
 import { onAuthStateChanged } from "firebase/auth";
 import { ref, onValue, push, serverTimestamp, get, update, increment } from "firebase/database";
-import { auth, database } from "../firebase";
+import { auth, database, storage } from "../firebase";
+import { uploadBytes, ref as storageRef, getDownloadURL } from 'firebase/storage';
 import '../styles/ChatScreen.css';
 
 const ChatScreen = () => {
@@ -13,15 +14,19 @@ const ChatScreen = () => {
   const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState('');
   const [chatPartner, setChatPartner] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [currentUserData, setCurrentUserData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState(null);
   const [isChatDisabled, setIsChatDisabled] = useState(false);
   const [serviceStatus, setServiceStatus] = useState(null);
   const [disableReason, setDisableReason] = useState('');
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (!chatId) {
@@ -105,104 +110,196 @@ const ChatScreen = () => {
   }, [chatId, navigate, error]);
 
   const checkServiceStatus = async (currentUserId, partnerId) => {
-  try {
-    const bookingsRef = ref(database, 'bookings');
-    const snapshot = await get(bookingsRef);
+    try {
+      const bookingsRef = ref(database, 'bookings');
+      const snapshot = await get(bookingsRef);
 
-    if (snapshot.exists()) {
-      const bookings = snapshot.val();
-      const relevant = Object.values(bookings).filter(b =>
-        (b.uid === currentUserId && b.technicianId === partnerId) ||
-        (b.uid === partnerId && b.technicianId === currentUserId)
-      );
+      if (snapshot.exists()) {
+        const bookings = snapshot.val();
+        const relevant = Object.values(bookings).filter(b =>
+          (b.uid === currentUserId && b.technicianId === partnerId) ||
+          (b.uid === partnerId && b.technicianId === currentUserId)
+        );
 
-      if (relevant.length > 0) {
-        // Sort latest booking by timestamp or createdAt
-        const latestBooking = relevant.sort((a, b) => {
-          const timeA = a.timestamp || a.createdAt || 0;
-          const timeB = b.timestamp || b.createdAt || 0;
-          return timeB - timeA;
-        })[0];
+        if (relevant.length > 0) {
+          const latestBooking = relevant.sort((a, b) => {
+            const timeA = a.timestamp || a.createdAt || 0;
+            const timeB = b.timestamp || b.createdAt || 0;
+            return timeB - timeA;
+          })[0];
 
-        const status = latestBooking.status?.toLowerCase() || '';
+          const status = latestBooking.status?.toLowerCase() || '';
 
-        if (status.includes('completed')) {
+          if (status.includes('completed')) {
+            setIsChatDisabled(true);
+            setServiceStatus('completed');
+            setDisableReason('Service Completed');
+          } 
+          else if (
+            status.includes('cancel') ||
+            status === 'rejected' ||
+            status === 'declined'
+          ) {
+            setIsChatDisabled(true);
+            setServiceStatus('cancelled');
+            setDisableReason('Service Cancelled');
+          } 
+          else {
+            setIsChatDisabled(false);
+            setServiceStatus('active');
+            setDisableReason('');
+          }
+        } else {
           setIsChatDisabled(true);
-          setServiceStatus('completed');
-          setDisableReason('Service Completed');
-        } 
-        else if (
-          status.includes('cancel') ||  // catches 'canceled', 'cancelled', 'userCanceled', 'technicianCanceled'
-          status === 'rejected' ||
-          status === 'declined'
-        ) {
-          setIsChatDisabled(true);
-          setServiceStatus('canceled');
-          setDisableReason('Service Cancelled');
-        } 
-        else {
-          setIsChatDisabled(false);
-          setServiceStatus('active');
-          setDisableReason('');
+          setServiceStatus('none');
+          setDisableReason('No active booking found');
         }
-      } else {
-        setIsChatDisabled(true);
-        setServiceStatus('none');
-        setDisableReason('No active booking found');
       }
+    } catch (err) {
+      console.error("Error checking service status:", err);
+      setIsChatDisabled(false);
     }
-  } catch (err) {
-    console.error("Error checking service status:", err);
-    setIsChatDisabled(false);
-  }
-};
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    if (isChatDisabled) return;
+  const handleImageSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        setError('Please select an image file');
+        return;
+      }
+      
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Image size should be less than 5MB');
+        return;
+      }
+      
+      setImageFile(file);
+      setImagePreviewUrl(URL.createObjectURL(file));
+      setError(null);
+    }
+  };
+  
+  const removeImage = () => {
+    // Clean up the object URL to prevent memory leaks
+    if (imagePreviewUrl) {
+      URL.revokeObjectURL(imagePreviewUrl);
+    }
+    setImageFile(null);
+    setImagePreviewUrl('');
+    if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+    }
+  };
 
-    if (newMessage.trim() === '' || !currentUser || !chatPartner || !currentUserData) return;
-
+  // NEW: Function to handle sending message with proper error handling
+  const sendMessageToDatabase = async (messageData, lastMsgSummary) => {
     const senderId = currentUser.uid;
     const receiverId = chatPartner.uid;
+    
+    const updates = {};
+    const messageRef = push(ref(database, `chats/${chatId}/messages`));
+    updates[`chats/${chatId}/messages/${messageRef.key}`] = messageData;
 
-    const newMessageObj = {
-      senderId,
-      message: newMessage.trim(),
-      timestamp: serverTimestamp(),
+    const senderName = `${currentUserData.firstName || ''} ${currentUserData.lastName || ''}`.trim() || 'User';
+    const partnerName = `${chatPartner.firstName || ''} ${chatPartner.lastName || ''}`.trim() || 'Partner';
+
+    updates[`userChats/${senderId}/${receiverId}`] = {
+      lastMessage: lastMsgSummary,
+      lastMessageTime: serverTimestamp(),
+      name: partnerName,
+      chatId,
+    };
+    updates[`userChats/${receiverId}/${senderId}`] = {
+      lastMessage: lastMsgSummary,
+      lastMessageTime: serverTimestamp(),
+      name: senderName,
+      chatId,
+      unreadCount: increment(1),
     };
 
+    await update(ref(database), updates);
+  };
+
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    
+    // Early returns with proper conditions
+    if (isChatDisabled) {
+      console.log('Chat is disabled');
+      return;
+    }
+    
+    if (isSending) {
+      console.log('Already sending a message');
+      return;
+    }
+    
+    const textMessage = newMessage.trim();
+    if (textMessage === '' && !imageFile) {
+      console.log('No message content');
+      return;
+    }
+
+    if (!currentUser || !chatPartner || !currentUserData) {
+      console.log('Missing user data');
+      return;
+    }
+    
+    console.log('Starting to send message...');
+    setIsSending(true);
+    setError(null);
+
+    let imageUrl = null;
+
     try {
-      const updates = {};
-      const messageRef = push(ref(database, `chats/${chatId}/messages`));
-      updates[`chats/${chatId}/messages/${messageRef.key}`] = newMessageObj;
+      // Upload image first if exists
+      if (imageFile) {
+        console.log('Uploading image...');
+        const imageExtension = imageFile.name.split('.').pop();
+        const imagePath = `chat_images/${chatId}/${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${imageExtension}`;
+        const storageReference = storageRef(storage, imagePath);
+        
+        const uploadResult = await uploadBytes(storageReference, imageFile);
+        console.log('Image uploaded, getting download URL...');
+        imageUrl = await getDownloadURL(uploadResult.ref);
+        console.log('Image URL:', imageUrl);
+      }
 
-      const senderName = `${currentUserData.firstName || ''} ${currentUserData.lastName || ''}`.trim() || 'User';
-      const partnerName = `${chatPartner.firstName || ''} ${chatPartner.lastName || ''}`.trim() || 'Partner';
-
-      updates[`userChats/${senderId}/${receiverId}`] = {
-        lastMessage: newMessage.trim(),
-        lastMessageTime: serverTimestamp(),
-        name: partnerName,
-        chatId,
+      // Prepare message object
+      const messageContent = textMessage || (imageUrl ? 'Image sent' : '');
+      const newMessageObj = {
+        senderId: currentUser.uid,
+        message: messageContent,
+        timestamp: serverTimestamp(),
+        imageUrl: imageUrl,
       };
-      updates[`userChats/${receiverId}/${senderId}`] = {
-        lastMessage: newMessage.trim(),
-        lastMessageTime: serverTimestamp(),
-        name: senderName,
-        chatId,
-        unreadCount: increment(1),
-      };
 
-      await update(ref(database), updates);
+      const lastMsgSummary = imageUrl ? (textMessage || 'Image') : textMessage;
+      
+      console.log('Sending message to database...');
+      await sendMessageToDatabase(newMessageObj, lastMsgSummary);
+      console.log('Message sent successfully');
+
+      // Clear form after successful send
       setNewMessage('');
+      removeImage();
+      
     } catch (err) {
-      console.error("Error sending message:", err);
-      setError("Failed to send message: " + err.message);
+      console.error("Error in handleSendMessage:", err);
+      setError(err.message || "Failed to send message");
+      
+      // Clean up on error
+      if (imageFile) {
+        removeImage();
+      }
+    } finally {
+      console.log('Setting isSending to false');
+      setIsSending(false);
     }
   };
 
@@ -216,7 +313,39 @@ const ChatScreen = () => {
     return 'Chat Partner';
   };
 
-  if (error) {
+  const renderMessageContent = (msg) => {
+    return (
+      <div className="message-content">
+        {msg.imageUrl && (
+          <a href={msg.imageUrl} target="_blank" rel="noopener noreferrer" className="image-link">
+            <img 
+                src={msg.imageUrl} 
+                alt="Uploaded by user" 
+                className="uploaded-image" 
+                onLoad={() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })}
+            />
+          </a>
+        )}
+        {msg.message && msg.message !== 'Image sent' && <p>{msg.message}</p>}
+        <span className="message-time">
+          {msg.timestamp
+            ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            : 'Sending...'}
+        </span>
+      </div>
+    );
+  };
+
+  // Clean up object URLs on unmount
+  useEffect(() => {
+    return () => {
+      if (imagePreviewUrl) {
+        URL.revokeObjectURL(imagePreviewUrl);
+      }
+    };
+  }, [imagePreviewUrl]);
+
+  if (error && !loading) {
     return (
       <div className="chat-screen-container">
         <Header />
@@ -271,16 +400,9 @@ const ChatScreen = () => {
                 messages.map((msg) => (
                   <div
                     key={msg.id}
-                    className={`message ${msg.senderId === currentUser?.uid ? 'user-message' : 'technician-message'}`}
+                    className={`message ${msg.senderId === currentUser?.uid ? 'user-message' : 'technician-message'} ${msg.imageUrl ? 'has-image' : ''}`}
                   >
-                    <div className="message-content">
-                      <p>{msg.message}</p>
-                      <span className="message-time">
-                        {msg.timestamp
-                          ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                          : 'Sending...'}
-                      </span>
-                    </div>
+                    {renderMessageContent(msg)}
                   </div>
                 ))
               ) : (
@@ -296,22 +418,73 @@ const ChatScreen = () => {
               <div ref={messagesEndRef} />
             </div>
 
+            {/* Error display */}
+            {error && (
+              <div className="image-preview-area error-message">
+                <span style={{ color: '#d32f2f' }}>Error: {error}</span>
+                <button 
+                  type="button" 
+                  className="remove-image-btn" 
+                  onClick={() => setError(null)}
+                >
+                  <FaTimes />
+                </button>
+              </div>
+            )}
+
+            {/* Image Preview Area */}
+            {imagePreviewUrl && (
+                <div className="image-preview-area">
+                    <img src={imagePreviewUrl} alt="Preview" className="image-preview" />
+                    <button 
+                      type="button" 
+                      className="remove-image-btn" 
+                      onClick={removeImage}
+                      disabled={isSending}
+                    >
+                      <FaTimes />
+                    </button>
+                </div>
+            )}
+            
             <form className="message-input-form" onSubmit={handleSendMessage}>
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    accept="image/*"
+                    onChange={handleImageSelect}
+                    style={{ display: 'none' }}
+                    disabled={!chatPartner || isChatDisabled || isSending}
+                />
+                <button
+                    type="button"
+                    className="attach-button"
+                    onClick={() => fileInputRef.current.click()}
+                    disabled={!chatPartner || isChatDisabled || isSending}
+                    title="Attach Image"
+                >
+                    <FaImage />
+                </button>
+
               <input
                 type="text"
                 placeholder={isChatDisabled ? `Chat disabled - ${disableReason}` : "Type your message..."}
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 className="message-input"
-                disabled={!chatPartner || isChatDisabled}
+                disabled={!chatPartner || isChatDisabled || isSending}
               />
               <button
                 type="submit"
                 className="send-button"
-                disabled={!chatPartner || newMessage.trim() === '' || isChatDisabled}
-                title={isChatDisabled ? `Chat disabled - ${disableReason}` : "Send message"}
+                disabled={!chatPartner || (newMessage.trim() === '' && !imageFile) || isChatDisabled || isSending}
+                title={isChatDisabled ? `Chat disabled - ${disableReason}` : isSending ? "Sending..." : "Send message"}
               >
-                <FaPaperPlane />
+                {isSending ? (
+                  <div className="loading-spinner"></div>
+                ) : (
+                  <FaPaperPlane />
+                )}
               </button>
             </form>
           </div>
@@ -327,6 +500,12 @@ const ChatScreen = () => {
                     <span className="label">Chat Status:</span>
                     <span className="value" style={{ color: isChatDisabled ? '#d32f2f' : '#22c55e', fontWeight: 'bold' }}>
                       {isChatDisabled ? `Disabled (${disableReason})` : 'Active'}
+                    </span>
+                  </div>
+                  <div className="info-row">
+                    <span className="label">Sending Status:</span>
+                    <span className="value" style={{ color: isSending ? '#f59e0b' : '#22c55e', fontWeight: 'bold' }}>
+                      {isSending ? 'Sending...' : 'Ready'}
                     </span>
                   </div>
                 </div>

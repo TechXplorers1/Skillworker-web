@@ -24,6 +24,11 @@ const MyBookingsPage = () => {
   const [techniciansData, setTechniciansData] = useState({});
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  // --- NEW STATE FOR CONFIRMATION POPUP ---
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [bookingToCancel, setBookingToCancel] = useState(null);
+  // ------------------------------------------
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
@@ -130,6 +135,21 @@ const MyBookingsPage = () => {
     update(bookingRef, updates)
       .catch(error => console.error(`Failed to update booking to ${status}:`, error));
   };
+
+  // --- NEW HANDLER FOR POPUP CONFIRMATION ---
+  const confirmCancellation = () => {
+    if (bookingToCancel) {
+      handleUpdateBookingStatus(bookingToCancel.id, 'cancelled');
+      setBookingToCancel(null);
+      setShowCancelModal(false);
+    }
+  };
+
+  const openCancelModal = (booking) => {
+    setBookingToCancel(booking);
+    setShowCancelModal(true);
+  };
+  // ------------------------------------------
   
   const handleChat = async (booking) => {
     if (!currentUser || !booking.technicianId) return;
@@ -302,23 +322,19 @@ const MyBookingsPage = () => {
                   </div>
 
                   <div className="booking-actions">
-                    {status === 'pending' && activeFilter === 'Active' && (
+                    {(status === 'pending' && activeFilter === 'Active') || (status === 'accepted' && activeFilter === 'Accepted') ? (
                         <button 
                           className="action-btn1 cancel-btn"
-                          onClick={() => handleUpdateBookingStatus(booking.id, 'cancelled')}
+                          // --- UPDATED CLICK HANDLER ---
+                          onClick={() => openCancelModal(booking)}
+                          // -----------------------------
                         >
                           Cancel
                         </button>
-                    )}
-
+                    ) : null}
+                    
                     {status === 'accepted' && activeFilter === 'Accepted' && (
                       <>
-                        <button 
-                          className="action-btn1 cancel-btn"
-                          onClick={() => handleUpdateBookingStatus(booking.id, 'cancelled')}
-                        >
-                          Cancel
-                        </button>
                         <button 
                           className="action-btn1 chat-btn" 
                           onClick={() => handleChat(booking)}
@@ -353,6 +369,30 @@ const MyBookingsPage = () => {
         </div>
       </main>
       <Footer />
+      
+      {/* --- CONFIRMATION POPUP JSX --- */}
+      {showCancelModal && (
+        <div className="modal-backdrop">
+          <div className="confirmation-modal">
+            <p className="modal-message">Are you sure you want to cancel this service booking?</p>
+            <div className="modal-actions">
+              <button 
+                className="modal-btn confirm-yes" 
+                onClick={confirmCancellation}
+              >
+                Yes, Cancel
+              </button>
+              <button 
+                className="modal-btn confirm-no" 
+                onClick={() => setShowCancelModal(false)}
+              >
+                No
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ------------------------------ */}
     </div>
   );
 };

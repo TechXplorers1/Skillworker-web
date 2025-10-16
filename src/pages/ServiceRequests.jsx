@@ -24,6 +24,11 @@ const ServiceRequests = () => {
   const [usersData, setUsersData] = useState({});
   const [currentTechnician, setCurrentTechnician] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  // --- NEW STATE FOR CONFIRMATION POPUP ---
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [requestToCancel, setRequestToCancel] = useState(null);
+  // ------------------------------------------
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
@@ -139,6 +144,9 @@ const ServiceRequests = () => {
     if (status.toLowerCase() === 'completed') {
         updates.completedAt = new Date().toISOString();
     }
+    if (status.toLowerCase() === 'cancelled') {
+        updates.cancelledAt = new Date().toISOString();
+    }
 
     setAllRequests(currentRequests =>
       currentRequests.map(r =>
@@ -149,6 +157,21 @@ const ServiceRequests = () => {
     update(requestRef, updates)
       .catch(error => console.error(`Failed to update status to ${status}:`, error));
   };
+
+  // --- NEW HANDLER FOR POPUP CONFIRMATION ---
+  const confirmCancellation = (status) => {
+    if (requestToCancel) {
+        handleUpdateStatus(requestToCancel.id, status);
+        setRequestToCancel(null);
+        setShowCancelModal(false);
+    }
+  };
+
+  const openCancelModal = (request) => {
+    setRequestToCancel(request);
+    setShowCancelModal(true);
+  };
+  // ------------------------------------------
   
   const handleChat = async (request) => {
     if (!currentTechnician || !request.uid) return;
@@ -314,7 +337,12 @@ const ServiceRequests = () => {
 
                   {status === 'pending' && (
                     <div className="request-actions">
-                      <button className="action-btn1 decline-btn" onClick={() => handleUpdateStatus(request.id, 'cancelled')}>
+                      <button 
+                        className="action-btn1 decline-btn" 
+                        // --- UPDATED CLICK HANDLER ---
+                        onClick={() => openCancelModal(request)}
+                        // -----------------------------
+                      >
                         Decline
                       </button>
                       <button className="action-btn1 accept-btn" onClick={() => handleUpdateStatus(request.id, 'accepted')}>
@@ -325,7 +353,12 @@ const ServiceRequests = () => {
 
                   {status === 'accepted' && (
                     <div className="request-actions accepted-actions">
-                      <button className="action-btn1 decline-btn" onClick={() => handleUpdateStatus(request.id, 'cancelled')}>
+                      <button 
+                        className="action-btn1 decline-btn" 
+                        // --- UPDATED CLICK HANDLER ---
+                        onClick={() => openCancelModal(request)}
+                        // -----------------------------
+                      >
                         Cancel
                       </button>
                       <button 
@@ -369,6 +402,35 @@ const ServiceRequests = () => {
         </div>
       </main>
       <Footer />
+
+      {/* --- CONFIRMATION POPUP JSX --- */}
+      {showCancelModal && requestToCancel && (
+        <div className="modal-backdrop">
+          <div className="confirmation-modal">
+            <p className="modal-message">
+                {requestToCancel.status === 'pending' ? 
+                    'Are you sure you want to decline this service request? This will mark it as cancelled.' : 
+                    'Are you sure you want to cancel this accepted service?'
+                }
+            </p>
+            <div className="modal-actions">
+              <button 
+                className="modal-btn confirm-yes" 
+                onClick={() => confirmCancellation('cancelled')}
+              >
+                Yes, {requestToCancel.status === 'pending' ? 'Decline' : 'Cancel'}
+              </button>
+              <button 
+                className="modal-btn confirm-no" 
+                onClick={() => setShowCancelModal(false)}
+              >
+                No
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ------------------------------ */}
     </div>
   );
 };

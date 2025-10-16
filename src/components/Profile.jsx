@@ -120,19 +120,19 @@ const Profile = () => {
         }
     };
 
-    // Phone validation (10 digits)
+    // Phone validation (10 digits) - for ALL users
     checkError('phone', !data.phone || !/^\d{10}$/.test(data.phone), "Phone number must be exactly 10 digits");
     
-    // Address validation (mandatory)
+    // Address validation (mandatory) - for ALL users
     checkError('address', !data.address || data.address.trim() === "", "Street address is required");
     
-    // City validation (mandatory)
+    // City validation (mandatory) - for ALL users
     checkError('city', !data.city || data.city.trim() === "", "City is required");
     
-    // State validation (mandatory)
+    // State validation (mandatory) - for ALL users
     checkError('state', !data.state || data.state.trim() === "", "State is required");
     
-    // ZIP Code validation (mandatory, 6 digits)
+    // ZIP Code validation (mandatory, 6 digits) - for ALL users
     checkError('zipCode', !data.zipCode || !/^\d{6}$/.test(data.zipCode), "ZIP code must be exactly 6 digits");
     
     // Technician-specific validations
@@ -175,18 +175,27 @@ const Profile = () => {
 
 
   const checkProfileCompletion = (data) => {
-    return (
-      data.skills && data.skills.length > 0 &&
+    // For ALL users, check basic profile completion
+    const basicComplete = (
       data.phone && /^\d{10}$/.test(data.phone) &&
       data.address && data.address.trim() !== "" &&
       data.city && data.city.trim() !== "" &&
       data.state && data.state.trim() !== "" &&
-      data.zipCode && /^\d{6}$/.test(data.zipCode) &&
-      data.aadharNumber && /^\d{12}$/.test(data.aadharNumber) &&
-      data.aadharProofUrl && 
-      data.experience && data.experience >= 0 && // Check for positive or zero
-      data.availableTimings
+      data.zipCode && /^\d{6}$/.test(data.zipCode)
     );
+
+    // For technicians, also check professional details
+    if (data.role === "technician") {
+      return basicComplete && (
+        data.skills && data.skills.length > 0 &&
+        data.aadharNumber && /^\d{12}$/.test(data.aadharNumber) &&
+        data.aadharProofUrl && 
+        data.experience && data.experience >= 0 &&
+        data.availableTimings
+      );
+    }
+
+    return basicComplete;
   };
 
   const handleEditToggle = () => setIsEditing(!isEditing);
@@ -279,6 +288,12 @@ const Profile = () => {
         const isComplete = checkProfileCompletion(userData);
         const userRef = ref(database, 'users/' + user.uid);
         await update(userRef, { ...userData, isProfileComplete: isComplete });
+        
+        // Remove the popup flag when profile is completed
+        if (isComplete) {
+          localStorage.removeItem('showProfilePopup');
+        }
+        
         setShowSuccess(true);
         setIsEditing(false);
         setTimeout(() => setShowSuccess(false), 3000);

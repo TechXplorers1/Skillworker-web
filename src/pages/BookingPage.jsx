@@ -89,6 +89,9 @@ const BookingPage = () => {
     const [creatingBooking, setCreatingBooking] = useState(false);
     const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+    
+    // NEW STATE: For profile completion popup
+    const [showProfilePopup, setShowProfilePopup] = useState(false);
 
     const handleInstructionsChange = (e) => {
         const value = e.target.value;
@@ -346,6 +349,20 @@ const BookingPage = () => {
 
     const isBookingDisabled = creatingBooking || !selectedDate || !selectedTime || technician?.unavailableDates?.includes(selectedDate);
 
+    // UPDATED: Check if user profile is complete before booking
+    const checkProfileComplete = async () => {
+        const user = auth.currentUser;
+        if (user) {
+            const userRef = ref(database, 'users/' + user.uid);
+            const snapshot = await get(userRef);
+            if (snapshot.exists()) {
+                const userData = snapshot.val();
+                return userData.isProfileComplete;
+            }
+        }
+        return false;
+    };
+
     const createBooking = async () => {
         if (!currentUser || !technician || !serviceDetails || !selectedTime) {
             console.error('Missing required data for booking');
@@ -391,7 +408,15 @@ const BookingPage = () => {
         }
     };
 
+    // UPDATED: Added profile completion check with custom popup
     const handleConfirmBooking = async () => {
+        // Check if user has completed profile with address
+        const isProfileComplete = await checkProfileComplete();
+        if (!isProfileComplete) {
+            setShowProfilePopup(true);
+            return;
+        }
+        
         if (isBookingDisabled) return;
 
         const bookingKey = await createBooking();
@@ -403,6 +428,15 @@ const BookingPage = () => {
                 alert('Failed to create booking. Please try again.');
             }
         }
+    };
+
+    // NEW: Handle profile popup actions
+    const handleProfilePopupAction = (action) => {
+        setShowProfilePopup(false);
+        if (action === 'completeNow') {
+            navigate('/profile');
+        }
+        // If 'later', just close the popup
     };
 
     const handleBack = () => navigate(-1);
@@ -459,6 +493,84 @@ const BookingPage = () => {
                   border: 1px dashed #e5e7eb;
                   border-radius: 8px;
                   font-size: 14px;
+                }
+
+                /* Profile Popup Styles */
+                .profile-popup-overlay {
+                  position: fixed;
+                  top: 0;
+                  left: 0;
+                  right: 0;
+                  bottom: 0;
+                  background: rgba(0, 0, 0, 0.5);
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  z-index: 2000;
+                  padding: 20px;
+                }
+
+                .profile-popup {
+                  background: white;
+                  border-radius: 12px;
+                  padding: 24px;
+                  max-width: 400px;
+                  width: 90%;
+                  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+                  text-align: center;
+                }
+
+                .profile-popup-icon {
+                  font-size: 48px;
+                  margin-bottom: 16px;
+                }
+
+                .profile-popup-title {
+                  font-size: 20px;
+                  font-weight: 700;
+                  color: #111827;
+                  margin-bottom: 12px;
+                }
+
+                .profile-popup-message {
+                  color: #6b7280;
+                  font-size: 16px;
+                  line-height: 1.5;
+                  margin-bottom: 24px;
+                }
+
+                .profile-popup-actions {
+                  display: flex;
+                  gap: 12px;
+                  justify-content: center;
+                }
+
+                .profile-popup-btn {
+                  padding: 12px 24px;
+                  border-radius: 8px;
+                  font-weight: 600;
+                  font-size: 14px;
+                  cursor: pointer;
+                  border: none;
+                  transition: all 0.2s;
+                }
+
+                .profile-popup-btn.primary {
+                  background: #0d6efd;
+                  color: white;
+                }
+
+                .profile-popup-btn.primary:hover {
+                  background: #0b5ed7;
+                }
+
+                .profile-popup-btn.secondary {
+                  background: #f3f4f6;
+                  color: #374151;
+                }
+
+                .profile-popup-btn.secondary:hover {
+                  background: #e5e7eb;
                 }
 
                 /* Other existing styles... */
@@ -652,7 +764,6 @@ const BookingPage = () => {
                                 )}
                             </div>
 
-
                             <div className="subsection">
                                 <h4>Special Instructions (Optional)</h4>
                                 <textarea
@@ -782,6 +893,34 @@ const BookingPage = () => {
                         </div>
                         <div className="calendar-actions">
                             <button className="btn-cancel" onClick={() => setShowCalendarPopup(false)}>Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Profile Completion Popup */}
+            {showProfilePopup && (
+                <div className="profile-popup-overlay">
+                    <div className="profile-popup">
+                        <div className="profile-popup-icon">📝</div>
+                        <h3 className="profile-popup-title">Complete Your Profile</h3>
+                        <p className="profile-popup-message">
+                            Please complete your profile with address details before booking services. 
+                            This helps technicians reach your location accurately.
+                        </p>
+                        <div className="profile-popup-actions">
+                            <button 
+                                className="profile-popup-btn primary"
+                                onClick={() => handleProfilePopupAction('completeNow')}
+                            >
+                                Complete Profile Now
+                            </button>
+                            <button 
+                                className="profile-popup-btn secondary"
+                                onClick={() => handleProfilePopupAction('later')}
+                            >
+                                I'll Do It Later
+                            </button>
                         </div>
                     </div>
                 </div>

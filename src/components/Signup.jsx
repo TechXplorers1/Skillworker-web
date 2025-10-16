@@ -96,16 +96,14 @@ const Signup = () => {
         status: "Active",
         createdAt: new Date().toISOString(),
         uid: user.uid,
-        isProfileComplete: isTechnician ? false : true, // Technicians need to complete profile
+        isProfileComplete: false, // Set to false for ALL users initially
       });
 
       localStorage.setItem("userRole", userRole);
       localStorage.setItem("isLoggedIn", "true");
       
-      // Set flag for technician to show popup on homepage
-      if (isTechnician) {
-         localStorage.setItem("showProfilePopup", "true");
-      }
+      // Set flag for ALL users to show popup on homepage
+      localStorage.setItem("showProfilePopup", "true");
 
       setSuccessMessage("Account created successfully! Redirecting to home...");
       setIsLoading(false); // Stop loading immediately after success, before timeout

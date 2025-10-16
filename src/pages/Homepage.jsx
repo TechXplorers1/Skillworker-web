@@ -50,14 +50,14 @@ const Homepage = () => {
   const [activeTab, setActiveTab] = useState('1');
   const [allServices, setAllServices] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showTechnicianPopup, setShowTechnicianPopup] = useState(false);
+  const [showProfilePopup, setShowProfilePopup] = useState(false);
 
   useEffect(() => {
-    // 1. Check local storage for the technician profile completion flag
+    // 1. Check local storage for the profile completion flag for ALL users
     const showPopupFlag = localStorage.getItem('showProfilePopup');
     
     if (showPopupFlag === 'true') {
-      setShowTechnicianPopup(true);
+      setShowProfilePopup(true);
     }
 
     // 2. Fetch Services from Firebase Realtime Database
@@ -91,7 +91,7 @@ const Homepage = () => {
   }, []);
 
   const handlePopupAction = (action) => {
-    setShowTechnicianPopup(false);
+    setShowProfilePopup(false);
     localStorage.removeItem('showProfilePopup');
     
     if (action === 'completeNow') {
@@ -136,11 +136,16 @@ const Homepage = () => {
       <main>
         <HeroSection setSearchQuery={setSearchQuery} />
         
-        {/* Technician Profile Completion Popup */}
-        {showTechnicianPopup && (
+        {/* Profile Completion Popup for ALL Users */}
+        {showProfilePopup && (
           <div className="modal-backdrop">
             <div className="modal-content homepage-popup">
-              <p className="modal-text">👋 Welcome! Please fill up your details to deliver services.</p>
+              <p className="modal-text">
+                {localStorage.getItem("userRole") === "technician" 
+                  ? "👋 Welcome! Please fill up your details to deliver services."
+                  : "👋 Welcome! Please complete your profile with address details to book services."
+                }
+              </p>
               <div className="modal-actions">
                 <button 
                   className="btn-primary" 

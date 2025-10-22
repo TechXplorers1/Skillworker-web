@@ -364,6 +364,7 @@
     font-size: 0.9rem;
   }
 }
+
 /* Popup Modal */
 .popup-overlay {
   position: fixed;
@@ -440,4 +441,45 @@
 @keyframes fadeInScale {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
+}
+
+/* --- NEW: Loading Spinner Styles --- */
+
+/* Container for the spinner, ensures it's centered in the content area */
+.loading-state-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px; /* Give it enough height to be visible in the main section */
+  width: 100%;
+  margin-top: 50px;
+}
+
+.loading-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #444;
+    margin-bottom: 20px;
+}
+
+.loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #ccc;
+  border-top-color: #2563eb; /* Primary color for the spinning part */
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }

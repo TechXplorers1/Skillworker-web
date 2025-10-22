@@ -25,6 +25,10 @@ import { database } from '../firebase'; // Import the database instance
 
 import '../styles/Homepage.css';
 
+// --- IN-MEMORY CACHE ---
+// This variable will store the fetched data so it's only loaded once per session.
+let serviceCache = [];
+
 // Map service titles to their imported images (All keys MUST be lowercase for lookup)
 const serviceImageMap = {
   'plumber': plumberImg,
@@ -59,8 +63,16 @@ const Homepage = () => {
     if (showPopupFlag === 'true') {
       setShowProfilePopup(true);
     }
+    
+    // 2. CACHE CHECK: If data is already in cache, use it immediately
+    if (serviceCache.length > 0) {
+      setAllServices(serviceCache);
+      setLoading(false);
+      // We still return the cleanup function, but skip the initial fetch logic
+      return () => {};
+    }
 
-    // 2. Fetch Services from Firebase Realtime Database
+    // 3. Fetch Services from Firebase Realtime Database (Only runs if cache is empty)
     const servicesRef = ref(database, 'services');
     const unsubscribe = onValue(servicesRef, (snapshot) => {
       const servicesData = snapshot.val();
@@ -80,13 +92,18 @@ const Homepage = () => {
             link: serviceTitleLower.replace(/\s/g, '-')
           };
         });
+        
+        // 4. Update component state and the in-memory cache
         setAllServices(fetchedServices);
+        serviceCache = fetchedServices; // Cache the data
       } else {
         setAllServices([]);
+        serviceCache = [];
       }
       setLoading(false);
     });
 
+    // Clean up the Firebase listener when the component unmounts
     return () => unsubscribe();
   }, []);
 
@@ -121,8 +138,12 @@ const Homepage = () => {
         <Header />
         <main>
           <HeroSection setSearchQuery={setSearchQuery} />
+          {/* Services Section with the loading spinner */}
           <section className="services">
             <h2 className="section-title">Loading Services...</h2>
+            <div className="loading-container">
+              <div className="spinner"></div>
+            </div>
           </section>
         </main>
         <Footer />

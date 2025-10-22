@@ -30,6 +30,13 @@ import constructioncleanersHeroImg from '../assets/Construction cleaners.png';
 import laundryHeroImg from '../assets/laundry.png';
 import deliveryHeroImg from '../assets/delivery.png';
 
+// --- IN-MEMORY CACHE ---
+// This variable will store fetched data to prevent re-loading on re-mount.
+let pageCache = {
+    serviceDetails: {}, // Key: serviceName (slug)
+    technicians: {} // Key: serviceId (Firebase ID)
+};
+
 // Map service slugs to local images
 const serviceImageMap = {
     'plumber': plumberHeroImg,
@@ -57,6 +64,7 @@ const ServiceTechniciansPage = () => {
     const [filteredTechnicians, setFilteredTechnicians] = useState([]);
     const [serviceDetails, setServiceDetails] = useState(null);
     const [serviceId, setServiceId] = useState(null);
+    const [loading, setLoading] = useState(true);
     
     // Filter states
     const [selectedRating, setSelectedRating] = useState('All Ratings');
@@ -110,9 +118,19 @@ const ServiceTechniciansPage = () => {
         setFilteredTechnicians(newFilteredList);
     }, [allTechnicians, selectedRating, selectedHourlyPrice, selectedDaylyPrice, selectedAvailability]);
     
+    // Fetch service details and cache them
     useEffect(() => {
-        const dbRef = ref(database);
+        // 1. CACHE CHECK for Service Details
+        if (pageCache.serviceDetails[serviceName]) {
+            const cachedData = pageCache.serviceDetails[serviceName];
+            setServiceId(cachedData.serviceId);
+            setServiceDetails(cachedData.serviceDetails);
+            // DO NOT set loading to false here, as technicians are the main content.
+            return; 
+        }
 
+        // 2. FETCH if cache is empty
+        const dbRef = ref(database);
         get(child(dbRef, 'services'))
             .then((snapshot) => {
                 if (snapshot.exists()) {
@@ -124,25 +142,48 @@ const ServiceTechniciansPage = () => {
                     if (serviceEntry) {
                         const sId = serviceEntry[0];
                         const dbServiceDetails = serviceEntry[1];
-
-                        setServiceId(sId);
-                        setServiceDetails({
+                        const finalDetails = {
                             ...dbServiceDetails,
                             image: localHeroImage || dbServiceDetails.image
-                        });
+                        };
+                        
+                        setServiceId(sId);
+                        setServiceDetails(finalDetails);
+                        
+                        // 3. CACHE the fetched data
+                        pageCache.serviceDetails[serviceName] = {
+                            serviceDetails: finalDetails,
+                            serviceId: sId
+                        };
                     } else {
                         setServiceId(null);
                         setServiceDetails(null);
+                        setLoading(false); 
                     }
+                } else {
+                    setLoading(false); 
                 }
             })
-            .catch(error => console.error("Error fetching services:", error));
+            .catch(error => {
+                console.error("Error fetching services:", error);
+                setLoading(false); 
+            });
     }, [serviceName, localHeroImage]);
 
-    // --- fetch technicians live ---
+    // Fetch technicians live and cache them
     useEffect(() => {
         if (!serviceId) return;
 
+        // 1. CACHE CHECK for Technicians
+        if (pageCache.technicians[serviceId]) {
+            const cachedTechnicians = pageCache.technicians[serviceId];
+            setAllTechnicians(cachedTechnicians);
+            handleApplyFilters(cachedTechnicians);
+            setLoading(false); // <-- Instant load!
+            return; 
+        }
+
+        // 2. FETCH (live listener) if cache is empty
         const currentUserId = auth.currentUser ? auth.currentUser.uid : null;
         const usersRef = ref(database, 'users');
 
@@ -150,9 +191,6 @@ const ServiceTechniciansPage = () => {
             if (snapshot.exists()) {
                 const usersData = snapshot.val();
                 
-                // --- THE ONLY CHANGE IS HERE ---
-                // The `user.isActive` filter has been removed.
-                // Now, both active (green dot) and inactive (red dot) technicians will be shown.
                 const technicians = Object.values(usersData).filter(user =>
                     user.role === 'technician' && 
                     user.skills && 
@@ -166,19 +204,26 @@ const ServiceTechniciansPage = () => {
                     city: tech.city || 'N/A',
                 }));
                 
+                // 3. CACHE the fetched data
+                pageCache.technicians[serviceId] = updatedTechnicians; 
+                
                 setAllTechnicians(updatedTechnicians);
                 handleApplyFilters(updatedTechnicians);
             } else {
                 setAllTechnicians([]);
                 handleApplyFilters([]);
             }
+            setLoading(false); 
         }, (error) => {
             console.error("Error fetching technicians:", error);
+            setLoading(false); 
         });
 
+        // Clean up the Firebase listener (only runs if the listener was set up)
         return () => unsubscribe();
     }, [serviceId, handleApplyFilters]);
 
+    // Re-apply filters whenever filter selections change
     useEffect(() => {
         handleApplyFilters();
     }, [selectedRating, selectedHourlyPrice, selectedDaylyPrice, selectedAvailability, handleApplyFilters]);
@@ -201,6 +246,25 @@ const ServiceTechniciansPage = () => {
             navigate("/login");
         }
     };
+    
+    // Loading Spinner Render Block
+    if (loading) {
+        return (
+            <div className="technicians-page-container">
+                <Header />
+                <main className="tech-main-content">
+                    <div className="loading-state-content">
+                        <h2 className="loading-title">Finding Professionals...</h2>
+                        <div className="loading-container">
+                            <div className="spinner"></div>
+                        </div>
+                    </div>
+                </main>
+                <Footer />
+            </div>
+        );
+    }
+    // END Loading Spinner Render Block
 
     return (
         <div className="technicians-page-container">

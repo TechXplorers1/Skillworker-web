@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { FaPaperPlane, FaStar, FaImage, FaTimes } from 'react-icons/fa';
+import { FaPaperPlane, FaStar, FaImage, FaTimes, FaCamera, FaStop } from 'react-icons/fa';
 import { onAuthStateChanged } from "firebase/auth";
 import { ref, onValue, push, serverTimestamp, get, update, increment } from "firebase/database";
 import { auth, database, storage } from "../firebase";
@@ -25,8 +25,13 @@ const ChatScreen = () => {
   const [isChatDisabled, setIsChatDisabled] = useState(false);
   const [serviceStatus, setServiceStatus] = useState(null);
   const [disableReason, setDisableReason] = useState('');
+  const [showWebcam, setShowWebcam] = useState(false);
+  const [webcamStream, setWebcamStream] = useState(null);
+  const [isRecording, setIsRecording] = useState(false);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  const webcamVideoRef = useRef(null);
+  const canvasRef = useRef(null);
 
   useEffect(() => {
     if (!chatId) {
@@ -185,7 +190,6 @@ const ChatScreen = () => {
   };
   
   const removeImage = () => {
-    // Clean up the object URL to prevent memory leaks
     if (imagePreviewUrl) {
       URL.revokeObjectURL(imagePreviewUrl);
     }
@@ -196,7 +200,56 @@ const ChatScreen = () => {
     }
   };
 
-  // NEW: Function to handle sending message with proper error handling
+  // Webcam functionality
+  const startWebcam = async () => {
+    try {
+      setError(null);
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { width: 640, height: 480 } 
+      });
+      setWebcamStream(stream);
+      setShowWebcam(true);
+      
+      if (webcamVideoRef.current) {
+        webcamVideoRef.current.srcObject = stream;
+      }
+    } catch (err) {
+      console.error('Error accessing webcam:', err);
+      setError('Could not access webcam. Please check permissions.');
+    }
+  };
+
+  const stopWebcam = () => {
+    if (webcamStream) {
+      webcamStream.getTracks().forEach(track => track.stop());
+      setWebcamStream(null);
+    }
+    setShowWebcam(false);
+    setIsRecording(false);
+  };
+
+  const captureImage = () => {
+    if (webcamVideoRef.current && canvasRef.current) {
+      const video = webcamVideoRef.current;
+      const canvas = canvasRef.current;
+      const context = canvas.getContext('2d');
+      
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      canvas.toBlob((blob) => {
+        const file = new File([blob], `webcam-capture-${Date.now()}.jpg`, { 
+          type: 'image/jpeg' 
+        });
+        
+        setImageFile(file);
+        setImagePreviewUrl(URL.createObjectURL(blob));
+        stopWebcam();
+      }, 'image/jpeg', 0.8);
+    }
+  };
+
   const sendMessageToDatabase = async (messageData, lastMsgSummary) => {
     const senderId = currentUser.uid;
     const receiverId = chatPartner.uid;
@@ -228,7 +281,6 @@ const ChatScreen = () => {
   const handleSendMessage = async (e) => {
     e.preventDefault();
     
-    // Early returns with proper conditions
     if (isChatDisabled) {
       console.log('Chat is disabled');
       return;
@@ -336,14 +388,17 @@ const ChatScreen = () => {
     );
   };
 
-  // Clean up object URLs on unmount
+  // Clean up object URLs and webcam stream on unmount
   useEffect(() => {
     return () => {
       if (imagePreviewUrl) {
         URL.revokeObjectURL(imagePreviewUrl);
       }
+      if (webcamStream) {
+        webcamStream.getTracks().forEach(track => track.stop());
+      }
     };
-  }, [imagePreviewUrl]);
+  }, [imagePreviewUrl, webcamStream]);
 
   if (error && !loading) {
     return (
@@ -418,6 +473,47 @@ const ChatScreen = () => {
               <div ref={messagesEndRef} />
             </div>
 
+            {/* Webcam Modal */}
+            {showWebcam && (
+              <div className="webcam-modal">
+                <div className="webcam-content">
+                  <div className="webcam-header">
+                    <h3>Take a Photo</h3>
+                    <button 
+                      type="button" 
+                      className="close-webcam-btn" 
+                      onClick={stopWebcam}
+                    >
+                      <FaTimes />
+                    </button>
+                  </div>
+                  <video 
+                    ref={webcamVideoRef} 
+                    autoPlay 
+                    playsInline
+                    className="webcam-video"
+                  />
+                  <canvas ref={canvasRef} style={{ display: 'none' }} />
+                  <div className="webcam-controls">
+                    <button 
+                      type="button" 
+                      className="capture-btn"
+                      onClick={captureImage}
+                    >
+                      Capture Photo
+                    </button>
+                    <button 
+                      type="button" 
+                      className="cancel-webcam-btn"
+                      onClick={stopWebcam}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Error display */}
             {error && (
               <div className="image-preview-area error-message">
@@ -448,23 +544,34 @@ const ChatScreen = () => {
             )}
             
             <form className="message-input-form" onSubmit={handleSendMessage}>
+              <div className="attachment-buttons">
                 <input
-                    type="file"
-                    ref={fileInputRef}
-                    accept="image/*"
-                    onChange={handleImageSelect}
-                    style={{ display: 'none' }}
-                    disabled={!chatPartner || isChatDisabled || isSending}
+                  type="file"
+                  ref={fileInputRef}
+                  accept="image/*"
+                  onChange={handleImageSelect}
+                  style={{ display: 'none' }}
+                  disabled={!chatPartner || isChatDisabled || isSending}
                 />
                 <button
-                    type="button"
-                    className="attach-button"
-                    onClick={() => fileInputRef.current.click()}
-                    disabled={!chatPartner || isChatDisabled || isSending}
-                    title="Attach Image"
+                  type="button"
+                  className="attach-button"
+                  onClick={() => fileInputRef.current.click()}
+                  disabled={!chatPartner || isChatDisabled || isSending}
+                  title="Attach Image"
                 >
-                    <FaImage />
+                  <FaImage />
                 </button>
+                <button
+                  type="button"
+                  className="webcam-button"
+                  onClick={startWebcam}
+                  disabled={!chatPartner || isChatDisabled || isSending}
+                  title="Take Photo"
+                >
+                  <FaCamera />
+                </button>
+              </div>
 
               <input
                 type="text"

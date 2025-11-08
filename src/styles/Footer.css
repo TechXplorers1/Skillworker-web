@@ -19,7 +19,7 @@
 
 /* Left Section */
 .footer-left {
-  flex: 1; /* ✅ Allow equal width distribution */
+  flex: 1; 
   max-width: 300px;
 }
 
@@ -58,7 +58,7 @@
 
 .footer-stats {
   display: flex;
-  justify-content: space-between; /* ✅ Even spacing */
+  justify-content: space-between; 
   margin-top: 12px;
 }
 
@@ -76,9 +76,9 @@
 
 /* Links Section */
 .footer-links {
-  flex: 2; /* ✅ Give this more space */
+  flex: 2; 
   display: flex;
-  justify-content: space-evenly; /* ✅ Equal space between columns */
+  justify-content: space-evenly; 
   width: 100%;
   flex-wrap: wrap;
 }
@@ -142,4 +142,73 @@
 .social-icons a:hover {
   background: #0066ff;
   color: #fff;
+}
+
+/* --- TABLET/MID-SIZE RESPONSIVENESS (<= 992px) --- */
+@media (max-width: 992px) {
+  .footer-container {
+    margin-left: 0; /* Remove fixed left margin */
+    justify-content: flex-start; /* Align sections to the start */
+  }
+  
+  .footer-left {
+    margin-bottom: 20px;
+  }
+
+  .footer-links {
+    justify-content: flex-start; /* Align columns to the start */
+    gap: 40px; /* Space between columns */
+    width: auto;
+  }
+}
+
+/* --- MOBILE RESPONSIVENESS (<= 768px) --- */
+@media (max-width: 768px) {
+  .footer-container {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .footer-left {
+    max-width: 100%; /* Take full width */
+    text-align: center;
+  }
+  
+  .footer-logo {
+    justify-content: center; /* Center logo */
+  }
+
+  .footer-contact p {
+    justify-content: center; /* Center contact info */
+  }
+  
+  .footer-links {
+    flex-direction: column; /* Stack link columns */
+    align-items: center; /* Center the stacked columns */
+    gap: 30px; 
+    text-align: center;
+  }
+
+  .footer-links ul {
+    margin-top: 10px;
+  }
+  
+  .footer-links h4 {
+    margin-bottom: 5px;
+  }
+
+  .footer-bottom {
+    flex-direction: column; /* Stack bottom bar elements */
+    gap: 10px;
+    text-align: center;
+  }
+  
+  .social-icons {
+    margin-top: 5px;
+  }
+  
+  .social-icons a {
+    margin: 0 5px;
+  }
 }

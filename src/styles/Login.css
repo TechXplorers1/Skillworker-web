@@ -7,6 +7,7 @@
   font-family: 'Segoe UI', Tahoma, sans-serif;
   overflow: hidden;
   margin: 0;
+  padding: 20px 0; /* Add vertical padding for very small screens */
 }
 
 .login-box {
@@ -118,6 +119,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  text-align: center;
 }
 
 .popup-content {
@@ -147,6 +149,7 @@
   color: #4a6eff;
   margin-bottom: 20px;
   text-decoration: none;
+  cursor: pointer;
 }
 
 .create-btn {
@@ -160,6 +163,13 @@
   font-weight: 600;
   cursor: pointer;
   margin-bottom: 25px;
+  transition: all 0.3s ease;
+}
+
+.create-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(106, 111, 255, 0.2);
 }
 
 .divider {
@@ -187,4 +197,38 @@
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
+}
+
+/* --- MOBILE RESPONSIVENESS (<= 480px) --- */
+@media (max-width: 480px) {
+  .login-box {
+    padding: 20px 25px; /* Reduced padding */
+  }
+
+  .welcome-text {
+    font-size: 16px;
+  }
+
+  .signin-text {
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+
+  .input-with-icon input {
+    padding: 10px 40px 10px 36px; /* Slightly smaller input fields */
+    font-size: 13px;
+  }
+  
+  .create-btn {
+    padding: 12px;
+    font-size: 15px;
+  }
+  
+  .success-popup {
+    padding: 15px 30px;
+  }
+  
+  .success-popup p {
+    font-size: 14px;
+  }
 }

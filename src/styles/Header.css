@@ -45,6 +45,7 @@
   font-weight: 700;
   color: blue;
   margin: 0;
+  white-space: nowrap; /* Prevent logo from wrapping */
 }
 
 .user-menu {
@@ -417,7 +418,7 @@
   100% { transform: translateY(0); }
 }
 
-
+/* --- MOBILE RESPONSIVENESS (<= 768px) --- */
 @media (max-width: 768px) {
   .header {
     padding: 12px 3%;
@@ -428,7 +429,16 @@
   }
   
   .user-name {
-    display: none;
+    display: none; /* Hide full name for space */
+  }
+  
+  .logout-btn {
+    padding: 6px 10px; /* Smaller padding */
+    font-size: 12px;
+  }
+  
+  .logout-icon {
+    font-size: 14px;
   }
   
   .signin-btn {
@@ -450,3 +460,42 @@
   }
 }
 
+/* --- SMALL MOBILE RESPONSIVENESS (<= 480px) --- */
+@media (max-width: 480px) {
+  .header {
+    padding: 8px 2%; /* Tighter padding */
+    height: 50px; /* Slightly shorter header */
+  }
+  
+  .user-menu {
+    gap: 8px; /* Tighter gap */
+  }
+
+  /* Hide navigation icons' labels, rely on icons/tooltips */
+  .icon-btn .icon-label {
+    display: none; 
+  }
+  
+  .header-icon {
+    font-size: 18px; /* Smaller icon size */
+  }
+
+  .user-avatar {
+    width: 30px;
+    height: 30px;
+  }
+  
+  .header-logo {
+    font-size: 16px; /* Smaller logo */
+  }
+  
+  .logout-btn {
+    display: none; /* Hide the full logout button on smallest screens, rely on profile avatar for logout */
+  }
+
+  .signin-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+    height: 30px;
+  }
+}

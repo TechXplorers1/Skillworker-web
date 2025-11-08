@@ -34,19 +34,22 @@
 .search-box {
   border: 1px solid #d1d5db;
   border-radius: 6px;
-  padding: 8px 12px 8px 35px;
+  padding: 8px 12px 8px 35px; /* Added left padding for icon */
   width: 250px;
   font-size: 14px;
 }
 
-/* .search-icon {
+/* --- FIX: Uncommented and adjusted search icon styles --- */
+.search-icon {
   position: absolute;
   left: 10px;
   top: 50%;
   transform: translateY(-50%);
   color: #6b7280;
   font-size: 16px;
-} */
+  pointer-events: none; /* Make sure the icon doesn't block clicks to the input */
+}
+/* -------------------------------------------------------- */
 
 .add-user-btn {
   background: black;
@@ -101,23 +104,33 @@
   color: #374151;
 }
 
+.role-badge.admin {
+  background-color: #fef3c7; /* Light Yellow */
+  color: #a16207; /* Dark Yellow */
+}
+
+.role-badge.technician {
+  background-color: #dbeafe; /* Light Blue */
+  color: #1d4ed8; /* Dark Blue */
+}
+
 .status-badge {
   padding: 4px 8px;
   border-radius: 6px;
   font-size: 12px;
-  background: #f3f4f6;
-  color: #374151;
 }
 
+/* --- FIX: Updated status badge colors --- */
 .status-badge.active {
-  background: #f3f4f6;
-  color: #374151;
+  background: #d1fae5; /* Light Green */
+  color: #065f46; /* Dark Green */
 }
 
 .status-badge.suspended {
-  background: #f3f4f6;
-  color: #374151;
+  background: #fee2e2; /* Light Red/Gray */
+  color: #b91c1c; /* Dark Red */
 }
+/* -------------------------------------- */
 
 .actions {
   display: flex;

@@ -29,26 +29,10 @@ const Footer = () => {
         {/* Middle Sections */}
         <div className="footer-links">
           <div>
-            <h4>Our Services</h4>
-            <ul>
-              <li>Plumbing</li>
-              <li>Electrical</li>
-              <li>AC Repair</li>
-              <li>Carpentry</li>
-              <li>Moving</li>
-              <li>Painting</li>
-              <li className="quote-link">Get a Quote</li>
-            </ul>
-          </div>
-          <div>
             <h4>Company</h4>
             <ul>
               <li>About Us</li>
               <li>How It Works</li>
-              <li>Careers</li>
-              <li>Press</li>
-              <li>Blog</li>
-              <li>Partnerships</li>
             </ul>
           </div>
           <div>
@@ -59,12 +43,6 @@ const Footer = () => {
               <li>Safety</li>
               <li>Trust & Safety</li>
             </ul>
-            <h4>Legal</h4>
-            <ul>
-              <li>Terms of Service</li>
-              <li>Privacy Policy</li>
-              <li>Cookie Policy</li>
-            </ul>
           </div>
         </div>
       </div>
@@ -72,7 +50,6 @@ const Footer = () => {
       {/* Bottom Bar */}
       <div className="footer-bottom">
         <p>© 2025 SkillWorkers. All rights reserved.</p>
-        <p className="made-with">Made with ❤️ in India</p>
         <div className="social-icons">
           <a href="#"><FaFacebookF /></a>
           <a href="#"><FaTwitter /></a>

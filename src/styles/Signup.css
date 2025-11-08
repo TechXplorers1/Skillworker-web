@@ -7,6 +7,7 @@
   font-family: 'Segoe UI', Tahoma, sans-serif;
   overflow: hidden;
   margin: 0;
+  padding: 20px 0; /* Add vertical padding for very small screens */
 }
 
 .signup-box {
@@ -167,6 +168,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  text-align: center;
 }
 
 .popup-content {
@@ -234,4 +236,53 @@
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
+}
+
+/* --- MOBILE RESPONSIVENESS (<= 480px) --- */
+@media (max-width: 480px) {
+  .signup-box {
+    padding: 20px 25px; /* Reduced padding */
+  }
+
+  .create-account-text {
+    font-size: 16px;
+  }
+
+  .join-text {
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+
+  .input-with-icon input {
+    padding: 10px 40px 10px 36px; /* Slightly smaller input fields */
+    font-size: 13px;
+  }
+  
+  /* Stack role selection vertically */
+  .role-selection {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .role-option {
+    width: 100%; /* Full width for stacked options */
+    padding: 10px;
+  }
+  
+  .role-option label {
+    font-size: 14px;
+  }
+
+  .create-btn {
+    padding: 12px;
+    font-size: 15px;
+  }
+  
+  .success-popup {
+    padding: 15px 30px;
+  }
+  
+  .success-popup p {
+    font-size: 14px;
+  }
 }

@@ -20,6 +20,8 @@ body {
 
 main {
   flex: 1;
+  /* Added margin-top to account for fixed header */
+  margin-top: 60px; 
 }
 
 /* Services Section */
@@ -38,7 +40,7 @@ main {
 }
 
 .services-grid {
-  /* Min width remains 380px for wide cards */
+  /* Default for wider screens: min width 380px, allow wrapping */
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
   gap: 20px;
@@ -61,8 +63,8 @@ main {
   height: 340px;
   background: rgba(30, 30, 30, 0.65);
   backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px); /* For Safari browser support */
-  border: 1px solid rgba(255, 255, 255, 0.1); /* Adds a subtle edge to the glass */
+  -webkit-backdrop-filter: blur(10px); 
+  border: 1px solid rgba(255, 255, 255, 0.1); 
   border-radius: 12px;
   box-shadow: 1px 1px 12px rgba(0,0,0,0.2);
   transform-style: preserve-3d;
@@ -83,12 +85,12 @@ main {
   border-radius: 12px;
   cursor: pointer;
   transition: transform 0.6s ease-in-out, box-shadow 0.6s ease-in-out;
-  transform-origin: left; /* Flips from the left edge */
+  transform-origin: left; 
   box-shadow: 1px 1px 12px rgba(0,0,0,0.3);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  backface-visibility: hidden; /* Hides the mirrored back when flipping */
+  backface-visibility: hidden; 
   z-index: 10;
 }
 
@@ -100,34 +102,27 @@ main {
 
 /* The content revealed on the "inside page" */
 .card-back {
-  /* NEW: This is now the container for the background image */
-  position: relative; /* Crucial for positioning the overlay */
+  position: relative; 
   width: 100%;
   height: 100%;
   border-radius: 12px;
-  overflow: hidden; /* Ensures the background image respects the border radius */
+  overflow: hidden; 
   color: #fff;
-  
-  /* Background image properties */
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
 }
 
-/* NEW: The overlay creates the shaded/masked effect over the image */
+/* The overlay creates the shaded/masked effect over the image */
 .card-back-overlay {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  
-  /* This is the mask color and transparency */
   background-color: rgba(10, 20, 30, 0.8); 
-  backdrop-filter: blur(3px); /* Adds a frosted glass effect */
+  backdrop-filter: blur(3px); 
   -webkit-backdrop-filter: blur(3px);
-  
-  /* Flex properties to center the content */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -139,7 +134,7 @@ main {
 
 .card-back .card-title {
   font-size: 1.3rem;
-  color: #fff; /* Ensures title text is white */
+  color: #fff; 
 }
 
 .card-back p {
@@ -147,13 +142,11 @@ main {
   color: rgba(255, 255, 255, 0.85); 
 }
 
-/* Make sure the existing styles for image and content still apply */
 .card-cover .card-content {
-  flex-grow: 1; /* Allows content to fill space below image */
-  padding: 15px; /* Restoring original padding */
+  flex-grow: 1; 
+  padding: 15px; 
 }
 
-/* We removed the button from the cover, so we can hide its old space */
 .card-cover .btn {
   display: none;
 }
@@ -162,7 +155,7 @@ main {
 .card-image-container {
   position: relative;
   width: 100%;
-  height: 200px; /* Fixed height for the container */
+  height: 200px; 
   overflow: hidden;
 }
 
@@ -173,18 +166,18 @@ main {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.3); /* 30% black overlay */
+  background-color: rgba(0, 0, 0, 0.3); 
   z-index: 1;
   transition: background-color 0.3s ease;
 }
 
 .service-card-flipper:hover .image-mask {
-    background-color: rgba(0, 0, 0, 0.45); /* Slight darkening on hover */
+    background-color: rgba(0, 0, 0, 0.45); 
 }
 
 .card-image-placeholder {
   width: 100%;
-  height: 100%; /* Set to 100% of the container height (200px) */
+  height: 100%; 
   background-color: #f0f0f0;
   display: flex;
   justify-content: center;
@@ -196,24 +189,22 @@ main {
 
 .card-image {
   width: 100%;
-  height: 100%; /* Set to 100% of the container height (200px) */
+  height: 100%; 
   object-fit: cover;
   transition: transform 0.5s ease;
 }
 
 .service-card-flipper:hover .card-image {
-    transform: scale(1.05); /* Subtle zoom effect on hover */
+    transform: scale(1.05); 
 }
 
 .card-content {
-  /* REDUCED PADDING: From 15px to 10px */
   padding: 10px;
 }
 
 .card-title {
   font-size: 1.2rem;
   font-weight: 600;
-  /* REDUCED MARGIN: From 8px to 6px */
   margin-bottom: 6px;
   color: #1e293b;
 }
@@ -221,20 +212,18 @@ main {
 .card-description {
   font-size: 0.9rem;
   color: #64748b;
-  /* REDUCED MARGIN: From 15px to 10px */
   margin-bottom: 10px;
   height: 3em; 
   overflow: hidden; 
 }
 
 .card-info {
-  display: none; /* NEW: Hidden as it's not being used and creates whitespace */
-  /* Keeping original styles just in case it's re-enabled, but display: none removes the space */
+  display: none; 
   justify-content: space-between;
   align-items: center;
   font-size: 0.85rem;
   color: #64748b;
-  margin-bottom: 0; /* Changed from 15px to 0 to minimize leftover space */
+  margin-bottom: 0; 
 }
 
 .rating {
@@ -256,7 +245,7 @@ main {
 }
 
 .btn {
-  display: block;
+  display: inline-block; /* Changed to inline-block for centering, but full width */
   width: 100%;
   padding: 10px;
   background: #007bff;
@@ -266,7 +255,7 @@ main {
   text-decoration: none;
   font-weight: 600;
   transition: background 0.3s ease;
-  max-width: 200px; /* Give the button a max-width on the back of the card */
+  max-width: 200px; 
 }
 
 .btn:hover {
@@ -289,6 +278,7 @@ main {
 
 .why-container {
   width: 100%;
+  max-width: 1200px; /* Constrain width */
   margin: 0 auto;
   background: #fff;
   border-radius: 16px;
@@ -424,15 +414,13 @@ main {
   transform: translateX(calc(var(--container_width) * 1 / 2));
 }
 
+/* --- Loading Spinner Styles --- */
 
-/* --- NEW: Loading Spinner Styles --- */
-
-/* Container for the spinner, ensures it's centered in the services section */
 .loading-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 200px; /* Give it enough height to be visible */
+  min-height: 200px; 
   width: 100%;
 }
 
@@ -440,7 +428,7 @@ main {
   width: 50px;
   height: 50px;
   border: 5px solid #ccc;
-  border-top-color: #007bff; /* Primary color for the spinning part */
+  border-top-color: #007bff; 
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -448,5 +436,161 @@ main {
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* --- Profile Popup Styles (Added for Mobile) --- */
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1050;
+}
+
+.homepage-popup {
+  width: 90%; /* Max width for mobile */
+  max-width: 400px; /* Constrain max size */
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+.modal-text {
+  font-size: 1rem;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: space-around;
+  gap: 10px;
+}
+
+.btn-primary, .btn-secondary {
+  padding: 10px 15px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.3s ease;
+  flex: 1; /* Make buttons take equal space */
+}
+
+.btn-primary {
+  background: #007bff;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #0056b3;
+}
+
+.btn-secondary {
+  background: #f0f0f0;
+  color: #333;
+  border-color: #ccc;
+}
+
+.btn-secondary:hover {
+  background: #e0e0e0;
+}
+
+
+/* --- MOBILE RESPONSIVENESS (<= 768px) --- */
+@media (max-width: 768px) {
+  .section-title {
+    font-size: 1.6rem;
+  }
+  
+  /* Make service cards smaller on mobile */
+  .services-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 15px;
+  }
+  
+  .service-card-flipper {
+    height: 300px; /* Shorter card height */
+  }
+
+  .card-image-container {
+    height: 160px; /* Shorter image container */
+  }
+
+  .why-choose {
+    padding: 30px 10px;
+  }
+  
+  .why-container {
+    padding: 25px;
+  }
+
+  .why-title {
+    font-size: 1.5rem;
+  }
+
+  .why-subtitle {
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+  }
+  
+  /* Stack why-choose cards */
+  .why-features {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .why-card {
+    max-width: 100%; /* Full width when stacked */
+  }
+}
+
+/* --- SMALL MOBILE RESPONSIVENESS (<= 480px) --- */
+@media (max-width: 480px) {
+  .services {
+    padding: 30px 3%; /* Tighter padding */
+  }
+  
+  .services-grid {
+    /* Enforce a single column on very small screens for better readability */
+    grid-template-columns: 1fr; 
+  }
+  
+  .service-card-flipper {
+    height: 280px; 
+  }
+  
+  .card-image-container {
+    height: 140px; 
+  }
+  
+  .card-content {
+    padding: 8px;
+  }
+  
+  .card-title {
+    font-size: 1.1rem;
+  }
+  
+  .card-description {
+    font-size: 0.85rem;
+  }
+
+  /* Adjust popup for smallest screens */
+  .homepage-popup {
+    padding: 20px;
+  }
+  
+  .modal-actions {
+    flex-direction: column;
   }
 }

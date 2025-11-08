@@ -30,11 +30,9 @@ import constructioncleanersHeroImg from '../assets/Construction cleaners.png';
 import laundryHeroImg from '../assets/laundry.png';
 import deliveryHeroImg from '../assets/delivery.png';
 
-// --- IN-MEMORY CACHE ---
-// This variable will store fetched data to prevent re-loading on re-mount.
+// --- IN-MEMORY CACHE (Only keeping service details cache to avoid re-fetching image mapping) ---
 let pageCache = {
     serviceDetails: {}, // Key: serviceName (slug)
-    technicians: {} // Key: serviceId (Firebase ID)
 };
 
 // Map service slugs to local images
@@ -125,7 +123,6 @@ const ServiceTechniciansPage = () => {
             const cachedData = pageCache.serviceDetails[serviceName];
             setServiceId(cachedData.serviceId);
             setServiceDetails(cachedData.serviceDetails);
-            // DO NOT set loading to false here, as technicians are the main content.
             return; 
         }
 
@@ -170,23 +167,15 @@ const ServiceTechniciansPage = () => {
             });
     }, [serviceName, localHeroImage]);
 
-    // Fetch technicians live and cache them
+    // Fetch technicians in real-time
     useEffect(() => {
         if (!serviceId) return;
 
-        // 1. CACHE CHECK for Technicians
-        if (pageCache.technicians[serviceId]) {
-            const cachedTechnicians = pageCache.technicians[serviceId];
-            setAllTechnicians(cachedTechnicians);
-            handleApplyFilters(cachedTechnicians);
-            setLoading(false); // <-- Instant load!
-            return; 
-        }
-
-        // 2. FETCH (live listener) if cache is empty
+        // Rely purely on the live listener for real-time updates
         const currentUserId = auth.currentUser ? auth.currentUser.uid : null;
         const usersRef = ref(database, 'users');
 
+        // onValue runs immediately with initial data and updates whenever data changes
         const unsubscribe = onValue(usersRef, (snapshot) => {
             if (snapshot.exists()) {
                 const usersData = snapshot.val();
@@ -204,9 +193,6 @@ const ServiceTechniciansPage = () => {
                     city: tech.city || 'N/A',
                 }));
                 
-                // 3. CACHE the fetched data
-                pageCache.technicians[serviceId] = updatedTechnicians; 
-                
                 setAllTechnicians(updatedTechnicians);
                 handleApplyFilters(updatedTechnicians);
             } else {
@@ -219,7 +205,6 @@ const ServiceTechniciansPage = () => {
             setLoading(false); 
         });
 
-        // Clean up the Firebase listener (only runs if the listener was set up)
         return () => unsubscribe();
     }, [serviceId, handleApplyFilters]);
 
@@ -246,6 +231,13 @@ const ServiceTechniciansPage = () => {
             navigate("/login");
         }
     };
+    
+    // Helper function to get initials
+    const getInitials = (firstName, lastName) => {
+        const first = firstName ? firstName[0].toUpperCase() : '';
+        const last = lastName ? lastName[0].toUpperCase() : '';
+        return first + last;
+    }
     
     // Loading Spinner Render Block
     if (loading) {
@@ -324,10 +316,15 @@ const ServiceTechniciansPage = () => {
                         <div className="technicians-grid">
                             {filteredTechnicians.map((tech) => (
                                 <div className="technician-card" key={tech.uid}>
+                                    <div className={`activity-dot ${tech.isActive ? 'available' : 'booked'}`}></div>
                                     <div className="card-header">
-                                        {/* The dot correctly reflects the tech.isActive status from Firebase */}
-                                        <div className={`activity-dot ${tech.isActive ? 'available' : 'booked'}`}></div>
-                                        <img src={tech.profileImage} alt={tech.firstName} className="tech-image" />
+                                        
+                                        {/* --- FIX 1: Replaced image with initials div --- */}
+                                        <div className="tech-initials-placeholder">
+                                            {getInitials(tech.firstName, tech.lastName)}
+                                        </div>
+                                        {/* ----------------------------------------------- */}
+                                        
                                         <div className="tech-info">
                                             <h3 className="tech-name">{tech.firstName} {tech.lastName}</h3>
                                             <div className="tech-rating">

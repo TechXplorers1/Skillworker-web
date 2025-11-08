@@ -161,6 +161,7 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
   padding: 1.25rem;
   transition: transform 0.2s, box-shadow 0.2s;
+  position: relative; /* Crucial for positioning the dot relative to the card */
 }
 
 .technician-card:hover {
@@ -171,19 +172,19 @@
 .card-header {
   display: flex;
   align-items: flex-start;
-  position: relative; /* ADDED: This is necessary for positioning the dot */
+  position: relative;
 }
 
-/* --- NEW STYLES FOR ACTIVITY DOT --- */
+/* --- FIX 1 & 2: Dot positioned relative to the card, not the image --- */
 .activity-dot {
   position: absolute;
-  top: 12px;
-  left: 12px;
-  width: 14px;
-  height: 14px;
+  top: 10px;
+  right: 10px;
+  width: 16px; /* Slightly larger for visibility */
+  height: 16px;
   border-radius: 50%;
-  border: 2px solid white;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  border: 3px solid #fff; /* White border for contrast against card edge */
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
   z-index: 2;
 }
 
@@ -192,18 +193,25 @@
 }
 
 .activity-dot.booked {
-  background-color: #dc3545; /* Red for booked */
+  background-color: #dc3545; /* Red for booked/offline */
 }
-/* --- END OF NEW STYLES --- */
+/* --- END OF FIX --- */
 
-
-.tech-image {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  object-fit: cover;
-  margin-right: 1rem;
-  border: 2px solid #e5e7eb;
+/* --- FIX 3: Styling for the new initials placeholder --- */
+.tech-initials-placeholder {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%; /* Rounded profile icon */
+    background-color: #2563eb; /* Primary color background */
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-right: 1rem;
+    border: 2px solid #e5e7eb;
+    flex-shrink: 0; /* Prevents shrinking */
 }
 
 .tech-info {
@@ -443,7 +451,7 @@
   to { opacity: 1; transform: scale(1); }
 }
 
-/* --- NEW: Loading Spinner Styles --- */
+/* --- Loading Spinner Styles --- */
 
 /* Container for the spinner, ensures it's centered in the content area */
 .loading-state-content {
@@ -451,7 +459,7 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  min-height: 300px; /* Give it enough height to be visible in the main section */
+  min-height: 300px; 
   width: 100%;
   margin-top: 50px;
 }
@@ -473,7 +481,7 @@
   width: 50px;
   height: 50px;
   border: 5px solid #ccc;
-  border-top-color: #2563eb; /* Primary color for the spinning part */
+  border-top-color: #2563eb; 
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }

@@ -3,12 +3,42 @@ import { ref, onValue, update } from "firebase/database";
 import { database } from "../firebase";
 import "../styles/TechnicianManagement.css";
 
+// Helper component for displaying skills in the table
+const SkillsDisplay = ({ skills, servicesMap, onShowMore }) => {
+  const MAX_SKILLS = 4;
+  const displaySkills = skills?.map(skillId => servicesMap[skillId] || skillId) || [];
+  const skillsToShow = displaySkills.slice(0, MAX_SKILLS);
+  const remainingCount = displaySkills.length - MAX_SKILLS;
+
+  if (displaySkills.length === 0) {
+    return <span className="skill-badge">N/A</span>;
+  }
+
+  return (
+    <div className="skills-container">
+      {skillsToShow.map((skill, index) => (
+        <span key={index} className="skill-badge">{skill}</span>
+      ))}
+      {remainingCount > 0 && (
+        <span 
+          className="show-more-link"
+          onClick={onShowMore}
+        >
+          +{remainingCount} more
+        </span>
+      )}
+    </div>
+  );
+};
+
+
 const TechnicianManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddTechnicianPopup, setShowAddTechnicianPopup] = useState(false);
   const [editingTechnician, setEditingTechnician] = useState(null);
   const [deactivatingTechnician, setDeactivatingTechnician] = useState(null);
   const [activatingTechnician, setActivatingTechnician] = useState(null);
+  const [showAllSkills, setShowAllSkills] = useState(null); // New state for 'Show More' popup
   const [newSkill, setNewSkill] = useState("");
   const [technicians, setTechnicians] = useState([]);
   const [newTechnician, setNewTechnician] = useState({
@@ -34,7 +64,6 @@ const TechnicianManagement = () => {
       if (users) {
         let fetchedTechnicians = Object.values(users).filter(user => user.role === "technician");
         
-        // --- ADDED SORTING LOGIC ---
         // Sort by createdAt in descending order (most recent first)
         fetchedTechnicians.sort((a, b) => {
           // Assuming createdAt is a sortable string/timestamp, or default to an empty string if null
@@ -42,9 +71,13 @@ const TechnicianManagement = () => {
           const dateB = b.createdAt || "";
           return dateB.localeCompare(dateA);
         });
-        // ---------------------------
+        
+        // Add uid from the key, if not already present
+        const techniciansWithUid = Object.keys(users)
+            .map(uid => ({ ...users[uid], uid }))
+            .filter(user => user.role === "technician");
 
-        setTechnicians(fetchedTechnicians);
+        setTechnicians(techniciansWithUid);
       }
     });
 
@@ -65,15 +98,22 @@ const TechnicianManagement = () => {
 
   const filteredTechnicians = technicians.filter(technician => 
     (technician.firstName + ' ' + technician.lastName).toLowerCase().includes(searchTerm.toLowerCase()) ||
-    technician.email.toLowerCase().includes(searchTerm.toLowerCase())
+    (technician.email || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const toggleTechnicianStatus = (technicianId) => {
     const technician = technicians.find(t => t.uid === technicianId);
-    if (technician.status === "Active" || technician.isActive) {
+    if (!technician) return;
+
+    // Use a consistent status check
+    const currentStatus = technician.status === "Active" || technician.isActive || technician.status === true;
+
+    if (currentStatus) {
       setDeactivatingTechnician(technician);
+      setActivatingTechnician(null);
     } else {
       setActivatingTechnician(technician);
+      setDeactivatingTechnician(null);
     }
   };
 
@@ -110,11 +150,26 @@ const TechnicianManagement = () => {
   const cancelActivation = () => {
     setActivatingTechnician(null);
   };
+  
+  const handleShowAllSkills = (technician) => {
+    const allSkills = technician.skills?.map(skillId => servicesMap[skillId] || skillId) || [];
+    setShowAllSkills({
+      name: `${technician.firstName} ${technician.lastName}`,
+      skills: allSkills
+    });
+  };
+
+  const handleCloseAllSkills = () => {
+    setShowAllSkills(null);
+  };
 
   const handleAddTechnician = () => {
     // This part requires a separate user creation flow,
     // so we'll just log the data for now.
     console.log("Adding new technician:", newTechnician);
+    // In a real application, you would use firebase.auth().createUserWithEmailAndPassword() 
+    // and then save the user profile (newTechnician) to the database/users collection.
+
     setShowAddTechnicianPopup(false);
     setNewTechnician({
       firstName: "",
@@ -135,9 +190,11 @@ const TechnicianManagement = () => {
   const handleEditTechnician = () => {
     if (editingTechnician) {
       // Map skill names back to their IDs before saving
-      const updatedSkills = editingTechnician.skills.map(skillName =>
-        Object.keys(servicesData).find(id => servicesData[id].title === skillName) || skillName
-      );
+      const updatedSkills = editingTechnician.skills.map(skillName => {
+        // Find the service ID that matches the skill name
+        const serviceEntry = Object.entries(servicesData).find(([, service]) => service.title === skillName);
+        return serviceEntry ? serviceEntry[0] : skillName; // Use ID or the name itself as a fallback
+      });
 
       const userRef = ref(database, `users/${editingTechnician.uid}`);
       update(userRef, {
@@ -191,6 +248,7 @@ const TechnicianManagement = () => {
     }
     
     const skillName = newSkill.trim();
+    
     if (isEdit && editingTechnician) {
       if (!editingTechnician.skills.includes(skillName)) {
         setEditingTechnician({
@@ -236,6 +294,7 @@ const TechnicianManagement = () => {
         <h2>Technician Management</h2>
         <div className="controls">
           <div className="search-container">
+            <span className="search-icon">⌕</span>
             <input
               type="text"
               placeholder="Search technicians..."
@@ -243,7 +302,6 @@ const TechnicianManagement = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <span className="search-icon">⌕</span>
           </div>
           <button 
             className="add-technician-btn"
@@ -254,86 +312,104 @@ const TechnicianManagement = () => {
         </div>
       </div>
 
-      <table className="technician-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Bio</th>
-            <th>Status</th>
-            <th>Available Timings</th>
-            <th>Skills</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredTechnicians.map((technician) => {
-            const statusString = typeof technician.status === 'boolean'
-              ? (technician.status ? 'Active' : 'Suspended')
-              : technician.status;
+      <div className="table-container"> {/* Wrap table for better styling/overflow */}
+        <table className="technician-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Bio</th>
+              <th>Status</th>
+              <th>Available Timings</th>
+              <th>Skills</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredTechnicians.map((technician) => {
+              const statusString = typeof technician.status === 'boolean'
+                ? (technician.status ? 'Active' : 'Suspended')
+                : technician.status;
 
-            const badgeClass = statusString 
-              ? statusString.toLowerCase() 
-              : (technician.isActive ? 'active' : 'suspended');
-            
-            const displayStatus = statusString || (technician.isActive ? 'Active' : 'Suspended');
+              const badgeClass = statusString 
+                ? statusString.toLowerCase() 
+                : (technician.isActive ? 'active' : 'suspended');
+              
+              const displayStatus = statusString || (technician.isActive ? 'Active' : 'Suspended');
 
-            return (
-              <tr key={technician.uid}>
-                <td>
-                  <div className="technician-name">{technician.firstName} {technician.lastName}</div>
-                </td>
-                <td>
-                  <div className="technician-email">{technician.email}</div>
-                </td>
-                <td>
-                  <div className="bio-text">{technician.bio}</div>
-                </td>
-                <td>
-                  <span className={`status-badge ${badgeClass}`}>
-                    {displayStatus}
-                  </span>
-                </td>
-                <td>
-                  <p className="timings-text">{technician.availableTimings}</p>
-                </td>
-                <td>
-                  <div className="skills-container">
-                    {/* Updated to display skill names instead of IDs */}
-                    {technician.skills?.map((skillId, index) => (
-                      <span key={index} className="skill-badge">{servicesMap[skillId] || skillId}</span>
-                    ))}
-                  </div>
-                </td>
-                <td className="actions">
-                  <label className="toggle-switch">
-                    <input
-                      type="checkbox"
-                      checked={technician.status === "Active" || technician.isActive || technician.status === true}
-                      onChange={() => toggleTechnicianStatus(technician.uid)}
+              return (
+                <tr key={technician.uid}>
+                  <td>
+                    <div className="technician-name">{technician.firstName} {technician.lastName}</div>
+                  </td>
+                  <td>
+                    <div className="technician-email">{technician.email}</div>
+                  </td>
+                  <td>
+                    <div className="bio-text">{technician.bio}</div>
+                  </td>
+                  <td>
+                    <span className={`status-badge ${badgeClass}`}>
+                      {displayStatus}
+                    </span>
+                  </td>
+                  <td>
+                    <p className="timings-text">{technician.availableTimings}</p>
+                  </td>
+                  <td>
+                    <SkillsDisplay 
+                      skills={technician.skills}
+                      servicesMap={servicesMap}
+                      onShowMore={() => handleShowAllSkills(technician)}
                     />
-                    <span className="slider"></span>
-                  </label>
-                  <button 
-                    className="edit-icon"
-                    onClick={() => openEditPopup(technician)}
-                    title="Edit Technician"
-                  >
-                    ✏️
-                  </button>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                  </td>
+                  <td className="actions">
+                    <label className="toggle-switch">
+                      <input
+                        type="checkbox"
+                        checked={technician.status === "Active" || technician.isActive || technician.status === true}
+                        onChange={() => toggleTechnicianStatus(technician.uid)}
+                      />
+                      <span className="slider"></span>
+                    </label>
+                    <button 
+                      className="edit-icon"
+                      onClick={() => openEditPopup(technician)}
+                      title="Edit Technician"
+                    >
+                      ✏️
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* All Skills Popup */}
+      {showAllSkills && (
+        <div className="popup-overlay" onClick={handleCloseAllSkills}>
+          <div className="all-skills-popup" onClick={e => e.stopPropagation()}>
+            <button className="close-btn" onClick={handleCloseAllSkills}>
+              &times;
+            </button>
+            <h3>All Skills for {showAllSkills.name}</h3>
+            <div className="skills-list">
+              {showAllSkills.skills.map((skill, index) => (
+                <span key={index} className="skill-tag">{skill}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Deactivation Confirmation Popup */}
       {deactivatingTechnician && (
         <div className="popup-overlay">
           <div className="confirmation-popup">
             <h3>Confirm Deactivation</h3>
-            <p>Are you sure you want to deactivate {deactivatingTechnician.firstName} {deactivatingTechnician.lastName}?</p>
+            <p>Are you sure you want to deactivate **{deactivatingTechnician.firstName} {deactivatingTechnician.lastName}**?</p>
             <div className="popup-buttons">
               <button className="cancel-btn" onClick={cancelDeactivation}>
                 Cancel
@@ -351,7 +427,7 @@ const TechnicianManagement = () => {
         <div className="popup-overlay">
           <div className="confirmation-popup">
             <h3>Confirm Activation</h3>
-            <p>Are you sure you want to activate {activatingTechnician.firstName} {activatingTechnician.lastName}?</p>
+            <p>Are you sure you want to activate **{activatingTechnician.firstName} {activatingTechnician.lastName}**?</p>
             <div className="popup-buttons">
               <button className="cancel-btn" onClick={cancelActivation}>
                 Cancel
@@ -368,9 +444,10 @@ const TechnicianManagement = () => {
       {showAddTechnicianPopup && (
         <div className="popup-overlay">
           <div className="add-technician-popup">
+            <button className="close-btn" onClick={() => setShowAddTechnicianPopup(false)}>&times;</button>
             <h3>Add New Technician</h3>
             <div className="form-group">
-              <label>Full Name:</label>
+              <label>First Name:</label>
               <input
                 type="text"
                 name="firstName"
@@ -378,6 +455,9 @@ const TechnicianManagement = () => {
                 onChange={handleInputChange}
                 placeholder="Enter first name"
               />
+            </div>
+            <div className="form-group">
+              <label>Last Name:</label>
               <input
                 type="text"
                 name="lastName"
@@ -488,7 +568,7 @@ const TechnicianManagement = () => {
                       className="remove-skill"
                       onClick={() => removeSkill(skill, false)}
                     >
-                      ×
+                      &times;
                     </span>
                   </div>
                 ))}
@@ -517,20 +597,24 @@ const TechnicianManagement = () => {
       {editingTechnician && (
         <div className="popup-overlay">
           <div className="edit-technician-popup">
+            <button className="close-btn" onClick={() => setEditingTechnician(null)}>&times;</button>
             <h3>Edit Technician</h3>
             <div className="form-group">
               <label>First Name:</label>
               <input
                 type="text"
                 name="firstName"
-                value={editingTechnician.firstName}
+                value={editingTechnician.firstName || ''}
                 onChange={(e) => handleInputChange(e, true)}
                 placeholder="Enter first name"
               />
-               <input
+            </div>
+            <div className="form-group">
+              <label>Last Name:</label>
+              <input
                 type="text"
                 name="lastName"
-                value={editingTechnician.lastName}
+                value={editingTechnician.lastName || ''}
                 onChange={(e) => handleInputChange(e, true)}
                 placeholder="Enter last name"
               />
@@ -540,7 +624,7 @@ const TechnicianManagement = () => {
               <input
                 type="email"
                 name="email"
-                value={editingTechnician.email}
+                value={editingTechnician.email || ''}
                 onChange={(e) => handleInputChange(e, true)}
                 placeholder="Enter email address"
               />
@@ -550,7 +634,7 @@ const TechnicianManagement = () => {
               <input
                 type="tel"
                 name="phone"
-                value={editingTechnician.phone}
+                value={editingTechnician.phone || ''}
                 onChange={(e) => handleInputChange(e, true)}
                 placeholder="Enter phone number"
               />
@@ -560,7 +644,7 @@ const TechnicianManagement = () => {
               <input
                 type="text"
                 name="city"
-                value={editingTechnician.city}
+                value={editingTechnician.city || ''}
                 onChange={(e) => handleInputChange(e, true)}
                 placeholder="Enter city"
               />
@@ -570,7 +654,7 @@ const TechnicianManagement = () => {
               <input
                 type="text"
                 name="state"
-                value={editingTechnician.state}
+                value={editingTechnician.state || ''}
                 onChange={(e) => handleInputChange(e, true)}
                 placeholder="Enter state"
               />
@@ -580,7 +664,7 @@ const TechnicianManagement = () => {
               <input
                 type="text"
                 name="country"
-                value={editingTechnician.country}
+                value={editingTechnician.country || ''}
                 onChange={(e) => handleInputChange(e, true)}
                 placeholder="Enter country"
               />
@@ -589,7 +673,7 @@ const TechnicianManagement = () => {
               <label>Bio:</label>
               <textarea
                 name="bio"
-                value={editingTechnician.bio}
+                value={editingTechnician.bio || ''}
                 onChange={(e) => handleInputChange(e, true)}
                 placeholder="Enter technician bio"
               />
@@ -599,7 +683,7 @@ const TechnicianManagement = () => {
               <input
                 type="text"
                 name="availableTimings"
-                value={editingTechnician.availableTimings}
+                value={editingTechnician.availableTimings || ''}
                 onChange={(e) => handleInputChange(e, true)}
                 placeholder="e.g., 9:00 AM - 6:00 PM (Mon-Sat)"
               />
@@ -637,7 +721,7 @@ const TechnicianManagement = () => {
                       className="remove-skill"
                       onClick={() => removeSkill(skill, true)}
                     >
-                      ×
+                      &times;
                     </span>
                   </div>
                 ))}

@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { ref, onValue, update, push } from "firebase/database";
-// Import necessary Auth functions
-import { createUserWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
-import { database, auth } from "../firebase";
+import { database } from "../firebase";
 import "../styles/UserManagement.css";
 
-// Helper function to generate a simple temporary password
-const generateTemporaryPassword = () => {
-    return Math.random().toString(36).slice(-8); // 8 character alphanumeric
-};
+// Note: For actual user creation (including password reset email), you would
+// need to use Firebase Authentication functions (e.g., createUserWithEmailAndPassword)
+// AND potentially a Cloud Function/Admin SDK on the backend to send the password
+// reset link, as direct `sendPasswordResetEmail` requires the user to exist in Auth.
 
 const UserManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -17,7 +15,6 @@ const UserManagement = () => {
   const [deactivatingUser, setDeactivatingUser] = useState(null);
   const [activatingUser, setActivatingUser] = useState(null);
   const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(false); // State for loading indicator
   
   const [newUser, setNewUser] = useState({
     firstName: "", 
@@ -29,6 +26,7 @@ const UserManagement = () => {
     country: "India",
     role: "user",
     status: "Active",
+    // Use a proper timestamp for sorting and display
     createdAt: new Date().toISOString(), 
   });
 
@@ -37,25 +35,25 @@ const UserManagement = () => {
     onValue(usersRef, (snapshot) => {
       const usersData = snapshot.val();
       if (usersData) {
-        let fetchedUsers = Object.keys(usersData).map(key => ({
-          ...usersData[key],
-          // Ensure uid is the key if it wasn't saved explicitly
-          uid: usersData[key].uid || key 
+        const fetchedUsers = Object.keys(usersData).map(uid => ({
+          ...usersData[uid],
+          uid: uid // Use the actual Firebase key as UID
         }));
         
-        // Filter to ONLY include 'user' and 'admin' roles
-        fetchedUsers = fetchedUsers.filter(user => 
-            (user.role === "user" || user.role === "admin")
+        // Filter out technicians - only show users and admins
+        const nonTechnicianUsers = fetchedUsers.filter(user => 
+          user.role !== "technician"
         );
         
         // Sort by createdAt in descending order (most recent first)
-        fetchedUsers.sort((a, b) => {
+        nonTechnicianUsers.sort((a, b) => {
           const dateA = a.createdAt || "";
           const dateB = b.createdAt || "";
+          // localeCompare is safe for ISO strings
           return dateB.localeCompare(dateA); 
         });
 
-        setUsers(fetchedUsers);
+        setUsers(nonTechnicianUsers);
       } else {
         setUsers([]);
       }
@@ -71,7 +69,7 @@ const UserManagement = () => {
   const getStatusString = (status) => {
     if (status === true || status === "Active") return "Active";
     if (status === false || status === "Suspended") return "Suspended";
-    return "Suspended";
+    return "Suspended"; // Default to suspended if status is unknown/null
   };
 
   const toggleUserStatus = (userId) => {
@@ -92,6 +90,7 @@ const UserManagement = () => {
   const confirmDeactivation = () => {
     if (deactivatingUser) {
       const userRef = ref(database, `users/${deactivatingUser.uid}`);
+      // Using "Suspended" string as per existing logic
       update(userRef, { status: "Suspended" }) 
         .then(() => {
           setDeactivatingUser(null);
@@ -105,6 +104,7 @@ const UserManagement = () => {
   const confirmActivation = () => {
     if (activatingUser) {
       const userRef = ref(database, `users/${activatingUser.uid}`);
+      // Using "Active" string as per existing logic
       update(userRef, { status: "Active" }) 
         .then(() => {
           setActivatingUser(null);
@@ -123,65 +123,42 @@ const UserManagement = () => {
     setActivatingUser(null);
   };
 
-  const handleAddUser = async () => {
+  const handleAddUser = () => {
     if (!newUser.firstName || !newUser.email || !newUser.phone) {
-      // Use a custom modal/alert for error messages
-      alert("First Name, Email, and Phone are required."); 
+      alert("First Name, Email, and Phone are required.");
       return;
     }
-    
-    setLoading(true);
-    const tempPassword = generateTemporaryPassword();
-    let authUid = null;
 
-    try {
-        // 1. Create user in Firebase Auth with a temporary password
-        const userCredential = await createUserWithEmailAndPassword(auth, newUser.email, tempPassword);
-        authUid = userCredential.user.uid;
+    const userRef = ref(database, "users");
+    const newUserData = {
+      ...newUser,
+      createdAt: new Date().toISOString(),
+    };
 
-        // 2. Immediately send a password reset email to force the user to create their own password
-        await sendPasswordResetEmail(auth, newUser.email);
-        
-        // 3. Save user data to Realtime Database using the Auth UID as the key
-        const newUserData = {
-            ...newUser,
-            uid: authUid, 
-            createdAt: new Date().toISOString(),
-        };
-
-        const userRef = ref(database, `users/${authUid}`);
-        await update(userRef, newUserData); // Use update on the specific UID path
-
-        console.log(`Successfully added new user: ${newUser.email}. Password creation email sent.`);
-        alert(`User ${newUser.firstName} added and activated. Password creation email sent to ${newUser.email}.`);
-
-        // 4. Reset state
+    // NOTE: This will create a record, but the user won't exist in Firebase AUTH 
+    // and won't be able to log in until you implement the Auth step.
+    push(userRef, newUserData)
+      .then((snap) => {
+        // Update the new object with the key it was saved under
+        update(snap, { uid: snap.key }); 
+        console.log("Successfully added new user entry to DB (Auth needed for login/email).");
         setShowAddUserPopup(false);
         setNewUser({
-            firstName: "",
-            lastName: "",
-            email: "",
-            phone: "",
-            city: "",
-            state: "",
-            country: "India",
-            role: "user",
-            status: "Active",
-            createdAt: new Date().toISOString(),
+          firstName: "",
+          lastName: "",
+          email: "",
+          phone: "",
+          city: "",
+          state: "",
+          country: "India",
+          role: "user",
+          status: "Active",
+          createdAt: new Date().toISOString(),
         });
-    } catch (error) {
-        console.error("Failed to add user or send email:", error);
-        
-        let message = "Failed to add user. Check console for details.";
-        if (error.code === 'auth/email-already-in-use') {
-            message = "Error: This email address is already in use by another account.";
-        } else if (error.code === 'auth/invalid-email') {
-             message = "Error: The email address is not valid.";
-        }
-        alert(message);
-    } finally {
-        setLoading(false);
-    }
+      })
+      .catch(error => {
+        console.error("Failed to add new user to database:", error);
+      });
   };
 
   const handleEditUser = () => {
@@ -195,7 +172,7 @@ const UserManagement = () => {
         city: editingUser.city,
         state: editingUser.state,
         country: editingUser.country,
-        role: editingUser.role,
+        role: editingUser.role, // Added role update
       })
       .then(() => {
         setEditingUser(null);
@@ -226,6 +203,7 @@ const UserManagement = () => {
     setEditingUser({...user});
   };
   
+  // Helper to format date string
   const formatDate = (isoString) => {
     if (!isoString) return 'N/A';
     try {
@@ -260,71 +238,73 @@ const UserManagement = () => {
         </div>
       </div>
 
-      <table className="user-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Phone</th>
-            <th>Location</th>
-            <th>Role</th>
-            <th>Status</th>
-            <th>Joined On</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredUsers.map((user) => {
-            const statusString = getStatusString(user.status);
-            return (
-            <tr key={user.uid}>
-              <td>
-                <div className="user-name">{user.firstName} {user.lastName}</div>
-              </td>
-              <td>
-                <div className="user-email">{user.email}</div>
-              </td>
-              <td>
-                <div className="user-phone">{user.phone}</div>
-              </td>
-              <td>
-                <div className="user-location">{user.city}, {user.state}</div>
-              </td>
-              <td>
-                <span className={`role-badge ${user.role?.toLowerCase() || 'user'}`}>
-                  {user.role || 'user'}
-                </span>
-              </td>
-              <td>
-                <span className={`status-badge ${statusString.toLowerCase()}`}>
-                  {statusString}
-                </span>
-              </td>
-              <td>
-                <div className="user-joined">{formatDate(user.createdAt)}</div>
-              </td>
-              <td className="actions">
-                <label className="toggle-switch">
-                  <input
-                    type="checkbox"
-                    checked={statusString === "Active"}
-                    onChange={() => toggleUserStatus(user.uid)}
-                  />
-                  <span className="slider"></span>
-                </label>
-                <button 
-                  className="edit-icon"
-                  onClick={() => openEditPopup(user)}
-                  title="Edit User"
-                >
-                  ✏️
-                </button>
-              </td>
+      <div className="table-container"> {/* Added table-container div */}
+        <table className="user-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Location</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Joined On</th>
+              <th>Actions</th>
             </tr>
-          );
-        })}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {filteredUsers.map((user) => {
+              const statusString = getStatusString(user.status);
+              return (
+              <tr key={user.uid}>
+                <td>
+                  <div className="user-name">{user.firstName} {user.lastName}</div>
+                </td>
+                <td>
+                  <div className="user-email">{user.email}</div>
+                </td>
+                <td>
+                  <div className="user-phone">{user.phone}</div>
+                </td>
+                <td>
+                  <div className="user-location">{user.city}, {user.state}</div>
+                </td>
+                <td>
+                  <span className={`role-badge ${user.role?.toLowerCase() || 'user'}`}>
+                    {user.role || 'user'}
+                  </span>
+                </td>
+                <td>
+                  <span className={`status-badge ${statusString.toLowerCase()}`}>
+                    {statusString}
+                  </span>
+                </td>
+                <td>
+                  <div className="user-joined">{formatDate(user.createdAt)}</div>
+                </td>
+                <td className="actions">
+                  <label className="toggle-switch">
+                    <input
+                      type="checkbox"
+                      checked={statusString === "Active"}
+                      onChange={() => toggleUserStatus(user.uid)}
+                    />
+                    <span className="slider"></span>
+                  </label>
+                  <button 
+                    className="edit-icon"
+                    onClick={() => openEditPopup(user)}
+                    title="Edit User"
+                  >
+                    ✏️
+                  </button>
+                </td>
+              </tr>
+            );
+          })}
+          </tbody>
+        </table>
+      </div>
 
       {/* Deactivation Confirmation Popup */}
       {deactivatingUser && (
@@ -366,6 +346,7 @@ const UserManagement = () => {
       {showAddUserPopup && (
         <div className="popup-overlay">
           <div className="add-user-popup">
+            <button className="close-btn" onClick={() => setShowAddUserPopup(false)}>&times;</button>
             <h3>Add New User</h3>
             <div className="form-group">
               <label>First Name:</label>
@@ -452,16 +433,15 @@ const UserManagement = () => {
               <button 
                 className="cancel-btn"
                 onClick={() => setShowAddUserPopup(false)}
-                disabled={loading}
               >
                 Cancel
               </button>
               <button 
                 className="confirm-btn"
                 onClick={handleAddUser}
-                disabled={!newUser.firstName || !newUser.email || !newUser.phone || loading}
+                disabled={!newUser.firstName || !newUser.email || !newUser.phone}
               >
-                {loading ? 'Sending Email...' : 'Add User'}
+                Add User
               </button>
             </div>
           </div>
@@ -472,6 +452,7 @@ const UserManagement = () => {
       {editingUser && (
         <div className="popup-overlay">
           <div className="edit-user-popup">
+            <button className="close-btn" onClick={() => setEditingUser(null)}>&times;</button>
             <h3>Edit User</h3>
             <div className="form-group">
               <label>First Name:</label>

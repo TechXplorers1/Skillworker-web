@@ -1,11 +1,42 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { FaPhoneAlt, FaEnvelope, FaMapMarkerAlt, FaUsers, FaStar } from "react-icons/fa";
 import { MdHomeRepairService } from "react-icons/md";
 import { FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn } from "react-icons/fa";
+import { ref, onValue } from "firebase/database";
+import { database } from "../firebase"; // Assuming firebase is exported correctly
 
 import "../styles/Footer.css";
 
 const Footer = () => {
+  const [settings, setSettings] = useState({
+    supportEmail: "support@skillworkers.com", // Default fallback
+    supportPhone: "+91 8855181212",           // Default fallback
+    facebookUrl: "#",
+    instagramUrl: "#",
+    twitterUrl: "#",
+  });
+
+  useEffect(() => {
+    const settingsRef = ref(database, "contact_settings");
+    const unsubscribe = onValue(settingsRef, (snapshot) => {
+      const settingsData = snapshot.val();
+      if (settingsData) {
+        setSettings({
+          supportEmail: settingsData.support_email || "support@skillworkers.com",
+          supportPhone: settingsData.support_phone || "+91 8855181212",
+          facebookUrl: settingsData.facebook_url || "#",
+          instagramUrl: settingsData.instagram_url || "#",
+          twitterUrl: settingsData.twitter_url || "#",
+        });
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Helper to check if a URL is valid/set before rendering a link
+  const isLinkValid = (url) => url && url !== "#" && url.startsWith('http');
+
   return (
     <footer className="footer">
       <div className="footer-container">
@@ -20,8 +51,16 @@ const Footer = () => {
             reliable, and affordable solutions at your fingertips.
           </p>
           <div className="footer-contact">
-            <p><FaPhoneAlt /> +91 8855181212</p>
-            <p><FaEnvelope /> support@skillworkers.com</p>
+            {/* Displaying Live Phone Number */}
+            <p>
+              <FaPhoneAlt /> 
+              <a href={`tel:${settings.supportPhone}`} className="contact-link">{settings.supportPhone}</a>
+            </p>
+            {/* Displaying Live Email */}
+            <p>
+              <FaEnvelope /> 
+              <a href={`mailto:${settings.supportEmail}`} className="contact-link">{settings.supportEmail}</a>
+            </p>
             <p><FaMapMarkerAlt /> India</p>
           </div>
         </div>
@@ -51,9 +90,17 @@ const Footer = () => {
       <div className="footer-bottom">
         <p>© 2025 SkillWorkers. All rights reserved.</p>
         <div className="social-icons">
-          <a href="#"><FaFacebookF /></a>
-          <a href="#"><FaTwitter /></a>
-          <a href="#"><FaInstagram /></a>
+          {/* Displaying Live Social Media Links */}
+          {isLinkValid(settings.facebookUrl) && (
+            <a href={settings.facebookUrl} target="_blank" rel="noopener noreferrer"><FaFacebookF /></a>
+          )}
+          {isLinkValid(settings.twitterUrl) && (
+            <a href={settings.twitterUrl} target="_blank" rel="noopener noreferrer"><FaTwitter /></a>
+          )}
+          {isLinkValid(settings.instagramUrl) && (
+            <a href={settings.instagramUrl} target="_blank" rel="noopener noreferrer"><FaInstagram /></a>
+          )}
+          {/* LinkedinIn kept as a static placeholder since it's not in settings */}
           <a href="#"><FaLinkedinIn /></a>
         </div>
       </div>

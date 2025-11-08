@@ -1,4 +1,3 @@
-// ServiceTechniciansPage.jsx - Fully Responsive
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
@@ -14,7 +13,7 @@ import { ref, get, child, onValue } from "firebase/database";
 import { database, auth } from '../firebase';
 import '../styles/ServiceTechniciansPage.css';
 
-// Hero images
+// Hero images (assuming these imports are correct)
 import plumberHeroImg from '../assets/plumber.png';
 import electricianHeroImg from '../assets/electrician.png';
 import acMechanicHeroImg from '../assets/ac mechanic.png';
@@ -31,7 +30,7 @@ import constructioncleanersHeroImg from '../assets/Construction cleaners.png';
 import laundryHeroImg from '../assets/laundry.png';
 import deliveryHeroImg from '../assets/delivery.png';
 
-// --- IN-MEMORY CACHE ---
+// --- IN-MEMORY CACHE (Only keeping service details cache to avoid re-fetching image mapping) ---
 let pageCache = {
     serviceDetails: {}, // Key: serviceName (slug)
 };
@@ -319,9 +318,13 @@ const ServiceTechniciansPage = () => {
                                 <div className="technician-card" key={tech.uid}>
                                     <div className={`activity-dot ${tech.isActive ? 'available' : 'booked'}`}></div>
                                     <div className="card-header">
+                                        
+                                        {/* --- FIX 1: Replaced image with initials div --- */}
                                         <div className="tech-initials-placeholder">
                                             {getInitials(tech.firstName, tech.lastName)}
                                         </div>
+                                        {/* ----------------------------------------------- */}
+                                        
                                         <div className="tech-info">
                                             <h3 className="tech-name">{tech.firstName} {tech.lastName}</h3>
                                             <div className="tech-rating">
@@ -341,6 +344,7 @@ const ServiceTechniciansPage = () => {
                                         <button className="tech-contact-btn chat-btn" onClick={() => handleChatClick(tech.uid)}>
                                             <FaCommentDots /> Chat
                                         </button>
+                                        {/* This button is always enabled, allowing users to book anyone */}
                                         <button className="tech-contact-btn book-btn" onClick={() => handleBookClick(tech)}>
                                             Book Now
                                         </button>

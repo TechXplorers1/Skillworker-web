@@ -36,8 +36,7 @@
 .hero-title {
   font-size: 48px;
   font-weight: 700;
-  margin-bottom: 10px;
-  margin-top: 20px;
+  /* margin-bottom: 20px; */
 }
 
 .hero-subtitle {

@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  background: #f5f7fa;
 }
 
 .message-container {
@@ -31,16 +32,13 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   cursor: pointer;
   transition: transform 0.2s ease;
+  display: flex;
+  align-items: flex-start; /* Align avatar and info */
+  gap: 12px;
 }
 
 .message-card:hover {
   transform: translateY(-2px);
-}
-
-.message-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
 }
 
 .avatar {
@@ -54,11 +52,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 12px;
+  flex-shrink: 0; /* Prevent avatar from shrinking */
 }
 
 .info {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0; /* Allows content within to shrink */
+}
+
+.message-header {
+  /* Removed: This should be handled by .info now for flexible stacking */
+  /* Re-purposing for the top line of the info column */
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  width: 100%;
 }
 
 .top-row {
@@ -70,6 +80,10 @@
 .name {
   font-weight: 600;
   font-size: 16px;
+  white-space: nowrap; /* Prevent name from wrapping prematurely */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px; /* Limit name width on mobile */
 }
 
 .rating {
@@ -81,6 +95,7 @@
   margin-left: auto;
   font-size: 13px;
   color: #666;
+  flex-shrink: 0; /* Prevent time from shrinking */
 }
 
 .service-row {
@@ -110,9 +125,13 @@
 }
 
 .text {
-  margin-top: 6px;
+  margin-top: 4px;
   font-size: 14px;
   color: #333;
+  /* Ensure message text is constrained and breaks long words */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .online-status {
@@ -134,6 +153,79 @@
   font-size: 12px;
   font-weight: bold;
   border-radius: 50%;
-  padding: 4px 8px;
-  align-self: center;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-left: 10px;
+  /* Align badge vertically with the whole card content */
+  align-self: flex-start; 
+}
+
+/* --- Responsive Adjustments --- */
+
+@media (max-width: 768px) {
+    .message-container {
+        padding: 15px;
+    }
+    
+    .message-container h2 {
+        font-size: 20px;
+        margin-bottom: 15px;
+    }
+
+    .message-card {
+        padding: 12px;
+        border-radius: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .message-container {
+        padding: 10px 0;
+    }
+    
+    .message-container h2 {
+        padding: 0 10px;
+        font-size: 18px;
+    }
+    
+    .message-card {
+        margin-bottom: 10px;
+        border-radius: 8px;
+        width: calc(100% - 20px); /* Full width minus side padding */
+        margin-left: auto;
+        margin-right: auto;
+        gap: 8px;
+    }
+
+    .avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+        margin-right: 8px;
+    }
+
+    .name {
+        font-size: 15px;
+        max-width: 100px; /* Further restrict name width on very small screens */
+    }
+
+    .time {
+        font-size: 12px;
+    }
+    
+    .text {
+        font-size: 13px;
+    }
+    
+    /* Ensure the badge is readable */
+    .unread-badge {
+        width: 22px;
+        height: 22px;
+        font-size: 11px;
+        margin-left: 8px;
+    }
 }

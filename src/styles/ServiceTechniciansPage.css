@@ -1,3 +1,5 @@
+/* ServiceTechniciansPage.css - Fully Responsive */
+
 /* Page container */
 .technicians-page-container {
   background: #fafafa;
@@ -10,23 +12,24 @@
 .tech-main-content {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 1.5rem;
+  padding: 1rem;
   width: 100%;
+  box-sizing: border-box;
 }
 
 /* Hero Banner */
 .service-hero-banner {
-  position: relative; /* Added for overlay positioning */
-  height: 240px;
+  position: relative;
+  height: 200px;
   background-size: cover;
   background-position: center;
   border-radius: 12px;
-  margin: 2.5rem 0 1.5rem;
+  margin: 1.5rem 0 1rem;
   display: flex;
   align-items: flex-end;
-  padding: 2rem;
+  padding: 1.5rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  overflow: hidden; /* Ensures overlay stays within bounds */
+  overflow: hidden;
 }
 
 /* New overlay for masking the image */
@@ -37,26 +40,26 @@
   width: 100%;
   height: 100%;
   background: linear-gradient(to bottom, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.7));
-  border-radius: 12px; /* Match parent's border-radius */
+  border-radius: 12px;
 }
 
 .hero-content {
-  position: relative; /* Ensures content is on top of the overlay */
+  position: relative;
   z-index: 1;
-  max-width: 600px;
+  max-width: 100%;
   color: #fff;
 }
 
 .banner-title {
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   font-weight: 700;
   margin: 0;
 }
 
 .banner-description {
   margin-top: 0.5rem;
-  font-size: 1rem;
-  line-height: 1.5;
+  font-size: 0.9rem;
+  line-height: 1.4;
   font-weight: 500;
 }
 
@@ -64,15 +67,15 @@
 .filter-bar-container {
   background: #fff;
   border-radius: 12px;
-  padding: 1rem 1.5rem;
-  margin-bottom: 2rem;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
 .filter-bar {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .filter-left {
@@ -100,8 +103,10 @@
 
 .filter-controls {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.8rem;
   align-items: center;
+  width: 100%;
 }
 
 .filter-select {
@@ -112,6 +117,9 @@
   color: #444;
   background-color: #fff;
   cursor: pointer;
+  flex: 1;
+  min-width: 120px;
+  box-sizing: border-box;
 }
 
 .filter-select:focus {
@@ -128,6 +136,7 @@
   font-size: 0.9rem;
   cursor: pointer;
   transition: background-color 0.2s;
+  white-space: nowrap;
 }
 
 .apply-filter-btn:hover {
@@ -151,8 +160,8 @@
 
 .technicians-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: 1fr;
+  gap: 1rem;
 }
 
 .technician-card {
@@ -161,7 +170,7 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
   padding: 1.25rem;
   transition: transform 0.2s, box-shadow 0.2s;
-  position: relative; /* Crucial for positioning the dot relative to the card */
+  position: relative;
 }
 
 .technician-card:hover {
@@ -175,47 +184,47 @@
   position: relative;
 }
 
-/* --- FIX 1 & 2: Dot positioned relative to the card, not the image --- */
+/* Activity dot */
 .activity-dot {
   position: absolute;
   top: 10px;
   right: 10px;
-  width: 16px; /* Slightly larger for visibility */
+  width: 16px;
   height: 16px;
   border-radius: 50%;
-  border: 3px solid #fff; /* White border for contrast against card edge */
+  border: 3px solid #fff;
   box-shadow: 0 1px 4px rgba(0,0,0,0.3);
   z-index: 2;
 }
 
 .activity-dot.available {
-  background-color: #28a745; /* Green for available */
+  background-color: #28a745;
 }
 
 .activity-dot.booked {
-  background-color: #dc3545; /* Red for booked/offline */
+  background-color: #dc3545;
 }
-/* --- END OF FIX --- */
 
-/* --- FIX 3: Styling for the new initials placeholder --- */
+/* Initials placeholder */
 .tech-initials-placeholder {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%; /* Rounded profile icon */
-    background-color: #2563eb; /* Primary color background */
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin-right: 1rem;
-    border: 2px solid #e5e7eb;
-    flex-shrink: 0; /* Prevents shrinking */
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background-color: #2563eb;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-right: 1rem;
+  border: 2px solid #e5e7eb;
+  flex-shrink: 0;
 }
 
 .tech-info {
   flex: 1;
+  min-width: 0; /* Prevents overflow */
 }
 
 .tech-name {
@@ -223,6 +232,7 @@
   font-weight: 700;
   margin: 0 0 0.3rem 0;
   color: #111;
+  word-wrap: break-word;
 }
 
 .tech-rating {
@@ -249,6 +259,7 @@
 .tech-details svg {
   margin-right: 0.4rem;
   color: #6b7280;
+  flex-shrink: 0;
 }
 
 .tech-status.available {
@@ -309,20 +320,19 @@
   background: #16a34a;
 }
 
-/* --- ADDED: Style for disabled book button --- */
 .tech-contact-btn.book-btn:disabled {
-    background-color: #6c757d;
-    cursor: not-allowed;
-    opacity: 0.7;
+  background-color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 /* No results message */
 .no-results-message {
   text-align: center;
-  padding: 3rem;
+  padding: 2rem;
   background: #fff;
   border-radius: 10px;
-  margin-top: 2rem;
+  margin-top: 1.5rem;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
 }
 
@@ -337,42 +347,6 @@
   color: #444;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .filter-bar {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-  
-  .filter-controls {
-    flex-wrap: wrap;
-    width: 100%;
-  }
-  
-  .filter-select {
-    flex: 1;
-    min-width: 120px;
-  }
-  
-  .technicians-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .service-hero-banner {
-    height: 200px;
-    padding: 1.5rem;
-  }
-  
-  .banner-title {
-    font-size: 1.5rem;
-  }
-  
-  .banner-description {
-    font-size: 0.9rem;
-  }
-}
-
 /* Popup Modal */
 .popup-overlay {
   position: fixed;
@@ -385,14 +359,16 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  padding: 1rem;
+  box-sizing: border-box;
 }
 
 .popup-card {
   background: #fff;
-  padding: 2rem;
+  padding: 1.5rem;
   border-radius: 12px;
   max-width: 400px;
-  width: 90%;
+  width: 100%;
   text-align: center;
   box-shadow: 0 4px 15px rgba(0,0,0,0.15);
   animation: fadeInScale 0.3s ease-in-out;
@@ -414,7 +390,8 @@
 
 .popup-actions {
   display: flex;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 0.8rem;
   justify-content: center;
 }
 
@@ -426,6 +403,7 @@
   border: none;
   cursor: pointer;
   transition: background-color 0.2s;
+  width: 100%;
 }
 
 .popup-btn.book-btn {
@@ -451,37 +429,36 @@
   to { opacity: 1; transform: scale(1); }
 }
 
-/* --- Loading Spinner Styles --- */
-
-/* Container for the spinner, ensures it's centered in the content area */
+/* Loading Spinner Styles */
 .loading-state-content {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  min-height: 300px; 
+  min-height: 300px;
   width: 100%;
   margin-top: 50px;
 }
 
 .loading-title {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: #444;
-    margin-bottom: 20px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #444;
+  margin-bottom: 20px;
+  text-align: center;
 }
 
 .loading-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .spinner {
   width: 50px;
   height: 50px;
   border: 5px solid #ccc;
-  border-top-color: #2563eb; 
+  border-top-color: #2563eb;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -489,5 +466,195 @@
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* Responsive adjustments */
+/* Tablet */
+@media (min-width: 768px) {
+  .tech-main-content {
+    padding: 1.5rem;
+  }
+  
+  .service-hero-banner {
+    height: 220px;
+    margin: 2rem 0 1.5rem;
+    padding: 2rem;
+  }
+  
+  .banner-title {
+    font-size: 1.7rem;
+  }
+  
+  .banner-description {
+    font-size: 1rem;
+  }
+  
+  .filter-bar {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0;
+  }
+  
+  .filter-controls {
+    flex-wrap: nowrap;
+    width: auto;
+  }
+  
+  .filter-select {
+    flex: none;
+  }
+  
+  .technicians-grid {
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  .tech-initials-placeholder {
+    width: 80px;
+    height: 80px;
+    font-size: 1.5rem;
+  }
+  
+  .popup-actions {
+    flex-direction: row;
+  }
+  
+  .popup-btn {
+    width: auto;
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  .service-hero-banner {
+    height: 240px;
+    margin: 2.5rem 0 1.5rem;
+  }
+  
+  .banner-title {
+    font-size: 1.8rem;
+  }
+  
+  .technicians-grid {
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  }
+  
+  .filter-bar-container {
+    padding: 1rem 1.5rem;
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 480px) {
+  .tech-main-content {
+    padding: 0.8rem;
+  }
+  
+  .service-hero-banner {
+    height: 180px;
+    margin: 1rem 0;
+    padding: 1rem;
+  }
+  
+  .banner-title {
+    font-size: 1.3rem;
+  }
+  
+  .banner-description {
+    font-size: 0.85rem;
+  }
+  
+  .filter-bar-container {
+    padding: 0.8rem;
+  }
+  
+  .filter-controls {
+    gap: 0.5rem;
+  }
+  
+  .filter-select {
+    min-width: 100px;
+    font-size: 0.85rem;
+    padding: 0.4rem 0.6rem;
+  }
+  
+  .apply-filter-btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+  }
+  
+  .technician-card {
+    padding: 1rem;
+  }
+  
+  .tech-initials-placeholder {
+    width: 60px;
+    height: 60px;
+    font-size: 1.1rem;
+    margin-right: 0.8rem;
+  }
+  
+  .tech-name {
+    font-size: 0.95rem;
+  }
+  
+  .tech-rating,
+  .tech-details p {
+    font-size: 0.8rem;
+  }
+  
+  .tech-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .tech-contact-btn {
+    padding: 0.5rem;
+    font-size: 0.85rem;
+  }
+  
+  .no-results-message {
+    padding: 1.5rem;
+  }
+  
+  .popup-card {
+    padding: 1.25rem;
+  }
+  
+  .popup-title {
+    font-size: 1.2rem;
+  }
+  
+  .popup-message {
+    font-size: 0.9rem;
+  }
+}
+
+/* Very small devices */
+@media (max-width: 360px) {
+  .tech-main-content {
+    padding: 0.5rem;
+  }
+  
+  .card-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .tech-initials-placeholder {
+    margin-right: 0;
+    margin-bottom: 0.8rem;
+  }
+  
+  .tech-details p {
+    justify-content: center;
+  }
+  
+  .filter-select {
+    min-width: 90px;
+    font-size: 0.8rem;
   }
 }

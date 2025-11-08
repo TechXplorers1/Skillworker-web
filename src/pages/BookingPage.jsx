@@ -1,3 +1,4 @@
+// BookingPage.jsx - Fully Responsive
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
@@ -6,6 +7,7 @@ import { ref, get, child, push, set, onValue, query, orderByChild, equalTo } fro
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, database } from '../firebase';
 import BookingConfirmationPopup from '../components/BookingConfirmation';
+import '../styles/BookingPage.css';
 
 // Helper function to generate time slots
 const generateTimeSlots = () => {
@@ -446,229 +448,6 @@ const BookingPage = () => {
     return (
         <div className="booking-page-container">
             <Header />
-            <style>
-                {`
-                .times-grid {
-                  display: grid;
-                  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-                  gap: 10px;
-                }
-
-                .chip.time-chip {
-                  padding: 8px 12px;
-                  min-height: 40px;
-                  font-size: 13px;
-                }
-
-                .chip.booked {
-                  background-color: #fee2e2;
-                  border-color: #fca5a5;
-                  color: #b91c1c;
-                  cursor: not-allowed;
-                  text-decoration: line-through;
-                  opacity: 0.8;
-                }
-                .chip.booked:hover {
-                    background-color: #fee2e2;
-                    border-color: #fca5a5;
-                }
-                
-                .chip.past {
-                  background-color: #f3f4f6;
-                  border-color: #e5e7eb;
-                  color: #9ca3af;
-                  cursor: not-allowed;
-                  opacity: 0.7;
-                }
-                .chip.past:hover {
-                    background-color: #f3f4f6;
-                    border-color: #e5e7eb;
-                }
-
-                .time-placeholder {
-                  padding: 20px;
-                  text-align: center;
-                  color: #6b7280;
-                  background-color: #f9fafb;
-                  border: 1px dashed #e5e7eb;
-                  border-radius: 8px;
-                  font-size: 14px;
-                }
-
-                /* Profile Popup Styles */
-                .profile-popup-overlay {
-                  position: fixed;
-                  top: 0;
-                  left: 0;
-                  right: 0;
-                  bottom: 0;
-                  background: rgba(0, 0, 0, 0.5);
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  z-index: 2000;
-                  padding: 20px;
-                }
-
-                .profile-popup {
-                  background: white;
-                  border-radius: 12px;
-                  padding: 24px;
-                  max-width: 400px;
-                  width: 90%;
-                  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-                  text-align: center;
-                }
-
-                .profile-popup-icon {
-                  font-size: 48px;
-                  margin-bottom: 16px;
-                }
-
-                .profile-popup-title {
-                  font-size: 20px;
-                  font-weight: 700;
-                  color: #111827;
-                  margin-bottom: 12px;
-                }
-
-                .profile-popup-message {
-                  color: #6b7280;
-                  font-size: 16px;
-                  line-height: 1.5;
-                  margin-bottom: 24px;
-                }
-
-                .profile-popup-actions {
-                  display: flex;
-                  gap: 12px;
-                  justify-content: center;
-                }
-
-                .profile-popup-btn {
-                  padding: 12px 24px;
-                  border-radius: 8px;
-                  font-weight: 600;
-                  font-size: 14px;
-                  cursor: pointer;
-                  border: none;
-                  transition: all 0.2s;
-                }
-
-                .profile-popup-btn.primary {
-                  background: #0d6efd;
-                  color: white;
-                }
-
-                .profile-popup-btn.primary:hover {
-                  background: #0b5ed7;
-                }
-
-                .profile-popup-btn.secondary {
-                  background: #f3f4f6;
-                  color: #374151;
-                }
-
-                .profile-popup-btn.secondary:hover {
-                  background: #e5e7eb;
-                }
-
-                /* Other existing styles... */
-                .booking-page-container { display: flex; flex-direction: column; min-height: 100vh; background: #f5f7fb; padding-top: 60px; }
-                .booking-main-content { flex: 1; max-width: 1180px; margin: 0 auto; width: 100%; padding: 16px; }
-                .page-title { text-align: center; margin-bottom: 18px; }
-                .page-title h1 { margin: 0 0 4px; font-size: 28px; font-weight: 700; color: #111827; }
-                .page-title p { margin: 0; color: #6b7280; font-size: 14px; }
-                .booking-layout { display: grid; grid-template-columns: 1.2fr 1fr; gap: 18px; align-items: start; }
-                .card { background: #fff; border-radius: 10px; box-shadow: 0 2px 10px rgba(16,24,40,.06); border: 1px solid #eef0f4; padding: 16px; }
-                .left-col { display: flex; flex-direction: column; gap: 16px; }
-                .service-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
-                .service-title { display: flex; align-items: center; gap: 10px; }
-                .service-title h2 { margin: 0; font-size: 18px; color: #111827; font-weight: 700; }
-                .service-badge { background: #e7f0ff; color: #0d6efd; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid #d6e6ff; }
-                .pro-row { display: grid; grid-template-columns: 56px 1fr; gap: 12px; align-items: center; }
-                .avatar { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #0d6efd; color: white; font-weight: 700; font-size: 24px; }
-                .pro-info { display: flex; flex-direction: column; gap: 6px; }
-                .pro-top { display: flex; align-items: center; gap: 12px; }
-                .pro-name { margin: 0; font-size: 18px; color: #0f172a; font-weight: 700; }
-                .stars { display: inline-flex; align-items: center; gap: 6px; color: #6b7280; font-size: 14px; }
-                .star { color: #fbbf24; }
-                .muted { color: #9ca3af; }
-                .pro-meta { display: flex; gap: 16px; color: #6b7280; font-size: 13px; }
-                .pro-meta svg { width: 14px; height: 14px; }
-                .pro-meta span { display: inline-flex; align-items: center; gap: 6px; }
-                .date-time { order: 1; }
-                .included { min-height: auto; order: 2; }
-                .included h3 { margin: 0 0 6px; font-size: 16px; font-weight: 700; color: #111827; }
-                .included > p { margin: 0 0 8px; color: #6b7280; font-size: 14px; }
-                .included ul { list-style: none; margin: 0; padding: 0; }
-                .included li { display: flex; align-items: center; gap: 8px; color: #374151; font-size: 14px; padding: 2px 0; }
-                .included li svg { width: 14px; height: 14px; color: #16a34a; }
-                .section-title { margin: 0 0 10px; font-size: 18px; color: #111827; font-weight: 700; }
-                .subsection { margin-top: 8px; }
-                .subsection h4 { margin: 0 0 8px; font-size: 14px; color: #111827; font-weight: 700; }
-                .date-display { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-                .date-chip { display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border: 1px solid #e5e7eb; border-radius: 10px; background: #f9fafb; font-size: 14px; cursor: pointer; transition: border-color .15s; }
-                .date-chip.no-selection { color: #6b7280; font-style: italic; }
-                .date-chip:hover { border-color: #0d6efd; }
-                .date-chip span:first-child { font-weight: 700; }
-                .date-chip span:last-child { opacity: 0.8; }
-                .chip { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 52px; gap: 4px; border: 1px solid #e5e7eb; border-radius: 10px; background: #f9fafb; font-size: 14px; cursor: pointer; transition: border-color .15s, background .15s, color .15s; }
-                .chip:hover { border-color: #0d6efd; }
-                .chip.selected { background: #0d6efd; color: #fff; border-color: #0d6efd; }
-                .chip.disabled { opacity: .55; cursor: not-allowed; }
-                .instructions-input { width: 100%; min-height: 90px; padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 10px; resize: vertical; font-size: 14px; font-family: inherit; }
-                .instructions-input:focus { outline: none; border-color: #0d6efd; }
-                .calendar-popup-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-                .calendar-popup { background: white; border-radius: 10px; padding: 20px; max-width: 400px; width: 100%; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); }
-                .calendar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
-                .calendar-nav { display: flex; align-items: center; gap: 10px; }
-                .calendar-nav button { background: #f3f4f6; border: none; border-radius: 5px; padding: 5px 10px; cursor: pointer; font-size: 14px; }
-                .calendar-nav button:hover { background: #e5e7eb; }
-                .calendar-month { font-weight: 700; font-size: 16px; }
-                .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 15px; }
-                .calendar-day-header { text-align: center; font-weight: 600; font-size: 12px; color: #6b7280; padding: 5px; }
-                .calendar-day { text-align: center; padding: 10px 5px; border-radius: 5px; cursor: pointer; font-size: 14px; transition: background 0.2s; }
-                .calendar-day:hover:not(.past):not(.empty):not(.blocked-date) { background: #f3f4f6; }
-                .calendar-day.selected { background: #0d6efd; color: white; }
-                .calendar-day.past, .calendar-day.blocked-date { color: #d1d5db; cursor: not-allowed; position: relative; }
-                .calendar-day.blocked-date { background: #fee2e2; color: #b91c1c; font-weight: 600; border: 1px dashed #fca5a5; }
-                .calendar-day.past:hover, .calendar-day.blocked-date:hover { background: transparent; }
-                .calendar-day.empty { background: transparent; cursor: default; }
-                .calendar-actions { display: flex; justify-content: flex-end; gap: 10px; }
-                .calendar-actions button { padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: 600; }
-                .calendar-actions .btn-cancel { background: #f3f4f6; color: #374151; }
-                .calendar-actions .btn-cancel:hover { background: #e5e7eb; }
-                .right-col { display: flex; flex-direction: column; gap: 16px; }
-                .booking-summary .section-title { margin-bottom: 10px; }
-                .summary-rows { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
-                .summary-rows .row { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eef0f4; padding-bottom: 8px; font-size: 14px; color: #111827; }
-                .summary-rows .row.total { border-bottom: none; padding-top: 8px; border-top: 2px solid #e5e7eb; font-weight: 800; font-size: 16px; }
-                .hint { margin-top: 8px; padding: 12px; background: #fff7ed; border: 1px solid #fde7c7; border-radius: 10px; color: #92400e; font-size: 13px; }
-                .appt-mini { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 10px; }
-                .appt-mini .mini { display: inline-flex; align-items: center; gap: 8px; color: #111827; font-size: 14px; }
-                .appt-mini .mini svg { width: 14px; height: 14px; }
-                .actions { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; }
-                .rowed { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-                .btn { display: inline-flex; align-items: center; gap: 8px; justify-content: center; width: 100%; padding: 12px 14px; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; border: 1px solid transparent; transition: all 0.2s; }
-                .btn.primary { background: #0d6efd; color: #fff; }
-                .btn.primary:hover { background: #0b5ed7; }
-                .btn.primary:disabled { background: #6c757d; cursor: not-allowed; }
-                .btn.outline { background: #ffffff; border-color: #e5e7eb; color: #111827; }
-                .btn.outline:hover { background: #f8fafc; }
-                .btn.ghost { background: #f3f4f6; color: #111827; }
-                .btn.ghost:hover { background: #e5e7eb; }
-                .btn svg { width: 14px; height: 14px; }
-                .guarantee { margin-top: 12px; padding: 12px; background: #ecfdf5; border: 1px solid #bbf7d0; border-radius: 10px; text-align: left; }
-                .guarantee h4 { margin: 0 0 4px; font-size: 14px; color: #065f46; }
-                .guarantee p { margin: 0; font-size: 13px; color: #065f46; }
-                .help h3 { margin: 0 0 8px; font-size: 16px; font-weight: 700; color: #111827; }
-                .help .help-line { font-size: 14px; color: #374151; padding: 6px 0; }
-                @media (max-width: 1024px) { .booking-layout { grid-template-columns: 1fr; } }
-                @media (max-width: 640px) { .times-grid { grid-template-columns: repeat(3, 1fr); } .rowed { grid-template-columns: 1fr; } }
-                `}
-            </style>
-
             <div className="booking-main-content">
                 <div className="page-title">
                     <h1>Confirm Your Booking</h1>
@@ -681,6 +460,10 @@ const BookingPage = () => {
                                 <div className="service-title">
                                     <h2>Service Details</h2>
                                     <span className="service-badge">{serviceDetails?.title || 'N/A'}</span>
+                                </div>
+                                <div className="rate-box">
+                                    {/* <div className="rate">₹{technician?.price?.amount || 'N/A'}/{technician?.price?.type === 'hourly' ? 'hr' : 'day'}</div> */}
+                                    <button className="avail-link">Available Now</button>
                                 </div>
                             </div>
                             <div className="pro-row">
@@ -713,6 +496,7 @@ const BookingPage = () => {
                                         onClick={() => setShowCalendarPopup(true)}
                                     >
                                         <span>{displayDate.label}</span>
+                                        {displayDate.sub && <span>{displayDate.sub}</span>}
                                     </button>
                                 </div>
                             </div>
@@ -772,7 +556,7 @@ const BookingPage = () => {
                                     value={specialInstructions}
                                     onChange={handleInstructionsChange}
                                 />
-                                {instructionsError && <p style={{ color: '#b91c1c', fontSize: '13px', marginTop: '5px' }}>{instructionsError}</p>}
+                                {instructionsError && <p style={{ color: '#b91c1c', fontSize: '0.8rem', marginTop: '0.4rem' }}>{instructionsError}</p>}
                             </div>
                         </div>
 

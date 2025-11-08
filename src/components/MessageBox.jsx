@@ -56,7 +56,15 @@ const MessageBox = () => {
 
   const formatTime = (timestamp) => {
       if (!timestamp) return '';
-      return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      // Display time if within today, otherwise date
+      const date = new Date(timestamp);
+      const today = new Date();
+      
+      if (date.toDateString() === today.toDateString()) {
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      } else {
+        return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+      }
   };
 
   if (loading) {
@@ -81,19 +89,27 @@ const MessageBox = () => {
               className="message-card"
               onClick={() => openChat(chat)}
             >
-              <div className="message-header">
-                <div className="avatar">{chat.partnerName.charAt(0).toUpperCase()}</div>
-                <div className="info">
+              <div className="avatar">{chat.partnerName.charAt(0).toUpperCase()}</div>
+              
+              <div className="info">
+                {/* Top Row: Name and Time */}
+                <div className="message-header">
                   <div className="top-row">
                     <span className="name">{chat.partnerName}</span>
-                    <span className="time">{formatTime(chat.lastMessageTime)}</span>
+                    {/* Placeholder for optional rating/status/service */}
+                    {/* <span className="service">Plumber</span> */}
                   </div>
-                  <div className="text">{chat.lastMessage || "No messages yet."}</div>
+                  <span className="time">{formatTime(chat.lastMessageTime)}</span>
                 </div>
-                {chat.unread > 0 && (
-                  <div className="unread-badge">{chat.unread}</div>
-                )}
+                
+                {/* Last Message Text */}
+                <div className="text">{chat.lastMessage || "No messages yet."}</div>
               </div>
+              
+              {/* Unread Badge */}
+              {chat.unread > 0 && (
+                <div className="unread-badge">{chat.unread > 99 ? '99+' : chat.unread}</div>
+              )}
             </div>
           ))
         ) : (

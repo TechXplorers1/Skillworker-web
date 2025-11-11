@@ -68,13 +68,11 @@ const Profile = () => {
         }
         setUserData(data);
 
-        // MOVED LOGIC: Set the technician's active status from fetched data
-        if (data.role === 'technician') {
-          setIsTechnicianActive(data.isActive || false);
-        }
+        // FIX: Always set the technician's active status from fetched data
+        setIsTechnicianActive(data.isActive || false);
 
       } else {
-        setUserData({
+        const defaultData = {
           firstName: "", lastName: "", email: "", phone: "", 
           address: "", city: "", state: "", zipCode: "",
           dob: "", gender: "", bio: "",
@@ -82,7 +80,10 @@ const Profile = () => {
           aadharNumber: "", aadharProofUrl: "",
           unavailableDates: [], // Initialize new field
           isProfileComplete: false,
-        });
+          isActive: false, // Add default isActive field
+        };
+        setUserData(defaultData);
+        setIsTechnicianActive(false);
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
@@ -158,15 +159,24 @@ const Profile = () => {
     return firstErrorField; 
   };
   
-  // NEW: Handler for the technician activity toggle switch
+  // FIXED: Handler for the technician activity toggle switch
   const handleToggleStatus = async () => {
     const newStatus = !isTechnicianActive;
     const user = auth.currentUser;
     if (user && userData?.role === 'technician') {
       try {
         const userRef = ref(database, `users/${user.uid}`);
+        // Update both Firebase and local state
         await update(userRef, { isActive: newStatus });
+        
+        // Update both the toggle state and userData state
         setIsTechnicianActive(newStatus);
+        setUserData(prevData => ({
+          ...prevData,
+          isActive: newStatus
+        }));
+        
+        console.log("Technician status updated to:", newStatus);
       } catch (error) {
         console.error("Failed to update technician status:", error);
       }
@@ -482,10 +492,16 @@ const Profile = () => {
         <div className="profile-header">
             <h1 className="main-title">Profile Management</h1>
             <div className="profile-header-actions">
-              {/* --- NEW: Activity Toggle for Technicians --- */}
+              {/* --- FIXED: Activity Toggle for Technicians --- */}
               {isTechnician && (
                  <div className="cyber-toggle-wrapper-profile">
-                    <input className="cyber-toggle-checkbox" id="cyber-toggle-profile" type="checkbox" checked={isTechnicianActive} onChange={handleToggleStatus} />
+                    <input 
+                      className="cyber-toggle-checkbox" 
+                      id="cyber-toggle-profile" 
+                      type="checkbox" 
+                      checked={isTechnicianActive} 
+                      onChange={handleToggleStatus} 
+                    />
                     <label className="cyber-toggle" htmlFor="cyber-toggle-profile">
                       <div className="cyber-toggle-track">
                         <div className="cyber-toggle-track-glow" />

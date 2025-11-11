@@ -22,7 +22,7 @@ const HeroSection = ({ setSearchQuery }) => {
           service needs
         </p>
         <div className="search-bar">
-          <FaSearch className="search-icon" />
+          <FaSearch className="search-icon1" />
           <input
             type="text"
             placeholder="What service do you need?"

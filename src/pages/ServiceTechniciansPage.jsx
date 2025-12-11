@@ -9,7 +9,7 @@ import {
     FaMapMarkerAlt,
     FaFilter
 } from 'react-icons/fa';
-import { ref, get, child, onValue } from "firebase/database";
+import { ref, get, child, onValue, query, orderByChild, equalTo } from "firebase/database";
 import { database, auth } from '../firebase';
 import '../styles/ServiceTechniciansPage.css';
 
@@ -33,6 +33,7 @@ import deliveryHeroImg from '../assets/delivery.jpeg';
 // --- IN-MEMORY CACHE (Only keeping service details cache to avoid re-fetching image mapping) ---
 let pageCache = {
     serviceDetails: {}, // Key: serviceName (slug)
+    technicians: {} // Key: serviceId
 };
 
 // Map service slugs to local images
@@ -63,13 +64,13 @@ const ServiceTechniciansPage = () => {
     const [serviceDetails, setServiceDetails] = useState(null);
     const [serviceId, setServiceId] = useState(null);
     const [loading, setLoading] = useState(true);
-    
+
     // Filter states
     const [selectedRating, setSelectedRating] = useState('All Ratings');
     const [selectedHourlyPrice, setSelectedHourlyPrice] = useState('All');
     const [selectedDaylyPrice, setSelectedDaylyPrice] = useState('All');
     const [selectedAvailability, setSelectedAvailability] = useState('All Availability');
-    
+
     // Popup states
     const [showPopup, setShowPopup] = useState(false);
     const [selectedTechnicianId, setSelectedTechnicianId] = useState(null);
@@ -86,7 +87,7 @@ const ServiceTechniciansPage = () => {
 
         const isHourlyFilterSet = selectedHourlyPrice !== 'All' && selectedDaylyPrice === 'All';
         const isDaylyFilterSet = selectedDaylyPrice !== 'All' && selectedHourlyPrice === 'All';
-        
+
         if (isHourlyFilterSet) {
             const hourlyPriceRange = selectedHourlyPrice.split('-');
             const minPrice = parseInt(hourlyPriceRange[0].replace('₹', ''), 10);
@@ -106,7 +107,7 @@ const ServiceTechniciansPage = () => {
                 tech.price?.type === 'dayly' && tech.price?.amount >= minPrice && tech.price?.amount <= maxPrice
             );
         }
-        
+
         if (selectedAvailability !== 'All Availability') {
             if (selectedAvailability === 'Available Now' || selectedAvailability === 'Available Today') {
                 newFilteredList = newFilteredList.filter((tech) => tech.isActive);
@@ -115,7 +116,7 @@ const ServiceTechniciansPage = () => {
 
         setFilteredTechnicians(newFilteredList);
     }, [allTechnicians, selectedRating, selectedHourlyPrice, selectedDaylyPrice, selectedAvailability]);
-    
+
     // Fetch service details and cache them
     useEffect(() => {
         // 1. CACHE CHECK for Service Details
@@ -123,7 +124,7 @@ const ServiceTechniciansPage = () => {
             const cachedData = pageCache.serviceDetails[serviceName];
             setServiceId(cachedData.serviceId);
             setServiceDetails(cachedData.serviceDetails);
-            return; 
+            return;
         }
 
         // 2. FETCH if cache is empty
@@ -143,10 +144,10 @@ const ServiceTechniciansPage = () => {
                             ...dbServiceDetails,
                             image: localHeroImage || dbServiceDetails.image
                         };
-                        
+
                         setServiceId(sId);
                         setServiceDetails(finalDetails);
-                        
+
                         // 3. CACHE the fetched data
                         pageCache.serviceDetails[serviceName] = {
                             serviceDetails: finalDetails,
@@ -155,35 +156,46 @@ const ServiceTechniciansPage = () => {
                     } else {
                         setServiceId(null);
                         setServiceDetails(null);
-                        setLoading(false); 
+                        setLoading(false);
                     }
                 } else {
-                    setLoading(false); 
+                    setLoading(false);
                 }
             })
             .catch(error => {
                 console.error("Error fetching services:", error);
-                setLoading(false); 
+                setLoading(false);
             });
     }, [serviceName, localHeroImage]);
 
-    // Fetch technicians in real-time
+    // Fetch technicians using get() to reduce downloads, but fetching all users to ensure nothing is missed
     useEffect(() => {
         if (!serviceId) return;
 
-        // Rely purely on the live listener for real-time updates
+        // 1. Check Cache
+        if (pageCache.technicians[serviceId]) {
+            const cachedTechs = pageCache.technicians[serviceId];
+            setAllTechnicians(cachedTechs);
+            handleApplyFilters(cachedTechs);
+            setLoading(false);
+            return;
+        }
+
+        // 2. Fetch if not in cache (Fetch all users and filter locally to avoid indexing issues)
         const currentUserId = auth.currentUser ? auth.currentUser.uid : null;
         const usersRef = ref(database, 'users');
+        // Removed the query to avoid potential indexing issues if rules aren't set up
+        // const techniciansQuery = query(usersRef, orderByChild('role'), equalTo('technician'));
 
-        // onValue runs immediately with initial data and updates whenever data changes
-        const unsubscribe = onValue(usersRef, (snapshot) => {
+        get(usersRef).then((snapshot) => {
             if (snapshot.exists()) {
                 const usersData = snapshot.val();
-                
+
+                // Filter by role AND serviceId (skills) on client side
                 const technicians = Object.values(usersData).filter(user =>
-                    user.role === 'technician' && 
-                    user.skills && 
-                    user.skills.includes(serviceId) && 
+                    user.role === 'technician' &&
+                    user.skills &&
+                    user.skills.includes(serviceId) &&
                     user.uid !== currentUserId
                 );
 
@@ -192,20 +204,22 @@ const ServiceTechniciansPage = () => {
                     experience: tech.experience || 'N/A',
                     city: tech.city || 'N/A',
                 }));
-                
+
+                // 3. Cache the result
+                pageCache.technicians[serviceId] = updatedTechnicians;
+
                 setAllTechnicians(updatedTechnicians);
                 handleApplyFilters(updatedTechnicians);
             } else {
                 setAllTechnicians([]);
                 handleApplyFilters([]);
+                pageCache.technicians[serviceId] = [];
             }
-            setLoading(false); 
-        }, (error) => {
+            setLoading(false);
+        }).catch((error) => {
             console.error("Error fetching technicians:", error);
-            setLoading(false); 
+            setLoading(false);
         });
-
-        return () => unsubscribe();
     }, [serviceId, handleApplyFilters]);
 
     // Re-apply filters whenever filter selections change
@@ -220,7 +234,7 @@ const ServiceTechniciansPage = () => {
 
     const handleBookClick = (technician) => {
         const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-        
+
         sessionStorage.setItem('selectedTechnician', JSON.stringify(technician));
         sessionStorage.setItem('serviceName', serviceName);
 
@@ -231,14 +245,14 @@ const ServiceTechniciansPage = () => {
             navigate("/login");
         }
     };
-    
+
     // Helper function to get initials
     const getInitials = (firstName, lastName) => {
         const first = firstName ? firstName[0].toUpperCase() : '';
         const last = lastName ? lastName[0].toUpperCase() : '';
         return first + last;
     }
-    
+
     // Loading Spinner Render Block
     if (loading) {
         return (
@@ -318,13 +332,13 @@ const ServiceTechniciansPage = () => {
                                 <div className="technician-card" key={tech.uid}>
                                     <div className={`activity-dot ${tech.isActive ? 'available' : 'booked'}`}></div>
                                     <div className="card-header">
-                                        
+
                                         {/* --- FIX 1: Replaced image with initials div --- */}
                                         <div className="tech-initials-placeholder">
                                             {getInitials(tech.firstName, tech.lastName)}
                                         </div>
                                         {/* ----------------------------------------------- */}
-                                        
+
                                         <div className="tech-info">
                                             <h3 className="tech-name">{tech.firstName} {tech.lastName}</h3>
                                             <div className="tech-rating">
@@ -375,7 +389,7 @@ const ServiceTechniciansPage = () => {
                                 onClick={() => {
                                     setShowPopup(false);
                                     const techToBook = allTechnicians.find(t => t.uid === selectedTechnicianId);
-                                    if(techToBook) handleBookClick(techToBook);
+                                    if (techToBook) handleBookClick(techToBook);
                                 }}
                             >
                                 Book Now

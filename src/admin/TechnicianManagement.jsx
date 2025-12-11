@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { ref, onValue, update } from "firebase/database";
-import { database } from "../firebase";
+import { ref, onValue, update, get, child } from "firebase/database";
+import { onAuthStateChanged } from "firebase/auth";
+import { database, auth } from "../firebase";
 import "../styles/TechnicianManagement.css";
+
+// --- IN-MEMORY CACHE ---
+let technicianManagementCache = null;
+let servicesCache = null;
 
 // Helper component for displaying skills in the table
 const SkillsDisplay = ({ skills, servicesMap, onShowMore }) => {
@@ -20,7 +25,7 @@ const SkillsDisplay = ({ skills, servicesMap, onShowMore }) => {
         <span key={index} className="skill-badge">{skill}</span>
       ))}
       {remainingCount > 0 && (
-        <span 
+        <span
           className="show-more-link"
           onClick={onShowMore}
         >
@@ -41,6 +46,8 @@ const TechnicianManagement = () => {
   const [showAllSkills, setShowAllSkills] = useState(null); // New state for 'Show More' popup
   const [newSkill, setNewSkill] = useState("");
   const [technicians, setTechnicians] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const [newTechnician, setNewTechnician] = useState({
     firstName: "",
     lastName: "",
@@ -58,33 +65,69 @@ const TechnicianManagement = () => {
   const [servicesData, setServicesData] = useState({});
 
   useEffect(() => {
-    const usersRef = ref(database, "users");
-    onValue(usersRef, (snapshot) => {
-      const users = snapshot.val();
-      if (users) {
-        let fetchedTechnicians = Object.values(users).filter(user => user.role === "technician");
-        
-        // Sort by createdAt in descending order (most recent first)
-        fetchedTechnicians.sort((a, b) => {
-          // Assuming createdAt is a sortable string/timestamp, or default to an empty string if null
-          const dateA = a.createdAt || "";
-          const dateB = b.createdAt || "";
-          return dateB.localeCompare(dateA);
-        });
-        
-        // Add uid from the key, if not already present
-        const techniciansWithUid = Object.keys(users)
-            .map(uid => ({ ...users[uid], uid }))
-            .filter(user => user.role === "technician");
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // 1. Check Cache
+        if (technicianManagementCache && servicesCache) {
+          setTechnicians(technicianManagementCache);
+          setServicesData(servicesCache);
+          setLoading(false);
+          return;
+        }
 
-        setTechnicians(techniciansWithUid);
+        const usersRef = ref(database, "users");
+        const servicesRef = ref(database, "services");
+
+        Promise.all([get(usersRef), get(servicesRef)])
+          .then(([usersSnap, servicesSnap]) => {
+            const users = usersSnap.val();
+            let parsedTechnicians = [];
+            if (users) {
+              // Filter purely on client side for now as per previous fix pattern
+              let fetchedTechnicians = Object.values(users).filter(user => user.role === "technician");
+
+              // Sort by createdAt
+              fetchedTechnicians.sort((a, b) => {
+                const dateA = a.createdAt || "";
+                const dateB = b.createdAt || "";
+                return dateB.localeCompare(dateA);
+              });
+
+              // Add uid
+              const techniciansWithUid = Object.keys(users)
+                .map(uid => ({ ...users[uid], uid }))
+                .filter(user => user.role === "technician");
+
+              // Sort again because map/filter logic above was slightly disjointed in original code
+              techniciansWithUid.sort((a, b) => {
+                const dateA = a.createdAt || "";
+                const dateB = b.createdAt || "";
+                return dateB.localeCompare(dateA);
+              });
+
+              parsedTechnicians = techniciansWithUid;
+            }
+
+            const parsedServices = servicesSnap.val() || {};
+
+            setTechnicians(parsedTechnicians);
+            setServicesData(parsedServices);
+
+            // Update Cache
+            technicianManagementCache = parsedTechnicians;
+            servicesCache = parsedServices;
+
+            setLoading(false);
+          })
+          .catch((error) => {
+            console.error("Error fetching data:", error);
+            setLoading(false);
+          });
+      } else {
+        setLoading(false);
       }
     });
-
-    const servicesRef = ref(database, "services");
-    onValue(servicesRef, (snapshot) => {
-      setServicesData(snapshot.val() || {});
-    });
+    return () => unsubscribe();
   }, []);
 
   // Create a map for easy lookup of service names by their IDs
@@ -92,11 +135,11 @@ const TechnicianManagement = () => {
     map[id] = service.title;
     return map;
   }, {});
-  
+
   // Create an array of available skills (service names) for the datalist
   const availableSkillNames = Object.values(servicesData).map(s => s.title);
 
-  const filteredTechnicians = technicians.filter(technician => 
+  const filteredTechnicians = technicians.filter(technician =>
     (technician.firstName + ' ' + technician.lastName).toLowerCase().includes(searchTerm.toLowerCase()) ||
     (technician.email || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -146,11 +189,11 @@ const TechnicianManagement = () => {
   const cancelDeactivation = () => {
     setDeactivatingTechnician(null);
   };
-  
+
   const cancelActivation = () => {
     setActivatingTechnician(null);
   };
-  
+
   const handleShowAllSkills = (technician) => {
     const allSkills = technician.skills?.map(skillId => servicesMap[skillId] || skillId) || [];
     setShowAllSkills({
@@ -209,18 +252,18 @@ const TechnicianManagement = () => {
         availableTimings: editingTechnician.availableTimings,
         skills: updatedSkills,
       })
-      .then(() => {
-        setEditingTechnician(null);
-      })
-      .catch(error => {
-        console.error("Failed to edit technician:", error);
-      });
+        .then(() => {
+          setEditingTechnician(null);
+        })
+        .catch(error => {
+          console.error("Failed to edit technician:", error);
+        });
     }
   };
 
   const handleInputChange = (e, isEdit = false) => {
     const { name, value } = e.target;
-    
+
     if (isEdit && editingTechnician) {
       setEditingTechnician({
         ...editingTechnician,
@@ -237,7 +280,7 @@ const TechnicianManagement = () => {
   const openEditPopup = (technician) => {
     // Convert skill IDs to names for editing UI
     const technicianSkills = technician.skills?.map(skillId => servicesMap[skillId] || skillId) || [];
-    setEditingTechnician({...technician, skills: technicianSkills});
+    setEditingTechnician({ ...technician, skills: technicianSkills });
     setNewSkill("");
   };
 
@@ -246,9 +289,9 @@ const TechnicianManagement = () => {
       setNewSkill("");
       return;
     }
-    
+
     const skillName = newSkill.trim();
-    
+
     if (isEdit && editingTechnician) {
       if (!editingTechnician.skills.includes(skillName)) {
         setEditingTechnician({
@@ -288,6 +331,10 @@ const TechnicianManagement = () => {
     }
   };
 
+  if (loading) {
+    return <div className="technician-management-container"><h2>Loading Technicians...</h2></div>;
+  }
+
   return (
     <div className="technician-management-container">
       <div className="header-section">
@@ -303,7 +350,7 @@ const TechnicianManagement = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <button 
+          <button
             className="add-technician-btn"
             onClick={() => setShowAddTechnicianPopup(true)}
           >
@@ -331,10 +378,10 @@ const TechnicianManagement = () => {
                 ? (technician.status ? 'Active' : 'Suspended')
                 : technician.status;
 
-              const badgeClass = statusString 
-                ? statusString.toLowerCase() 
+              const badgeClass = statusString
+                ? statusString.toLowerCase()
                 : (technician.isActive ? 'active' : 'suspended');
-              
+
               const displayStatus = statusString || (technician.isActive ? 'Active' : 'Suspended');
 
               return (
@@ -357,7 +404,7 @@ const TechnicianManagement = () => {
                     <p className="timings-text">{technician.availableTimings}</p>
                   </td>
                   <td>
-                    <SkillsDisplay 
+                    <SkillsDisplay
                       skills={technician.skills}
                       servicesMap={servicesMap}
                       onShowMore={() => handleShowAllSkills(technician)}
@@ -372,7 +419,7 @@ const TechnicianManagement = () => {
                       />
                       <span className="slider"></span>
                     </label>
-                    <button 
+                    <button
                       className="edit-icon"
                       onClick={() => openEditPopup(technician)}
                       title="Edit Technician"
@@ -439,7 +486,7 @@ const TechnicianManagement = () => {
           </div>
         </div>
       )}
-      
+
       {/* Add Technician Popup */}
       {showAddTechnicianPopup && (
         <div className="popup-overlay">
@@ -552,8 +599,8 @@ const TechnicianManagement = () => {
                     <option key={index} value={skill} />
                   ))}
                 </datalist>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="add-skill-btn"
                   onClick={() => addSkill(false)}
                 >
@@ -564,7 +611,7 @@ const TechnicianManagement = () => {
                 {newTechnician.skills.map((skill, index) => (
                   <div key={index} className="skill-tag">
                     {skill}
-                    <span 
+                    <span
                       className="remove-skill"
                       onClick={() => removeSkill(skill, false)}
                     >
@@ -575,13 +622,13 @@ const TechnicianManagement = () => {
               </div>
             </div>
             <div className="popup-buttons">
-              <button 
+              <button
                 className="cancel-btn"
                 onClick={() => setShowAddTechnicianPopup(false)}
               >
                 Cancel
               </button>
-              <button 
+              <button
                 className="confirm-btn"
                 onClick={handleAddTechnician}
                 disabled={!newTechnician.firstName || !newTechnician.email || !newTechnician.phone}
@@ -705,8 +752,8 @@ const TechnicianManagement = () => {
                     <option key={index} value={skill} />
                   ))}
                 </datalist>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="add-skill-btn"
                   onClick={() => addSkill(true)}
                 >
@@ -717,7 +764,7 @@ const TechnicianManagement = () => {
                 {editingTechnician.skills?.map((skill, index) => (
                   <div key={index} className="skill-tag">
                     {skill}
-                    <span 
+                    <span
                       className="remove-skill"
                       onClick={() => removeSkill(skill, true)}
                     >
@@ -728,13 +775,13 @@ const TechnicianManagement = () => {
               </div>
             </div>
             <div className="popup-buttons">
-              <button 
+              <button
                 className="cancel-btn"
                 onClick={() => setEditingTechnician(null)}
               >
                 Cancel
               </button>
-              <button 
+              <button
                 className="confirm-btn"
                 onClick={handleEditTechnician}
                 disabled={!editingTechnician.firstName || !editingTechnician.email || !editingTechnician.phone}

@@ -15,6 +15,10 @@ import { onAuthStateChanged } from "firebase/auth";
 import { auth, database } from '../firebase';
 import '../styles/ServiceRequests.css';
 
+// --- IN-MEMORY CACHE ---
+let technicianRequestsCache = {};
+let usersCache = {};
+
 const ServiceRequests = () => {
   const navigate = useNavigate();
 
@@ -24,7 +28,7 @@ const ServiceRequests = () => {
   const [usersData, setUsersData] = useState({});
   const [currentTechnician, setCurrentTechnician] = useState(null);
   const [loading, setLoading] = useState(true);
-  
+
   // --- NEW STATE FOR CONFIRMATION POPUP ---
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [requestToCancel, setRequestToCancel] = useState(null);
@@ -44,70 +48,92 @@ const ServiceRequests = () => {
   useEffect(() => {
     if (!currentTechnician) return;
 
-    const requestsQuery = query(
-      ref(database, 'bookings'),
-      orderByChild('technicianId'),
-      equalTo(currentTechnician.uid)
-    );
-
-    const unsubscribeBookings = onValue(requestsQuery, (snapshot) => {
-      const technicianRequestsData = snapshot.val();
-      if (technicianRequestsData) {
-        const requestsList = Object.entries(technicianRequestsData)
-          .map(([key, booking]) => {
-            const status = (booking.status || 'pending').toLowerCase();
-            let displayStatus;
-
-            switch (status) {
-              case 'pending':
-                displayStatus = 'requests';
-                break;
-              case 'accepted':
-                displayStatus = 'accepted';
-                break;
-              case 'completed':
-                displayStatus = 'history';
-                break;
-              case 'cancelled':
-                displayStatus = 'cancelled';
-                break;
-              default:
-                displayStatus = status;
-            }
-            
-            return {
-              id: key,
-              ...booking,
-              displayStatus: displayStatus
-            };
-          });
-        
-        requestsList.sort((a, b) => b.timestamp - a.timestamp);
-        setAllRequests(requestsList);
-      } else {
-        setAllRequests([]);
-      }
+    // 1. Check Cache
+    if (technicianRequestsCache[currentTechnician.uid]) {
+      setAllRequests(technicianRequestsCache[currentTechnician.uid]);
       setLoading(false);
-    });
+    } else {
+      // 2. Fetch if not in cache
+      const requestsRef = ref(database, 'bookings');
+      const requestsQuery = query(
+        requestsRef,
+        orderByChild('technicianId'),
+        equalTo(currentTechnician.uid)
+      );
 
-    return () => unsubscribeBookings();
+      get(requestsQuery).then((snapshot) => {
+        const technicianRequestsData = snapshot.val();
+        if (technicianRequestsData) {
+          const requestsList = Object.entries(technicianRequestsData)
+            .map(([key, booking]) => {
+              const status = (booking.status || 'pending').toLowerCase();
+              let displayStatus;
+
+              switch (status) {
+                case 'pending':
+                  displayStatus = 'requests';
+                  break;
+                case 'accepted':
+                  displayStatus = 'accepted';
+                  break;
+                case 'completed':
+                  displayStatus = 'history';
+                  break;
+                case 'cancelled':
+                  displayStatus = 'cancelled';
+                  break;
+                default:
+                  displayStatus = status;
+              }
+
+              return {
+                id: key,
+                ...booking,
+                displayStatus: displayStatus
+              };
+            });
+
+          requestsList.sort((a, b) => b.timestamp - a.timestamp);
+          setAllRequests(requestsList);
+          technicianRequestsCache[currentTechnician.uid] = requestsList;
+        } else {
+          setAllRequests([]);
+          technicianRequestsCache[currentTechnician.uid] = [];
+        }
+        setLoading(false);
+      }).catch((error) => {
+        console.error("Error fetching service requests:", error);
+        setLoading(false);
+      });
+    }
   }, [currentTechnician]);
 
   useEffect(() => {
     if (allRequests.length === 0) return;
 
     const fetchUserData = async () => {
-      const userIds = [...new Set(allRequests.map(r => r.uid))];
-      const userPromises = userIds.map(id => {
-        if (!id) return null;
-        return get(child(ref(database), `users/${id}`));
-      }).filter(Boolean);
-      
-      const userSnapshots = await Promise.all(userPromises);
+      const distinctUserIds = [...new Set(allRequests.map(r => r.uid))];
+
+      const missingUserIds = distinctUserIds.filter(id => !usersCache[id]);
+
+      if (missingUserIds.length > 0) {
+        const userPromises = missingUserIds.map(id => {
+          if (!id) return null;
+          return get(child(ref(database), `users/${id}`));
+        }).filter(Boolean);
+
+        const userSnapshots = await Promise.all(userPromises);
+        userSnapshots.forEach(snapshot => {
+          if (snapshot.exists()) {
+            usersCache[snapshot.key] = snapshot.val();
+          }
+        });
+      }
+
       const users = {};
-      userSnapshots.forEach(snapshot => {
-        if (snapshot.exists()) {
-          users[snapshot.key] = snapshot.val();
+      distinctUserIds.forEach(id => {
+        if (usersCache[id]) {
+          users[id] = usersCache[id];
         }
       });
       setUsersData(users);
@@ -124,13 +150,13 @@ const ServiceRequests = () => {
 
     let matchesStatus = false;
     if (request.displayStatus) {
-        matchesStatus = activeFilter === request.displayStatus;
+      matchesStatus = activeFilter === request.displayStatus;
     }
-    
+
     const matchesSearch = searchTerm === '' ||
       (request.serviceName && request.serviceName.toLowerCase().includes(searchTerm.toLowerCase())) ||
       userName.toLowerCase().includes(searchTerm.toLowerCase());
-      
+
     return matchesStatus && matchesSearch;
   });
 
@@ -139,13 +165,13 @@ const ServiceRequests = () => {
     const updates = { status: status.toLowerCase() };
 
     if (status.toLowerCase() === 'accepted') {
-        updates.acceptedAt = new Date().toISOString();
+      updates.acceptedAt = new Date().toISOString();
     }
     if (status.toLowerCase() === 'completed') {
-        updates.completedAt = new Date().toISOString();
+      updates.completedAt = new Date().toISOString();
     }
     if (status.toLowerCase() === 'cancelled') {
-        updates.cancelledAt = new Date().toISOString();
+      updates.cancelledAt = new Date().toISOString();
     }
 
     setAllRequests(currentRequests =>
@@ -161,9 +187,9 @@ const ServiceRequests = () => {
   // --- NEW HANDLER FOR POPUP CONFIRMATION ---
   const confirmCancellation = (status) => {
     if (requestToCancel) {
-        handleUpdateStatus(requestToCancel.id, status);
-        setRequestToCancel(null);
-        setShowCancelModal(false);
+      handleUpdateStatus(requestToCancel.id, status);
+      setRequestToCancel(null);
+      setShowCancelModal(false);
     }
   };
 
@@ -172,10 +198,10 @@ const ServiceRequests = () => {
     setShowCancelModal(true);
   };
   // ------------------------------------------
-  
+
   const handleChat = async (request) => {
     if (!currentTechnician || !request.uid) return;
-    
+
     const technicianId = currentTechnician.uid;
     const customerId = request.uid;
     const chatId = [technicianId, customerId].sort().join('_');
@@ -197,10 +223,10 @@ const ServiceRequests = () => {
       const updates = {};
       updates[`/userChats/${technicianId}/${customerId}`] = { ...chatMetadata, name: `${customer.firstName} ${customer.lastName}` };
       updates[`/userChats/${customerId}/${technicianId}`] = { ...chatMetadata, name: technicianName };
-      
+
       await update(ref(database), updates);
     }
-    
+
     navigate(`/chat/${chatId}`);
   };
 
@@ -231,16 +257,16 @@ const ServiceRequests = () => {
         <div className="toggle-container">
           <div className="glass-radio-group">
             {statusFilters.map(filter => (
-                <React.Fragment key={filter}>
-                  <input
-                    type="radio"
-                    name="request-filter"
-                    id={filter}
-                    checked={activeFilter === filter}
-                    onChange={() => setActiveFilter(filter)}
-                  />
-                  <label htmlFor={filter}>{filter === 'cancelled' ? 'Cancelled' : filter.charAt(0).toUpperCase() + filter.slice(1)}</label>
-                </React.Fragment>
+              <React.Fragment key={filter}>
+                <input
+                  type="radio"
+                  name="request-filter"
+                  id={filter}
+                  checked={activeFilter === filter}
+                  onChange={() => setActiveFilter(filter)}
+                />
+                <label htmlFor={filter}>{filter === 'cancelled' ? 'Cancelled' : filter.charAt(0).toUpperCase() + filter.slice(1)}</label>
+              </React.Fragment>
             ))}
             <div className="glass-glider2" />
           </div>
@@ -251,10 +277,10 @@ const ServiceRequests = () => {
             filteredRequests.map((request) => {
               const user = usersData[request.uid];
               const status = request.status || 'pending';
-              const fullAddress = user ? 
-                `${user.address || ''}, ${user.city || ''}, ${user.state || ''} - ${user.zipCode || ''}`.trim() : 
+              const fullAddress = user ?
+                `${user.address || ''}, ${user.city || ''}, ${user.state || ''} - ${user.zipCode || ''}`.trim() :
                 'Address not available';
-              
+
               // --- UPDATED LOGIC FOR BUTTON ENABLING & HOVER TEXT ---
               let serviceStartTime = null;
               const now = new Date();
@@ -267,23 +293,23 @@ const ServiceRequests = () => {
                 const startTimeStr = request.timing.split(' - ')[0];
                 const fullDateTimeStr = `${request.date} ${startTimeStr}`;
                 serviceStartTime = new Date(fullDateTimeStr);
-                
-                if (!isNaN(serviceStartTime.valueOf())) {
-                    const chatActivationTime = new Date(serviceStartTime.getTime() - 60 * 60 * 1000); // 1 hour before
-                    
-                    isChatDisabled = now < chatActivationTime;
-                    isCompleteDisabled = now < serviceStartTime;
-                    
-                    const chatTimeFormatted = chatActivationTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                    const serviceTimeFormatted = serviceStartTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-                    chatTitle = isChatDisabled 
-                        ? `Chat will be available 1 hour before service (from ${chatTimeFormatted})` 
-                        : 'Click to chat with the customer';
-                    
-                    completeTitle = isCompleteDisabled 
-                        ? `This can be marked complete after the service begins (at ${serviceTimeFormatted})` 
-                        : 'Click to mark this service as completed';
+                if (!isNaN(serviceStartTime.valueOf())) {
+                  const chatActivationTime = new Date(serviceStartTime.getTime() - 60 * 60 * 1000); // 1 hour before
+
+                  isChatDisabled = now < chatActivationTime;
+                  isCompleteDisabled = now < serviceStartTime;
+
+                  const chatTimeFormatted = chatActivationTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                  const serviceTimeFormatted = serviceStartTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                  chatTitle = isChatDisabled
+                    ? `Chat will be available 1 hour before service (from ${chatTimeFormatted})`
+                    : 'Click to chat with the customer';
+
+                  completeTitle = isCompleteDisabled
+                    ? `This can be marked complete after the service begins (at ${serviceTimeFormatted})`
+                    : 'Click to mark this service as completed';
                 }
               }
               // --- END OF UPDATED LOGIC ---
@@ -310,7 +336,7 @@ const ServiceRequests = () => {
                       </div>
                     </div>
                   )}
-                  
+
                   <div className="request-details-grid">
                     <div className="detail-row">
                       <FaCalendarAlt className="detail-icon" />
@@ -321,15 +347,15 @@ const ServiceRequests = () => {
                       <span>{request.timing}</span>
                     </div>
                     <div className="detail-row full-address-row">
-                        <FaMapMarkerAlt className="detail-icon" />
-                        <span className="full-address">{fullAddress}</span>
+                      <FaMapMarkerAlt className="detail-icon" />
+                      <span className="full-address">{fullAddress}</span>
                     </div>
                     <div className="detail-row">
-                        <FaRupeeSign className="detail-icon rupee-icon" />
-                        <span>{request.price || 'N/A'}</span>
+                      <FaRupeeSign className="detail-icon rupee-icon" />
+                      <span>{request.price || 'N/A'}</span>
                     </div>
                   </div>
-                    
+
                   <div className="description-row">
                     <span className="description-label">Description:</span>
                     <span className="request-description">{request.description || 'No description provided.'}</span>
@@ -337,11 +363,11 @@ const ServiceRequests = () => {
 
                   {status === 'pending' && (
                     <div className="request-actions">
-                      <button 
-                        className="action-btn1 decline-btn" 
+                      <button
+                        className="action-btn1 decline-btn"
                         // --- UPDATED CLICK HANDLER ---
                         onClick={() => openCancelModal(request)}
-                        // -----------------------------
+                      // -----------------------------
                       >
                         Decline
                       </button>
@@ -353,24 +379,24 @@ const ServiceRequests = () => {
 
                   {status === 'accepted' && (
                     <div className="request-actions accepted-actions">
-                      <button 
-                        className="action-btn1 decline-btn" 
+                      <button
+                        className="action-btn1 decline-btn"
                         // --- UPDATED CLICK HANDLER ---
                         onClick={() => openCancelModal(request)}
-                        // -----------------------------
+                      // -----------------------------
                       >
                         Cancel
                       </button>
-                      <button 
-                        className="action-btn1 chat-btn" 
+                      <button
+                        className="action-btn1 chat-btn"
                         onClick={() => handleChat(request)}
                         disabled={isChatDisabled}
                         title={chatTitle}
                       >
                         Chat
                       </button>
-                      <button 
-                        className="action-btn1 complete-btn" 
+                      <button
+                        className="action-btn1 complete-btn"
                         onClick={() => handleUpdateStatus(request.id, 'completed')}
                         disabled={isCompleteDisabled}
                         title={completeTitle}
@@ -408,20 +434,20 @@ const ServiceRequests = () => {
         <div className="modal-backdrop">
           <div className="confirmation-modal">
             <p className="modal-message">
-                {requestToCancel.status === 'pending' ? 
-                    'Are you sure you want to decline this service request? This will mark it as cancelled.' : 
-                    'Are you sure you want to cancel this accepted service?'
-                }
+              {requestToCancel.status === 'pending' ?
+                'Are you sure you want to decline this service request? This will mark it as cancelled.' :
+                'Are you sure you want to cancel this accepted service?'
+              }
             </p>
             <div className="modal-actions">
-              <button 
-                className="modal-btn confirm-yes" 
+              <button
+                className="modal-btn confirm-yes"
                 onClick={() => confirmCancellation('cancelled')}
               >
                 Yes, {requestToCancel.status === 'pending' ? 'Decline' : 'Cancel'}
               </button>
-              <button 
-                className="modal-btn confirm-no" 
+              <button
+                className="modal-btn confirm-no"
                 onClick={() => setShowCancelModal(false)}
               >
                 No

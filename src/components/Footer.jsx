@@ -2,10 +2,13 @@ import React, { useState, useEffect } from "react";
 import { FaPhoneAlt, FaEnvelope, FaMapMarkerAlt, FaUsers, FaStar } from "react-icons/fa";
 import { MdHomeRepairService } from "react-icons/md";
 import { FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn } from "react-icons/fa";
-import { ref, onValue } from "firebase/database";
+import { ref, onValue, get } from "firebase/database";
 import { database } from "../firebase"; // Assuming firebase is exported correctly
 
 import "../styles/Footer.css";
+
+// --- IN-MEMORY CACHE ---
+let footerSettingsCache = null;
 
 const Footer = () => {
   const [settings, setSettings] = useState({
@@ -17,21 +20,32 @@ const Footer = () => {
   });
 
   useEffect(() => {
+    // 1. Check Cache
+    if (footerSettingsCache) {
+      setSettings(footerSettingsCache);
+      return;
+    }
+
+    // 2. Fetch if not in cache
     const settingsRef = ref(database, "contact_settings");
-    const unsubscribe = onValue(settingsRef, (snapshot) => {
+    get(settingsRef).then((snapshot) => {
       const settingsData = snapshot.val();
       if (settingsData) {
-        setSettings({
+        const newSettings = {
           supportEmail: settingsData.support_email || "support@skillworkers.com",
           supportPhone: settingsData.support_phone || "+91 8855181212",
           facebookUrl: settingsData.facebook_url || "#",
           instagramUrl: settingsData.instagram_url || "#",
           twitterUrl: settingsData.twitter_url || "#",
-        });
-      }
-    });
+        };
 
-    return () => unsubscribe();
+        setSettings(newSettings);
+        // 3. Save to Cache
+        footerSettingsCache = newSettings;
+      }
+    }).catch((error) => {
+      console.error("Error fetching footer settings:", error);
+    });
   }, []);
 
   // Helper to check if a URL is valid/set before rendering a link
@@ -53,12 +67,12 @@ const Footer = () => {
           <div className="footer-contact">
             {/* Displaying Live Phone Number */}
             <p>
-              <FaPhoneAlt /> 
+              <FaPhoneAlt />
               <a href={`tel:${settings.supportPhone}`} className="contact-link">{settings.supportPhone}</a>
             </p>
             {/* Displaying Live Email */}
             <p>
-              <FaEnvelope /> 
+              <FaEnvelope />
               <a href={`mailto:${settings.supportEmail}`} className="contact-link">{settings.supportEmail}</a>
             </p>
             <p><FaMapMarkerAlt /> India</p>

@@ -15,6 +15,10 @@ import { onAuthStateChanged } from "firebase/auth";
 import { auth, database } from '../firebase';
 import '../styles/MyBookingsPage.css';
 
+// --- IN-MEMORY CACHE ---
+let userBookingsCache = {};
+let technicianCache = {};
+
 const MyBookingsPage = () => {
   const navigate = useNavigate();
 
@@ -24,7 +28,7 @@ const MyBookingsPage = () => {
   const [techniciansData, setTechniciansData] = useState({});
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  
+
   // --- NEW STATE FOR CONFIRMATION POPUP ---
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [bookingToCancel, setBookingToCancel] = useState(null);
@@ -58,7 +62,7 @@ const MyBookingsPage = () => {
             id: key,
             ...booking,
           }));
-        
+
         bookingsList.sort((a, b) => b.timestamp - a.timestamp);
         setAllBookings(bookingsList);
       } else {
@@ -74,16 +78,30 @@ const MyBookingsPage = () => {
     if (allBookings.length === 0) return;
 
     const fetchTechnicianData = async () => {
-      const technicianIds = [...new Set(allBookings.map(b => b.technicianId))];
-      const technicianPromises = technicianIds.map(id =>
-        get(child(ref(database), `users/${id}`))
-      );
+      const distinctTechIds = [...new Set(allBookings.map(b => b.technicianId))];
 
-      const technicianSnapshots = await Promise.all(technicianPromises);
+      // Identify which technicians are missing from cache
+      const missingTechIds = distinctTechIds.filter(id => !technicianCache[id]);
+
+      // Fetch only missing technicians
+      if (missingTechIds.length > 0) {
+        const technicianPromises = missingTechIds.map(id =>
+          get(child(ref(database), `users/${id}`))
+        );
+
+        const technicianSnapshots = await Promise.all(technicianPromises);
+        technicianSnapshots.forEach(snapshot => {
+          if (snapshot.exists()) {
+            technicianCache[snapshot.key] = snapshot.val();
+          }
+        });
+      }
+
+      // Construct the techniciansData map from cache
       const technicians = {};
-      technicianSnapshots.forEach(snapshot => {
-        if (snapshot.exists()) {
-          technicians[snapshot.key] = snapshot.val();
+      distinctTechIds.forEach(id => {
+        if (technicianCache[id]) {
+          technicians[id] = technicianCache[id];
         }
       });
       setTechniciansData(technicians);
@@ -91,7 +109,7 @@ const MyBookingsPage = () => {
 
     fetchTechnicianData();
   }, [allBookings]);
-  
+
   const statusFilters = ['Active', 'Accepted', 'Cancelled', 'Completed'];
 
   const filteredBookings = allBookings.filter((booking) => {
@@ -108,11 +126,11 @@ const MyBookingsPage = () => {
     } else {
       matchesStatus = activeFilter.toLowerCase() === bookingStatus;
     }
-    
+
     const matchesSearch = searchTerm === '' ||
       (booking.serviceName && booking.serviceName.toLowerCase().includes(searchTerm.toLowerCase())) ||
       technicianName.toLowerCase().includes(searchTerm.toLowerCase());
-      
+
     return matchesStatus && matchesSearch;
   });
 
@@ -120,12 +138,12 @@ const MyBookingsPage = () => {
     const bookingRef = ref(database, `bookings/${bookingId}`);
     const updates = { status: status.toLowerCase() };
     if (status.toLowerCase() === 'cancelled') {
-        updates.cancelledAt = new Date().toISOString();
+      updates.cancelledAt = new Date().toISOString();
     }
     if (status.toLowerCase() === 'completed') {
-        updates.completedAt = new Date().toISOString();
+      updates.completedAt = new Date().toISOString();
     }
-    
+
     setAllBookings(currentBookings =>
       currentBookings.map(b =>
         b.id === bookingId ? { ...b, ...updates } : b
@@ -150,7 +168,7 @@ const MyBookingsPage = () => {
     setShowCancelModal(true);
   };
   // ------------------------------------------
-  
+
   const handleChat = async (booking) => {
     if (!currentUser || !booking.technicianId) return;
 
@@ -164,7 +182,7 @@ const MyBookingsPage = () => {
     if (!chatSnap.exists()) {
       const technician = techniciansData[technicianId];
       const customerName = currentUser.displayName || `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() || 'Customer';
-      
+
       const chatMetadata = {
         chatId: chatId,
         lastMessage: "Chat started",
@@ -175,10 +193,10 @@ const MyBookingsPage = () => {
       const updates = {};
       updates[`/userChats/${customerId}/${technicianId}`] = { ...chatMetadata, name: `${technician.firstName} ${technician.lastName}` };
       updates[`/userChats/${technicianId}/${customerId}`] = { ...chatMetadata, name: customerName };
-      
+
       await update(ref(database), updates);
     }
-    
+
     navigate(`/chat/${chatId}`);
   };
 
@@ -209,16 +227,16 @@ const MyBookingsPage = () => {
         <div className="toggle-container">
           <div className="glass-radio-group">
             {statusFilters.map(filter => (
-                <React.Fragment key={filter}>
-                  <input
-                    type="radio"
-                    name="booking-filter"
-                    id={filter.toLowerCase()}
-                    checked={activeFilter === filter}
-                    onChange={() => setActiveFilter(filter)}
-                  />
-                  <label htmlFor={filter.toLowerCase()}>{filter}</label>
-                </React.Fragment>
+              <React.Fragment key={filter}>
+                <input
+                  type="radio"
+                  name="booking-filter"
+                  id={filter.toLowerCase()}
+                  checked={activeFilter === filter}
+                  onChange={() => setActiveFilter(filter)}
+                />
+                <label htmlFor={filter.toLowerCase()}>{filter}</label>
+              </React.Fragment>
             ))}
             <div className="glass-glider1" />
           </div>
@@ -231,8 +249,8 @@ const MyBookingsPage = () => {
               const status = booking.status || 'pending';
               const statusClass = status.toLowerCase();
 
-              const fullAddress = technician ? 
-                `${technician.address || ''}, ${technician.city || ''}, ${technician.state || ''} - ${technician.zipCode || ''}`.trim() : 
+              const fullAddress = technician ?
+                `${technician.address || ''}, ${technician.city || ''}, ${technician.state || ''} - ${technician.zipCode || ''}`.trim() :
                 'Address not available';
 
               // --- UPDATED LOGIC FOR BUTTON ENABLING & HOVER TEXT ---
@@ -247,23 +265,23 @@ const MyBookingsPage = () => {
                 const startTimeStr = booking.timing.split(' - ')[0];
                 const fullDateTimeStr = `${booking.date} ${startTimeStr}`;
                 serviceStartTime = new Date(fullDateTimeStr);
-                
-                if (!isNaN(serviceStartTime.valueOf())) {
-                    const chatActivationTime = new Date(serviceStartTime.getTime() - 60 * 60 * 1000); // 1 hour before
-                    
-                    isChatDisabled = now < chatActivationTime;
-                    isCompleteDisabled = now < serviceStartTime;
-                    
-                    const chatTimeFormatted = chatActivationTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                    const serviceTimeFormatted = serviceStartTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-                    chatTitle = isChatDisabled 
-                        ? `Chat will be available 1 hour before service (from ${chatTimeFormatted})` 
-                        : 'Click to chat with the technician';
-                    
-                    completeTitle = isCompleteDisabled 
-                        ? `This can be marked complete after the service begins (at ${serviceTimeFormatted})` 
-                        : 'Click to mark this service as completed';
+                if (!isNaN(serviceStartTime.valueOf())) {
+                  const chatActivationTime = new Date(serviceStartTime.getTime() - 60 * 60 * 1000); // 1 hour before
+
+                  isChatDisabled = now < chatActivationTime;
+                  isCompleteDisabled = now < serviceStartTime;
+
+                  const chatTimeFormatted = chatActivationTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                  const serviceTimeFormatted = serviceStartTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                  chatTitle = isChatDisabled
+                    ? `Chat will be available 1 hour before service (from ${chatTimeFormatted})`
+                    : 'Click to chat with the technician';
+
+                  completeTitle = isCompleteDisabled
+                    ? `This can be marked complete after the service begins (at ${serviceTimeFormatted})`
+                    : 'Click to mark this service as completed';
                 }
               }
               // --- END OF UPDATED LOGIC ---
@@ -283,9 +301,9 @@ const MyBookingsPage = () => {
                   {technician && (
                     <div className="technician-info-row">
                       <div className="tech-avatar-wrapper">
-                          <span className="tech-avatar-placeholder">
-                            {technician.firstName?.charAt(0) || 'T'}
-                          </span>
+                        <span className="tech-avatar-placeholder">
+                          {technician.firstName?.charAt(0) || 'T'}
+                        </span>
                       </div>
                       <div className="tech-name-rating">
                         <span className="tech-name">{technician.firstName} {technician.lastName}</span>
@@ -296,7 +314,7 @@ const MyBookingsPage = () => {
                       </div>
                     </div>
                   )}
-                  
+
                   <div className="booking-details-grid">
                     <div className="detail-row">
                       <FaCalendarAlt className="detail-icon" />
@@ -315,7 +333,7 @@ const MyBookingsPage = () => {
                       <span>{booking.price || 'Price not available'}</span>
                     </div>
                   </div>
-                    
+
                   <div className="description-row">
                     <span className="description-label">Description:</span>
                     <span className="booking-description">{booking.description || 'No description.'}</span>
@@ -323,27 +341,27 @@ const MyBookingsPage = () => {
 
                   <div className="booking-actions">
                     {(status === 'pending' && activeFilter === 'Active') || (status === 'accepted' && activeFilter === 'Accepted') ? (
-                        <button 
-                          className="action-btn1 cancel-btn"
-                          // --- UPDATED CLICK HANDLER ---
-                          onClick={() => openCancelModal(booking)}
-                          // -----------------------------
-                        >
-                          Cancel
-                        </button>
+                      <button
+                        className="action-btn1 cancel-btn"
+                        // --- UPDATED CLICK HANDLER ---
+                        onClick={() => openCancelModal(booking)}
+                      // -----------------------------
+                      >
+                        Cancel
+                      </button>
                     ) : null}
-                    
+
                     {status === 'accepted' && activeFilter === 'Accepted' && (
                       <>
-                        <button 
-                          className="action-btn1 chat-btn" 
+                        <button
+                          className="action-btn1 chat-btn"
                           onClick={() => handleChat(booking)}
                           disabled={isChatDisabled}
                           title={chatTitle}
                         >
                           Chat
                         </button>
-                        <button 
+                        <button
                           className="action-btn1 complete-btn"
                           onClick={() => handleUpdateBookingStatus(booking.id, 'completed')}
                           disabled={isCompleteDisabled}
@@ -353,9 +371,9 @@ const MyBookingsPage = () => {
                         </button>
                       </>
                     )}
-                    
+
                     {status === 'completed' && activeFilter === 'Completed' && (
-                        <button className="action-btn1 review-btn">Leave a Review</button>
+                      <button className="action-btn1 review-btn">Leave a Review</button>
                     )}
                   </div>
                 </div>
@@ -369,21 +387,21 @@ const MyBookingsPage = () => {
         </div>
       </main>
       <Footer />
-      
+
       {/* --- CONFIRMATION POPUP JSX --- */}
       {showCancelModal && (
         <div className="modal-backdrop">
           <div className="confirmation-modal">
             <p className="modal-message">Are you sure you want to cancel this service booking?</p>
             <div className="modal-actions">
-              <button 
-                className="modal-btn confirm-yes" 
+              <button
+                className="modal-btn confirm-yes"
                 onClick={confirmCancellation}
               >
                 Yes, Cancel
               </button>
-              <button 
-                className="modal-btn confirm-no" 
+              <button
+                className="modal-btn confirm-no"
                 onClick={() => setShowCancelModal(false)}
               >
                 No

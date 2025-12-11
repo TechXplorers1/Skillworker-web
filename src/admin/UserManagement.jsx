@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { ref, onValue, update, push } from "firebase/database";
-import { database } from "../firebase";
+import { ref, onValue, update, push, get } from "firebase/database";
+import { onAuthStateChanged } from "firebase/auth";
+import { database, auth } from "../firebase";
 import "../styles/UserManagement.css";
 
 // Note: For actual user creation (including password reset email), you would
 // need to use Firebase Authentication functions (e.g., createUserWithEmailAndPassword)
 // AND potentially a Cloud Function/Admin SDK on the backend to send the password
 // reset link, as direct `sendPasswordResetEmail` requires the user to exist in Auth.
+
+// --- IN-MEMORY CACHE ---
+let usersManagementCache = null;
 
 const UserManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -15,10 +19,11 @@ const UserManagement = () => {
   const [deactivatingUser, setDeactivatingUser] = useState(null);
   const [activatingUser, setActivatingUser] = useState(null);
   const [users, setUsers] = useState([]);
-  
+  const [loading, setLoading] = useState(true);
+
   const [newUser, setNewUser] = useState({
-    firstName: "", 
-    lastName: "",  
+    firstName: "",
+    lastName: "",
     email: "",
     phone: "",
     city: "",
@@ -27,43 +32,65 @@ const UserManagement = () => {
     role: "user",
     status: "Active",
     // Use a proper timestamp for sorting and display
-    createdAt: new Date().toISOString(), 
+    createdAt: new Date().toISOString(),
   });
 
   useEffect(() => {
-    const usersRef = ref(database, "users");
-    onValue(usersRef, (snapshot) => {
-      const usersData = snapshot.val();
-      if (usersData) {
-        const fetchedUsers = Object.keys(usersData).map(uid => ({
-          ...usersData[uid],
-          uid: uid // Use the actual Firebase key as UID
-        }));
-        
-        // Filter out technicians - only show users and admins
-        const nonTechnicianUsers = fetchedUsers.filter(user => 
-          user.role !== "technician"
-        );
-        
-        // Sort by createdAt in descending order (most recent first)
-        nonTechnicianUsers.sort((a, b) => {
-          const dateA = a.createdAt || "";
-          const dateB = b.createdAt || "";
-          // localeCompare is safe for ISO strings
-          return dateB.localeCompare(dateA); 
-        });
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // 1. Check Cache
+        if (usersManagementCache) {
+          setUsers(usersManagementCache);
+          setLoading(false);
+          return;
+        }
 
-        setUsers(nonTechnicianUsers);
+        const usersRef = ref(database, "users");
+        // Changed onValue to get to avoid continuous download of entire database
+        get(usersRef).then((snapshot) => {
+          const usersData = snapshot.val();
+          if (usersData) {
+            const fetchedUsers = Object.keys(usersData).map(uid => ({
+              ...usersData[uid],
+              uid: uid // Use the actual Firebase key as UID
+            }));
+
+            // Filter out technicians - only show users and admins
+            const nonTechnicianUsers = fetchedUsers.filter(user =>
+              user.role !== "technician"
+            );
+
+            // Sort by createdAt in descending order (most recent first)
+            nonTechnicianUsers.sort((a, b) => {
+              const dateA = a.createdAt || "";
+              const dateB = b.createdAt || "";
+              // localeCompare is safe for ISO strings
+              return dateB.localeCompare(dateA);
+            });
+
+            setUsers(nonTechnicianUsers);
+            // Update Cache
+            usersManagementCache = nonTechnicianUsers;
+          } else {
+            setUsers([]);
+            usersManagementCache = [];
+          }
+          setLoading(false);
+        }).catch((error) => {
+          console.error("Error fetching users:", error);
+          setLoading(false);
+        });
       } else {
-        setUsers([]);
+        setLoading(false);
       }
     });
+    return () => unsubscribe();
   }, []);
 
   const filteredUsers = users.filter(user => {
     const fullName = `${user.firstName || ''} ${user.lastName || ''}`;
     return fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           (user.email || '').toLowerCase().includes(searchTerm.toLowerCase());
+      (user.email || '').toLowerCase().includes(searchTerm.toLowerCase());
   });
 
   const getStatusString = (status) => {
@@ -91,7 +118,7 @@ const UserManagement = () => {
     if (deactivatingUser) {
       const userRef = ref(database, `users/${deactivatingUser.uid}`);
       // Using "Suspended" string as per existing logic
-      update(userRef, { status: "Suspended" }) 
+      update(userRef, { status: "Suspended" })
         .then(() => {
           setDeactivatingUser(null);
         })
@@ -105,7 +132,7 @@ const UserManagement = () => {
     if (activatingUser) {
       const userRef = ref(database, `users/${activatingUser.uid}`);
       // Using "Active" string as per existing logic
-      update(userRef, { status: "Active" }) 
+      update(userRef, { status: "Active" })
         .then(() => {
           setActivatingUser(null);
         })
@@ -140,7 +167,7 @@ const UserManagement = () => {
     push(userRef, newUserData)
       .then((snap) => {
         // Update the new object with the key it was saved under
-        update(snap, { uid: snap.key }); 
+        update(snap, { uid: snap.key });
         console.log("Successfully added new user entry to DB (Auth needed for login/email).");
         setShowAddUserPopup(false);
         setNewUser({
@@ -174,18 +201,18 @@ const UserManagement = () => {
         country: editingUser.country,
         role: editingUser.role, // Added role update
       })
-      .then(() => {
-        setEditingUser(null);
-      })
-      .catch(error => {
-        console.error("Failed to edit user:", error);
-      });
+        .then(() => {
+          setEditingUser(null);
+        })
+        .catch(error => {
+          console.error("Failed to edit user:", error);
+        });
     }
   };
 
   const handleInputChange = (e, isEdit = false) => {
     const { name, value } = e.target;
-    
+
     if (isEdit && editingUser) {
       setEditingUser({
         ...editingUser,
@@ -200,9 +227,9 @@ const UserManagement = () => {
   };
 
   const openEditPopup = (user) => {
-    setEditingUser({...user});
+    setEditingUser({ ...user });
   };
-  
+
   // Helper to format date string
   const formatDate = (isoString) => {
     if (!isoString) return 'N/A';
@@ -213,6 +240,9 @@ const UserManagement = () => {
     }
   };
 
+  if (loading) {
+    return <div className="user-management-container"><h2>Loading Users...</h2></div>;
+  }
 
   return (
     <div className="user-management-container">
@@ -220,7 +250,7 @@ const UserManagement = () => {
         <h2>User Management</h2>
         <div className="controls">
           <div className="search-container">
-            <span className="search-icon">⌕</span> 
+            <span className="search-icon">⌕</span>
             <input
               type="text"
               placeholder="Search users..."
@@ -229,7 +259,7 @@ const UserManagement = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <button 
+          <button
             className="add-user-btn"
             onClick={() => setShowAddUserPopup(true)}
           >
@@ -256,52 +286,52 @@ const UserManagement = () => {
             {filteredUsers.map((user) => {
               const statusString = getStatusString(user.status);
               return (
-              <tr key={user.uid}>
-                <td>
-                  <div className="user-name">{user.firstName} {user.lastName}</div>
-                </td>
-                <td>
-                  <div className="user-email">{user.email}</div>
-                </td>
-                <td>
-                  <div className="user-phone">{user.phone}</div>
-                </td>
-                <td>
-                  <div className="user-location">{user.city}, {user.state}</div>
-                </td>
-                <td>
-                  <span className={`role-badge ${user.role?.toLowerCase() || 'user'}`}>
-                    {user.role || 'user'}
-                  </span>
-                </td>
-                <td>
-                  <span className={`status-badge ${statusString.toLowerCase()}`}>
-                    {statusString}
-                  </span>
-                </td>
-                <td>
-                  <div className="user-joined">{formatDate(user.createdAt)}</div>
-                </td>
-                <td className="actions">
-                  <label className="toggle-switch">
-                    <input
-                      type="checkbox"
-                      checked={statusString === "Active"}
-                      onChange={() => toggleUserStatus(user.uid)}
-                    />
-                    <span className="slider"></span>
-                  </label>
-                  <button 
-                    className="edit-icon"
-                    onClick={() => openEditPopup(user)}
-                    title="Edit User"
-                  >
-                    ✏️
-                  </button>
-                </td>
-              </tr>
-            );
-          })}
+                <tr key={user.uid}>
+                  <td>
+                    <div className="user-name">{user.firstName} {user.lastName}</div>
+                  </td>
+                  <td>
+                    <div className="user-email">{user.email}</div>
+                  </td>
+                  <td>
+                    <div className="user-phone">{user.phone}</div>
+                  </td>
+                  <td>
+                    <div className="user-location">{user.city}, {user.state}</div>
+                  </td>
+                  <td>
+                    <span className={`role-badge ${user.role?.toLowerCase() || 'user'}`}>
+                      {user.role || 'user'}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={`status-badge ${statusString.toLowerCase()}`}>
+                      {statusString}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="user-joined">{formatDate(user.createdAt)}</div>
+                  </td>
+                  <td className="actions">
+                    <label className="toggle-switch">
+                      <input
+                        type="checkbox"
+                        checked={statusString === "Active"}
+                        onChange={() => toggleUserStatus(user.uid)}
+                      />
+                      <span className="slider"></span>
+                    </label>
+                    <button
+                      className="edit-icon"
+                      onClick={() => openEditPopup(user)}
+                      title="Edit User"
+                    >
+                      ✏️
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -328,7 +358,7 @@ const UserManagement = () => {
       {activatingUser && (
         <div className="popup-overlay">
           <div className="confirmation-popup">
-            <h3>Confirm Activation</h3> 
+            <h3>Confirm Activation</h3>
             <p>Are you sure you want to **activate** {activatingUser.firstName} {activatingUser.lastName}?</p>
             <div className="popup-buttons">
               <button className="cancel-btn" onClick={cancelActivation}>
@@ -426,17 +456,17 @@ const UserManagement = () => {
                 onChange={handleInputChange}
               >
                 <option value="user">User</option>
-                <option value="admin">Admin</option> 
+                <option value="admin">Admin</option>
               </select>
             </div>
             <div className="popup-buttons">
-              <button 
+              <button
                 className="cancel-btn"
                 onClick={() => setShowAddUserPopup(false)}
               >
                 Cancel
               </button>
-              <button 
+              <button
                 className="confirm-btn"
                 onClick={handleAddUser}
                 disabled={!newUser.firstName || !newUser.email || !newUser.phone}
@@ -466,7 +496,7 @@ const UserManagement = () => {
             </div>
             <div className="form-group">
               <label>Last Name:</label>
-               <input
+              <input
                 type="text"
                 name="lastName"
                 value={editingUser.lastName || ''}
@@ -532,17 +562,17 @@ const UserManagement = () => {
                 onChange={(e) => handleInputChange(e, true)}
               >
                 <option value="user">User</option>
-                <option value="admin">Admin</option> 
+                <option value="admin">Admin</option>
               </select>
             </div>
             <div className="popup-buttons">
-              <button 
+              <button
                 className="cancel-btn"
                 onClick={() => setEditingUser(null)}
               >
                 Cancel
               </button>
-              <button 
+              <button
                 className="confirm-btn"
                 onClick={handleEditUser}
                 disabled={!editingUser.firstName || !editingUser.email || !editingUser.phone}

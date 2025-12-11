@@ -1,41 +1,78 @@
 import React, { useState, useEffect } from 'react';
-import { ref, onValue } from "firebase/database";
-import { database } from "../firebase";
+import { ref, onValue, get } from "firebase/database";
+import { onAuthStateChanged } from "firebase/auth";
+import { database, auth } from "../firebase";
 import '../styles/BookingManagement.css';
+
+// --- IN-MEMORY CACHE (Session Level) ---
+let bookingsCache = null;
+let usersCache = null;
 
 const BookingsManagement = () => {
   const [activeFilter, setActiveFilter] = useState('All Statuses');
   const [bookingsData, setBookingsData] = useState([]);
   const [usersData, setUsersData] = useState({});
   // New state for handling the pop-up
-  const [selectedBooking, setSelectedBooking] = useState(null); 
-  
-  useEffect(() => {
-    const bookingsRef = ref(database, "bookings");
-    onValue(bookingsRef, (snapshot) => {
-      const bookings = snapshot.val();
-      if (bookings) {
-        const fetchedBookings = Object.keys(bookings).map(key => ({
-          id: key,
-          ...bookings[key]
-        }));
-        
-        // Sort by createdAt in descending order (most recent first)
-        fetchedBookings.sort((a, b) => {
-          // Assuming createdAt is a sortable string/timestamp, or default to an empty string if null
-          const dateA = a.createdAt || "";
-          const dateB = b.createdAt || "";
-          return dateB.localeCompare(dateA);
-        });
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-        setBookingsData(fetchedBookings);
+  useEffect(() => {
+    // Wrap with auth listener to ensure we have permission/user before fetching
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // 1. Check Cache First
+        if (bookingsCache && usersCache) {
+          setBookingsData(bookingsCache);
+          setUsersData(usersCache);
+          setLoading(false);
+          return; // Use cache and skip fetch
+        }
+
+        // 2. Fetch Bookings and Users (Parallel)
+        const bookingsRef = ref(database, "bookings");
+        const usersRef = ref(database, "users");
+
+        Promise.all([get(bookingsRef), get(usersRef)]).then(([bookingsSnap, usersSnap]) => {
+          // Process Bookings
+          const bookings = bookingsSnap.val();
+          let parsedBookings = [];
+          if (bookings) {
+            parsedBookings = Object.keys(bookings).map(key => ({
+              id: key,
+              ...bookings[key]
+            }));
+
+            // Sort by createdAt in descending order (most recent first)
+            parsedBookings.sort((a, b) => {
+              const dateA = a.createdAt || "";
+              const dateB = b.createdAt || "";
+              return dateB.localeCompare(dateA);
+            });
+          }
+
+          // Process Users
+          const parsedUsers = usersSnap.val() || {};
+
+          // Update State
+          setBookingsData(parsedBookings);
+          setUsersData(parsedUsers);
+
+          // Update Cache
+          bookingsCache = parsedBookings;
+          usersCache = parsedUsers;
+
+          setLoading(false);
+        }).catch(error => {
+          console.error("Error fetching data:", error);
+          setLoading(false);
+        });
+      } else {
+        // Not logged in or auth not ready
+        setLoading(false);
       }
     });
 
-    const usersRef = ref(database, "users");
-    onValue(usersRef, (snapshot) => {
-      setUsersData(snapshot.val() || {});
-    });
+    return () => unsubscribe();
   }, []);
 
   const statusFilters = ['All Statuses', 'pending', 'accepted', 'completed', 'cancelled'];
@@ -48,14 +85,18 @@ const BookingsManagement = () => {
     setSelectedBooking(null);
   };
 
-  const filteredBookings = activeFilter === 'All Statuses' 
-    ? bookingsData 
+  const filteredBookings = activeFilter === 'All Statuses'
+    ? bookingsData
     : bookingsData.filter(booking => booking.status === activeFilter);
+
+  if (loading) {
+    return <div className="bookings-management"><h1>Loading Management...</h1></div>;
+  }
 
   return (
     <div className="bookings-management">
       <h1>Booking Management</h1>
-      
+
       <div className="filters">
         {statusFilters.map(filter => (
           <button
@@ -67,7 +108,7 @@ const BookingsManagement = () => {
           </button>
         ))}
       </div>
-      
+
       <div className="table-container">
         <table className="bookings-table">
           <thead>
@@ -97,7 +138,7 @@ const BookingsManagement = () => {
                 </td>
                 <td>{booking.date}</td>
                 <td>
-                  <button 
+                  <button
                     className="details-btn"
                     onClick={() => showDetailsPopup(booking)}
                   >
@@ -114,11 +155,11 @@ const BookingsManagement = () => {
       {selectedBooking && (
         <div className="popup-overlay" onClick={closeDetailsPopup}>
           <div className="booking-details-popup" onClick={e => e.stopPropagation()}>
-            
+
             <button className="close-btn" onClick={closeDetailsPopup}>
               &times;
             </button>
-            
+
             <h3>Booking ID: {selectedBooking.id}</h3>
             <p><strong>Booked on:</strong> {selectedBooking.createdAt}</p>
             <p><strong>User:</strong> {usersData[selectedBooking.uid]?.firstName} {usersData[selectedBooking.uid]?.lastName}</p>

@@ -9,6 +9,9 @@ import { auth, database } from '../firebase';
 import BookingConfirmationPopup from '../components/BookingConfirmation';
 import '../styles/BookingPage.css';
 
+// --- IN-MEMORY CACHE ---
+let technicianDetailsCache = {};
+
 // Helper function to generate time slots
 const generateTimeSlots = () => {
     const slots = [];
@@ -51,7 +54,7 @@ const getFilteredTimeSlots = (allSlots, preference) => {
     // Filter slots based on the preference string
     return allSlots.filter(slot => {
         const { hours } = parseTime(slot);
-        
+
         if (preference.includes('Morning')) {
             // Morning: 8:00 AM up to (but not including) 12:00 PM
             return hours >= 8 && hours < 12;
@@ -66,7 +69,7 @@ const getFilteredTimeSlots = (allSlots, preference) => {
         }
 
         // If preference is something unexpected, return no slots by default
-        return false; 
+        return false;
     });
 };
 
@@ -91,7 +94,7 @@ const BookingPage = () => {
     const [creatingBooking, setCreatingBooking] = useState(false);
     const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-    
+
     // NEW STATE: For profile completion popup
     const [showProfilePopup, setShowProfilePopup] = useState(false);
 
@@ -134,94 +137,83 @@ const BookingPage = () => {
     useEffect(() => {
         if (!technicianId) return;
 
-        const technicianRef = ref(database, `users/${technicianId}`);
-        const unsubscribeTechnician = onValue(technicianRef, (snapshot) => {
-            const fetchedTechnician = snapshot.val();
-            if (fetchedTechnician) {
-                setTechnician(fetchedTechnician);
-                setLoading(false);
-            } else {
-                console.log("Technician not found.");
-                setLoading(false);
-            }
-        }, (error) => {
-            console.error("Error fetching real-time technician data:", error);
+        // 1. Check Cache
+        if (technicianDetailsCache[technicianId]) {
+            setTechnician(technicianDetailsCache[technicianId]);
             setLoading(false);
-        });
-        return () => unsubscribeTechnician();
+        } else {
+            // 2. Fetch if not in cache
+            const technicianRef = ref(database, `users/${technicianId}`);
+            get(technicianRef).then((snapshot) => {
+                const fetchedTechnician = snapshot.val();
+                if (fetchedTechnician) {
+                    setTechnician(fetchedTechnician);
+                    technicianDetailsCache[technicianId] = fetchedTechnician; // Cache it
+                    setLoading(false);
+                } else {
+                    console.log("Technician not found.");
+                    setLoading(false);
+                }
+            }).catch((error) => {
+                console.error("Error fetching technician data:", error);
+                setLoading(false);
+            });
+        }
     }, [technicianId]);
 
     // --- LOGIC UPDATED HERE ---
-    // This effect now checks the status and timestamp of bookings.
+    // This effect now uses get() instead of onValue() to reduce downloads.
     useEffect(() => {
         if (!technicianId || !selectedDate) {
             setBookedSlots([]);
             return;
         }
 
-        const bookingsRef = ref(database, 'bookings');
-        const bookingsQuery = query(
-            bookingsRef,
-            orderByChild('technicianId'),
-            equalTo(technicianId)
-        );
+        const fetchBookings = () => {
+            const bookingsRef = ref(database, 'bookings');
+            const bookingsQuery = query(
+                bookingsRef,
+                orderByChild('technicianId'),
+                equalTo(technicianId)
+            );
 
-        const unsubscribeBookings = onValue(bookingsQuery, (snapshot) => {
-            const now = Date.now();
-            const TEN_MINUTES_IN_MS = 10 * 60 * 1000;
-            const slots = [];
+            get(bookingsQuery).then((snapshot) => {
+                const now = Date.now();
+                const TEN_MINUTES_IN_MS = 10 * 60 * 1000;
+                const slots = [];
 
-            if (snapshot.exists()) {
-                snapshot.forEach(childSnapshot => {
-                    const booking = childSnapshot.val();
+                if (snapshot.exists()) {
+                    snapshot.forEach(childSnapshot => {
+                        const booking = childSnapshot.val();
 
-                    if (booking.date === selectedDate) {
-                        const status = (booking.status || 'pending').toLowerCase();
-                        const timestamp = booking.timestamp;
+                        if (booking.date === selectedDate) {
+                            const status = (booking.status || 'pending').toLowerCase();
+                            const timestamp = booking.timestamp;
 
-                        // A slot is booked if it's 'accepted' OR if it's 'pending'
-                        // and was created less than 10 minutes ago.
-                        const isAccepted = status === 'accepted';
-                        const isRecentPending = status === 'pending' && (now - timestamp < TEN_MINUTES_IN_MS);
+                            // A slot is booked if it's 'accepted' OR if it's 'pending'
+                            // and was created less than 10 minutes ago.
+                            const isAccepted = status === 'accepted';
+                            const isRecentPending = status === 'pending' && (now - timestamp < TEN_MINUTES_IN_MS);
 
-                        if (isAccepted || isRecentPending) {
-                            slots.push(booking.timing);
+                            if (isAccepted || isRecentPending) {
+                                slots.push(booking.timing);
+                            }
                         }
-                    }
-                });
-            }
-            setBookedSlots(slots);
-        });
+                    });
+                }
+                setBookedSlots(slots);
+            }).catch(error => {
+                console.error("Error fetching bookings:", error);
+            });
+        };
 
-        // Set up an interval to re-check pending slots every minute
-        // This ensures that expired pending slots will become available without a page refresh
-        const interval = setInterval(() => {
-            // This is a way to trigger a re-render and re-evaluation of the booked slots
-            // by creating a new date object, which will be different from the previous one
-            // if we were to pass it as a dependency. Here, we just re-run the logic.
-            const now = Date.now();
-            const TEN_MINUTES_IN_MS = 10 * 60 * 1000;
-            const currentSlots = [];
-            if (snapshot.exists()) {
-                 snapshot.forEach(childSnapshot => {
-                    const booking = childSnapshot.val();
-                    if (booking.date === selectedDate) {
-                        const status = (booking.status || 'pending').toLowerCase();
-                        const timestamp = booking.timestamp;
-                        const isAccepted = status === 'accepted';
-                        const isRecentPending = status === 'pending' && (now - timestamp < TEN_MINUTES_IN_MS);
-                        if (isAccepted || isRecentPending) {
-                           currentSlots.push(booking.timing);
-                        }
-                    }
-                 });
-            }
-            setBookedSlots(currentSlots);
-        }, 60000); // Re-check every 60 seconds
+        fetchBookings();
+
+        // Optional: Refresh bookings every minute to check for expired pending slots or new bookings without real-time connection
+        const interval = setInterval(fetchBookings, 60000);
 
         return () => {
-            unsubscribeBookings();
-            clearInterval(interval); // Clean up interval on component unmount or dependency change
+            clearInterval(interval);
         };
 
     }, [technicianId, selectedDate]);
@@ -241,8 +233,7 @@ const BookingPage = () => {
                     setServiceDetails(serviceEntry);
                 }
             }
-        } catch (error)
-        {
+        } catch (error) {
             console.error("Error fetching data:", error);
         }
     };
@@ -418,7 +409,7 @@ const BookingPage = () => {
             setShowProfilePopup(true);
             return;
         }
-        
+
         if (isBookingDisabled) return;
 
         const bookingKey = await createBooking();
@@ -689,17 +680,17 @@ const BookingPage = () => {
                         <div className="profile-popup-icon">📝</div>
                         <h3 className="profile-popup-title">Complete Your Profile</h3>
                         <p className="profile-popup-message">
-                            Please complete your profile with address details before booking services. 
+                            Please complete your profile with address details before booking services.
                             This helps technicians reach your location accurately.
                         </p>
                         <div className="profile-popup-actions">
-                            <button 
+                            <button
                                 className="profile-popup-btn primary"
                                 onClick={() => handleProfilePopupAction('completeNow')}
                             >
                                 Complete Profile Now
                             </button>
-                            <button 
+                            <button
                                 className="profile-popup-btn secondary"
                                 onClick={() => handleProfilePopupAction('later')}
                             >

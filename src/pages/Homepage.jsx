@@ -21,6 +21,10 @@ import constructioncleanersImg from '../assets/Construction.jpeg';
 import laundryImg from '../assets/laundry.jpeg';
 import deliveryImg from '../assets/delivery.jpeg';
 
+// Add these imports!
+import { ref, onValue } from "firebase/database";
+import { database } from "../firebase"; // Adjust this path to where your firebase config file is located
+
 import '../styles/Homepage.css';
 
 // --- IN-MEMORY CACHE ---

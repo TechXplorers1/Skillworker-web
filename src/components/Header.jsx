@@ -95,9 +95,9 @@ const Header = () => {
     navigate("/profile");
   };
 
-  const handleNotifications = () => {
-    navigate("/notifications");
-  };
+  // const handleNotifications = () => {
+  //   navigate("/notifications");
+  // };
 
   const handleMessages = () => {
     navigate("/message-box");
@@ -179,10 +179,10 @@ const Header = () => {
               </button>
             )}
 
-            <button className="icon-btn" onClick={handleNotifications} title="Notifications">
+            {/* <button className="icon-btn" onClick={handleNotifications} title="Notifications">
               <HiOutlineBell className="header-icon" />
               <span className="icon-label">Notifications</span>
-            </button>
+            </button> */}
 
             <button className="icon-btn" onClick={handleMessages} title="Messages">
               <FiMessageSquare className="header-icon" />

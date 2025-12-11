@@ -14,21 +14,21 @@ import { database, auth } from '../firebase';
 import '../styles/ServiceTechniciansPage.css';
 
 // Hero images (assuming these imports are correct)
-import plumberHeroImg from '../assets/plumber.png';
-import electricianHeroImg from '../assets/electrician.png';
-import acMechanicHeroImg from '../assets/ac mechanic.png';
-import carpenterHeroImg from '../assets/carpenter.png';
-import packersHeroImg from '../assets/packers&movers.png';
-import housecleanersHeroImg from '../assets/House cleaners.png';
-import camerafittingsHeroImg from '../assets/camera fittings.png';
-import privateinvestigatorsHeroImg from '../assets/private investigators.png';
-import welderHeroImg from '../assets/welder.png';
-import surveyorsImg from '../assets/surveyors.png';
-import developersHeroImg from '../assets/SoftwareDeveloper.png';
-import bodymassageHeroImg from '../assets/BodyMassage.png';
-import constructioncleanersHeroImg from '../assets/Construction cleaners.png';
-import laundryHeroImg from '../assets/laundry.png';
-import deliveryHeroImg from '../assets/delivery.png';
+import plumberHeroImg from '../assets/plumber.jpeg';
+import electricianHeroImg from '../assets/electrician.jpeg';
+import acMechanicHeroImg from '../assets/ac_mechanic.jpeg';
+import carpenterHeroImg from '../assets/carpenter.jpeg';
+import packersHeroImg from '../assets/packers_movers.jpeg';
+import housecleanersHeroImg from '../assets/house_cleaners.jpeg';
+import camerafittingsHeroImg from '../assets/cam_fitting.jpeg';
+import privateinvestigatorsHeroImg from '../assets/private_investigators.jpeg';
+import welderHeroImg from '../assets/welders.jpeg';
+import surveyorsImg from '../assets/surveyors.jpeg';
+import developersHeroImg from '../assets/software_dev.jpeg';
+import bodymassageHeroImg from '../assets/body_massage.jpeg';
+import constructioncleanersHeroImg from '../assets/Construction.jpeg';
+import laundryHeroImg from '../assets/laundry.jpeg';
+import deliveryHeroImg from '../assets/delivery.jpeg';
 
 // --- IN-MEMORY CACHE (Only keeping service details cache to avoid re-fetching image mapping) ---
 let pageCache = {

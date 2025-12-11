@@ -4,7 +4,7 @@
   width: 100%;
   min-height: 40vh;
   /* Use the image as a background */
-  background: url("../assets/sw_herosection.jpg") no-repeat center center/cover;
+  background: url("../assets/sw_herosec.jpg") no-repeat center center/cover;
   display: flex;
   justify-content: center;
   align-items: center;

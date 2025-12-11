@@ -9,7 +9,7 @@ import ServiceTechniciansPage from "./pages/ServiceTechniciansPage";
 import ChatScreen from './components/ChatScreen';
 import BookingPage from './pages/BookingPage';
 import MyBookingsPage from './pages/MyBookingsPage';
-import NotificationsPage from './components/NotificationsPage';
+// import NotificationsPage from './components/NotificationsPage';
 import MessageBox from './components/MessageBox';
 import Profile from './components/Profile';
 import ServiceRequests from "./pages/ServiceRequests";
@@ -34,7 +34,7 @@ const App = () => {
                 <Route path="/booking/:serviceName/:technicianId" element={<BookingPage />} />
                 <Route path="/my-bookings" element={<MyBookingsPage />} />
                 <Route path="/technician-registration-prompt" element={<TechnicianRegistrationPrompt />} />
-                <Route path="/notifications" element={<NotificationsPage />} />
+                {/* <Route path="/notifications" element={<NotificationsPage />} /> */}
                 <Route path="/message-box" element={<MessageBox />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/service-requests" element={<ServiceRequests />} />

@@ -5,23 +5,21 @@ import Footer from '../components/Footer';
 import { FaStar } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
 // Image Imports
-import plumberImg from '../assets/plumber.png';
-import electricianImg from '../assets/electrician.png';
-import acMechanicImg from '../assets/ac mechanic.png';
-import carpenterImg from '../assets/carpenter.png';
-import packersImg from '../assets/packers&movers.png';
-import housecleanersImg from '../assets/House cleaners.png';
-import camerafittingsImg from '../assets/camera fittings.png';
-import privateinvestigatorsImg from '../assets/private investigators.png';
-import welderImg from '../assets/welder.png';
-import surveyorsImg from '../assets/surveyors.png';
-import developersImg from '../assets/SoftwareDeveloper.png';
-import bodymassageImg from '../assets/BodyMassage.png';
-import constructioncleanersImg from '../assets/Construction cleaners.png';
-import laundryImg from '../assets/laundry.png';
-import deliveryImg from '../assets/delivery.png';
-import { ref, onValue } from "firebase/database";
-import { database } from '../firebase'; // Import the database instance
+import plumberImg from '../assets/plumber.jpeg';
+import electricianImg from '../assets/electrician.jpeg';
+import acMechanicImg from '../assets/ac_mechanic.jpeg';
+import carpenterImg from '../assets/carpenter.jpeg';
+import packersImg from '../assets/packers_movers.jpeg';
+import housecleanersImg from '../assets/house_cleaners.jpeg';
+import camerafittingsImg from '../assets/cam_fitting.jpeg';
+import privateinvestigatorsImg from '../assets/private_investigators.jpeg';
+import welderImg from '../assets/welders.jpeg';
+import surveyorsImg from '../assets/surveyors.jpeg';
+import developersImg from '../assets/software_dev.jpeg';
+import bodymassageImg from '../assets/body_massage.jpeg';
+import constructioncleanersImg from '../assets/Construction.jpeg';
+import laundryImg from '../assets/laundry.jpeg';
+import deliveryImg from '../assets/delivery.jpeg';
 
 import '../styles/Homepage.css';
 

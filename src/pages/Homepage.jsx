@@ -22,7 +22,7 @@ import laundryImg from '../assets/laundry.jpeg';
 import deliveryImg from '../assets/delivery.jpeg';
 
 // Add these imports!
-import { ref, get } from "firebase/database";
+import { ref, get, query, orderByKey, limitToFirst, startAfter } from "firebase/database";
 import { database } from "../firebase"; // Adjust this path to where your firebase config file is located
 
 import '../styles/Homepage.css';
@@ -57,54 +57,90 @@ const Homepage = () => {
   const [allServices, setAllServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showProfilePopup, setShowProfilePopup] = useState(false);
+  const [lastKey, setLastKey] = useState(null); // Cursor for pagination
+
+  // Helper to process and format service data
+  const processServiceData = (data) => {
+    return Object.keys(data).map(key => {
+      const service = data[key];
+      const serviceTitleLower = service.title ? service.title.toLowerCase() : '';
+      const imageSource = serviceImageMap[serviceTitleLower] || service.image;
+      return {
+        id: key,
+        ...service,
+        image: imageSource,
+        link: serviceTitleLower.replace(/\s/g, '-')
+      };
+    });
+  };
+
+  const fetchServices = async (isInitial = true) => {
+    setLoading(true);
+    try {
+      let servicesQuery;
+      const servicesRef = ref(database, 'services');
+
+      if (isInitial) {
+        // Fetch first 9 for Tab 1
+        servicesQuery = query(servicesRef, limitToFirst(9));
+      } else {
+        // Fetch next 6 for Tab 2, starting after the last key we have
+        if (!lastKey) {
+          setLoading(false);
+          return;
+        }
+        servicesQuery = query(servicesRef, startAfter(lastKey), limitToFirst(6));
+      }
+
+      const snapshot = await get(servicesQuery);
+      const servicesData = snapshot.val();
+
+      if (servicesData) {
+        const fetchedServices = processServiceData(servicesData);
+
+        // Update lastKey for next pagination
+        const keys = Object.keys(servicesData);
+        if (keys.length > 0) {
+          setLastKey(keys[keys.length - 1]);
+        }
+
+        if (isInitial) {
+          setAllServices(fetchedServices);
+          serviceCache = fetchedServices;
+        } else {
+          const updatedServices = [...allServices, ...fetchedServices];
+          setAllServices(updatedServices);
+          serviceCache = updatedServices;
+        }
+      } else if (isInitial) {
+        setAllServices([]);
+        serviceCache = [];
+      }
+    } catch (error) {
+      console.error("Error fetching services:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // 1. Check local storage for the profile completion flag for ALL users
+    // 1. Profile Popup Check
     const showPopupFlag = localStorage.getItem('showProfilePopup');
-
     if (showPopupFlag === 'true') {
       setShowProfilePopup(true);
     }
 
-    // 2. CACHE CHECK: If data is already in cache, use it immediately
+    // 2. Data Fetching Strategy
     if (serviceCache.length > 0) {
       setAllServices(serviceCache);
       setLoading(false);
+      // We also need to recover the lastKey from the cache if we want to fetch more later
+      // The cursor is the ID of the last item in the cache
+      if (serviceCache.length > 0) {
+        setLastKey(serviceCache[serviceCache.length - 1].id);
+      }
     } else {
-      // 3. Fetch Services from Firebase Database (Use get for one-time fetch)
-      const servicesRef = ref(database, 'services');
-
-      get(servicesRef).then((snapshot) => {
-        const servicesData = snapshot.val();
-        if (servicesData) {
-          const fetchedServices = Object.keys(servicesData).map(key => {
-            const service = servicesData[key];
-            const serviceTitleLower = service.title ? service.title.toLowerCase() : '';
-
-            // Use the local imported image if the title matches, otherwise use the image URL from DB
-            const imageSource = serviceImageMap[serviceTitleLower] || service.image;
-
-            return {
-              id: key,
-              ...service,
-              // Ensure the image source is the local asset if available
-              image: imageSource,
-              link: serviceTitleLower.replace(/\s/g, '-')
-            };
-          });
-
-          // 4. Update component state and the in-memory cache
-          setAllServices(fetchedServices);
-          serviceCache = fetchedServices; // Cache the data
-        } else {
-          setAllServices([]);
-          serviceCache = [];
-        }
-        setLoading(false);
-      }).catch((error) => {
-        console.error("Error fetching services:", error);
-        setLoading(false);
-      });
+      fetchServices(true); // Initial fetch for Tab 1
     }
   }, []);
 
@@ -122,24 +158,27 @@ const Homepage = () => {
     service.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Pagination logic remains the same
+  // Pagination logic
+  // Tab 1: 0-9
+  // Tab 2: 9-15
   const displayedServices = activeTab === '1' ? filteredServices.slice(0, 9) : filteredServices.slice(9, 15);
 
   const handleTabChange = (tabValue) => {
     setActiveTab(tabValue);
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // If switching to Tab 2 and we haven't fetched enough data yet, fetch more
+    if (tabValue === '2' && allServices.length <= 9) {
+      fetchServices(false);
+    }
   };
 
-  if (loading) {
+  if (loading && allServices.length === 0) {
     return (
       <div className="homepage">
         <Header />
         <main>
           <HeroSection setSearchQuery={setSearchQuery} />
-          {/* Services Section with the loading spinner */}
           <section className="services">
             <h2 className="section-title">Loading Services...</h2>
             <div className="loading-container">
@@ -240,13 +279,17 @@ const Homepage = () => {
               ))
             ) : (
               <div className="no-results-found">
-                <p>No results found for your search.</p>
+                {searchQuery ? (
+                  <p>No results found for "{searchQuery}".</p>
+                ) : (
+                  <p>No services available. Please try reloading.</p>
+                )}
               </div>
             )}
           </div>
 
 
-          {allServices.length > 9 && (
+          {allServices.length > 0 && (
             <div className="radio-input-container">
               <div className="radio-input">
                 <label>

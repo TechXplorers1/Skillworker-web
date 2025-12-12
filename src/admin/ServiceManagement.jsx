@@ -171,9 +171,19 @@ const ServiceManagement = () => {
     try {
       let imageUrl = image;
 
+
+
       if (imageFile) {
-        // Upload image code would go here
-        // For now, we are just using the base64 string or existing URL
+        // Create a reference to the file in Firebase Storage
+        // Use a timestamp or unique ID to prevent overwriting if names conflict
+        const timestamp = Date.now();
+        const imageRef = storageRef(storage, `service-images/${timestamp}_${imageFile.name}`);
+
+        // Upload the file
+        const snapshot = await uploadBytes(imageRef, imageFile);
+
+        // Get the download URL
+        imageUrl = await getDownloadURL(snapshot.ref);
       }
 
       const serviceData = {

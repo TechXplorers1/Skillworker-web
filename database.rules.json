@@ -1,0 +1,17 @@
+{
+    "rules": {
+        ".read": "now < 1767225599000",
+        ".write": "now < 1767225599000",
+        "users": {
+            ".indexOn": [
+                "role"
+            ]
+        },
+        "bookings": {
+            ".indexOn": [
+                "uid",
+                "technicianId"
+            ]
+        }
+    }
+}

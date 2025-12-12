@@ -9,7 +9,7 @@ import {
     FaMapMarkerAlt,
     FaFilter
 } from 'react-icons/fa';
-import { ref, get, child, onValue, query, orderByChild, equalTo } from "firebase/database";
+import { ref, get, child, query, orderByChild, equalTo } from "firebase/database";
 import { database, auth } from '../firebase';
 import '../styles/ServiceTechniciansPage.css';
 
@@ -77,8 +77,8 @@ const ServiceTechniciansPage = () => {
 
     const localHeroImage = serviceImageMap[serviceName];
 
-    const handleApplyFilters = useCallback((techniciansToFilter = allTechnicians) => {
-        let newFilteredList = [...techniciansToFilter];
+    const handleApplyFilters = useCallback(() => {
+        let newFilteredList = [...allTechnicians];
 
         if (selectedRating !== 'All Ratings') {
             const minRating = parseFloat(selectedRating.replace('+ Stars', ''));
@@ -168,7 +168,7 @@ const ServiceTechniciansPage = () => {
             });
     }, [serviceName, localHeroImage]);
 
-    // Fetch technicians using get() to reduce downloads, but fetching all users to ensure nothing is missed
+    // Fetch technicians using get() to reduce downloads
     useEffect(() => {
         if (!serviceId) return;
 
@@ -176,24 +176,25 @@ const ServiceTechniciansPage = () => {
         if (pageCache.technicians[serviceId]) {
             const cachedTechs = pageCache.technicians[serviceId];
             setAllTechnicians(cachedTechs);
-            handleApplyFilters(cachedTechs);
+            // Filtering will be handled by the separate effect
             setLoading(false);
             return;
         }
 
-        // 2. Fetch if not in cache (Fetch all users and filter locally to avoid indexing issues)
+        // 2. Fetch if not in cache
         const currentUserId = auth.currentUser ? auth.currentUser.uid : null;
         const usersRef = ref(database, 'users');
-        // Removed the query to avoid potential indexing issues if rules aren't set up
-        // const techniciansQuery = query(usersRef, orderByChild('role'), equalTo('technician'));
 
-        get(usersRef).then((snapshot) => {
+        // OPTIMIZATION: Query only technicians to save bandwidth
+        // Ensure your Firebase Security Rules or Indexes enable this query
+        const techniciansQuery = query(usersRef, orderByChild('role'), equalTo('technician'));
+
+        get(techniciansQuery).then((snapshot) => {
             if (snapshot.exists()) {
                 const usersData = snapshot.val();
 
-                // Filter by role AND serviceId (skills) on client side
+                // Filter by serviceId (skills) on client side
                 const technicians = Object.values(usersData).filter(user =>
-                    user.role === 'technician' &&
                     user.skills &&
                     user.skills.includes(serviceId) &&
                     user.uid !== currentUserId
@@ -209,10 +210,8 @@ const ServiceTechniciansPage = () => {
                 pageCache.technicians[serviceId] = updatedTechnicians;
 
                 setAllTechnicians(updatedTechnicians);
-                handleApplyFilters(updatedTechnicians);
             } else {
                 setAllTechnicians([]);
-                handleApplyFilters([]);
                 pageCache.technicians[serviceId] = [];
             }
             setLoading(false);
@@ -220,12 +219,12 @@ const ServiceTechniciansPage = () => {
             console.error("Error fetching technicians:", error);
             setLoading(false);
         });
-    }, [serviceId, handleApplyFilters]);
+    }, [serviceId]);
 
-    // Re-apply filters whenever filter selections change
+    // Re-apply filters whenever filter selections or data changes
     useEffect(() => {
         handleApplyFilters();
-    }, [selectedRating, selectedHourlyPrice, selectedDaylyPrice, selectedAvailability, handleApplyFilters]);
+    }, [handleApplyFilters]);
 
     const handleChatClick = (technicianId) => {
         setSelectedTechnicianId(technicianId);

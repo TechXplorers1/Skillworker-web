@@ -46,8 +46,10 @@ const Profile = () => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        await fetchUserData(user.uid);
-        await fetchAllServices();
+        const data = await fetchUserData(user.uid);
+        if (data) {
+          await fetchAllServices(data.role);
+        }
       } else {
         setLoading(false);
       }
@@ -73,6 +75,7 @@ const Profile = () => {
 
         // FIX: Always set the technician's active status from fetched data
         setIsTechnicianActive(data.isActive || false);
+        return data;
 
       } else {
         const defaultData = {
@@ -87,6 +90,7 @@ const Profile = () => {
         };
         setUserData(defaultData);
         setIsTechnicianActive(false);
+        return defaultData;
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
@@ -95,7 +99,12 @@ const Profile = () => {
     }
   };
 
-  const fetchAllServices = async () => {
+  const fetchAllServices = async (role) => {
+    // Only fetch services for technicians (needed for skills selection)
+    if (role !== 'technician') {
+      return;
+    }
+
     // 1. Check Cache
     if (allServicesCache) {
       setAllServices(allServicesCache);

@@ -4,7 +4,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { FaPaperPlane, FaStar, FaImage, FaTimes, FaCamera, FaStop } from 'react-icons/fa';
 import { onAuthStateChanged } from "firebase/auth";
-import { ref, onValue, push, serverTimestamp, get, update, increment } from "firebase/database";
+import { ref, onValue, push, serverTimestamp, get, update, increment, query, orderByChild, equalTo, limitToLast } from "firebase/database";
 import { auth, database, storage } from "../firebase";
 import { uploadBytes, ref as storageRef, getDownloadURL } from 'firebase/storage';
 import '../styles/ChatScreen.css';
@@ -87,7 +87,8 @@ const ChatScreen = () => {
 
         // Listen for messages
         const chatMessagesRef = ref(database, `chats/${chatId}/messages`);
-        const unsubscribeChat = onValue(chatMessagesRef, (snapshot) => {
+        const recentMessagesQuery = query(chatMessagesRef, limitToLast(100));
+        const unsubscribeChat = onValue(recentMessagesQuery, (snapshot) => {
           const data = snapshot.val();
           if (data) {
             const msgs = Object.entries(data).map(([key, msg]) => ({
@@ -117,48 +118,61 @@ const ChatScreen = () => {
   const checkServiceStatus = async (currentUserId, partnerId) => {
     try {
       const bookingsRef = ref(database, 'bookings');
-      const snapshot = await get(bookingsRef);
 
-      if (snapshot.exists()) {
-        const bookings = snapshot.val();
-        const relevant = Object.values(bookings).filter(b =>
-          (b.uid === currentUserId && b.technicianId === partnerId) ||
-          (b.uid === partnerId && b.technicianId === currentUserId)
-        );
+      // Optimization: Query both scenarios (User vs Tech, Tech vs User)
+      // instead of downloading the entire bookings table.
+      const asUserQuery = query(bookingsRef, orderByChild('uid'), equalTo(currentUserId));
+      const asTechQuery = query(bookingsRef, orderByChild('technicianId'), equalTo(currentUserId));
 
-        if (relevant.length > 0) {
-          const latestBooking = relevant.sort((a, b) => {
-            const timeA = a.timestamp || a.createdAt || 0;
-            const timeB = b.timestamp || b.createdAt || 0;
-            return timeB - timeA;
-          })[0];
+      const [asUserSnap, asTechSnap] = await Promise.all([get(asUserQuery), get(asTechQuery)]);
 
-          const status = latestBooking.status?.toLowerCase() || '';
+      let relevant = [];
 
-          if (status.includes('completed')) {
-            setIsChatDisabled(true);
-            setServiceStatus('completed');
-            setDisableReason('Service Completed');
-          } 
-          else if (
-            status.includes('cancel') ||
-            status === 'rejected' ||
-            status === 'declined'
-          ) {
-            setIsChatDisabled(true);
-            setServiceStatus('cancelled');
-            setDisableReason('Service Cancelled');
-          } 
-          else {
-            setIsChatDisabled(false);
-            setServiceStatus('active');
-            setDisableReason('');
-          }
-        } else {
+      if (asUserSnap.exists()) {
+        const userBookings = Object.values(asUserSnap.val());
+        relevant = [...relevant, ...userBookings.filter(b => b.technicianId === partnerId)];
+      }
+
+      if (asTechSnap.exists()) {
+        const techBookings = Object.values(asTechSnap.val());
+        relevant = [...relevant, ...techBookings.filter(b => b.uid === partnerId)];
+      }
+
+      if (relevant.length > 0) {
+        // Filter out duplicates based on ID (though unlikely to overlap in this logic)
+        const uniqueBookings = Array.from(new Map(relevant.map(item => [item.id || JSON.stringify(item), item])).values());
+
+        const latestBooking = uniqueBookings.sort((a, b) => {
+          const timeA = a.timestamp || a.createdAt || 0;
+          const timeB = b.timestamp || b.createdAt || 0;
+          return timeB - timeA;
+        })[0];
+
+        const status = latestBooking.status?.toLowerCase() || '';
+
+        if (status.includes('completed')) {
           setIsChatDisabled(true);
-          setServiceStatus('none');
-          setDisableReason('No active booking found');
+          setServiceStatus('completed');
+          setDisableReason('Service Completed');
         }
+        else if (
+          status.includes('cancel') ||
+          status === 'rejected' ||
+          status === 'declined'
+        ) {
+          setIsChatDisabled(true);
+          setServiceStatus('cancelled');
+          setDisableReason('Service Cancelled');
+        }
+        else {
+          setIsChatDisabled(false);
+          setServiceStatus('active');
+          setDisableReason('');
+        }
+      } else {
+        setIsChatDisabled(true);
+        setServiceStatus('none');
+        setDisableReason('No active booking found');
       }
     } catch (err) {
       console.error("Error checking service status:", err);
@@ -177,18 +191,18 @@ const ChatScreen = () => {
         setError('Please select an image file');
         return;
       }
-      
+
       if (file.size > 5 * 1024 * 1024) {
         setError('Image size should be less than 5MB');
         return;
       }
-      
+
       setImageFile(file);
       setImagePreviewUrl(URL.createObjectURL(file));
       setError(null);
     }
   };
-  
+
   const removeImage = () => {
     if (imagePreviewUrl) {
       URL.revokeObjectURL(imagePreviewUrl);
@@ -196,7 +210,7 @@ const ChatScreen = () => {
     setImageFile(null);
     setImagePreviewUrl('');
     if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+      fileInputRef.current.value = '';
     }
   };
 
@@ -204,12 +218,12 @@ const ChatScreen = () => {
   const startWebcam = async () => {
     try {
       setError(null);
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { width: 640, height: 480 } 
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: 640, height: 480 }
       });
       setWebcamStream(stream);
       setShowWebcam(true);
-      
+
       if (webcamVideoRef.current) {
         webcamVideoRef.current.srcObject = stream;
       }
@@ -233,16 +247,16 @@ const ChatScreen = () => {
       const video = webcamVideoRef.current;
       const canvas = canvasRef.current;
       const context = canvas.getContext('2d');
-      
+
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
-      
+
       canvas.toBlob((blob) => {
-        const file = new File([blob], `webcam-capture-${Date.now()}.jpg`, { 
-          type: 'image/jpeg' 
+        const file = new File([blob], `webcam-capture-${Date.now()}.jpg`, {
+          type: 'image/jpeg'
         });
-        
+
         setImageFile(file);
         setImagePreviewUrl(URL.createObjectURL(blob));
         stopWebcam();
@@ -253,7 +267,7 @@ const ChatScreen = () => {
   const sendMessageToDatabase = async (messageData, lastMsgSummary) => {
     const senderId = currentUser.uid;
     const receiverId = chatPartner.uid;
-    
+
     const updates = {};
     const messageRef = push(ref(database, `chats/${chatId}/messages`));
     updates[`chats/${chatId}/messages/${messageRef.key}`] = messageData;
@@ -280,17 +294,17 @@ const ChatScreen = () => {
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    
+
     if (isChatDisabled) {
       console.log('Chat is disabled');
       return;
     }
-    
+
     if (isSending) {
       console.log('Already sending a message');
       return;
     }
-    
+
     const textMessage = newMessage.trim();
     if (textMessage === '' && !imageFile) {
       console.log('No message content');
@@ -301,7 +315,7 @@ const ChatScreen = () => {
       console.log('Missing user data');
       return;
     }
-    
+
     console.log('Starting to send message...');
     setIsSending(true);
     setError(null);
@@ -315,7 +329,7 @@ const ChatScreen = () => {
         const imageExtension = imageFile.name.split('.').pop();
         const imagePath = `chat_images/${chatId}/${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${imageExtension}`;
         const storageReference = storageRef(storage, imagePath);
-        
+
         const uploadResult = await uploadBytes(storageReference, imageFile);
         console.log('Image uploaded, getting download URL...');
         imageUrl = await getDownloadURL(uploadResult.ref);
@@ -332,7 +346,7 @@ const ChatScreen = () => {
       };
 
       const lastMsgSummary = imageUrl ? (textMessage || 'Image') : textMessage;
-      
+
       console.log('Sending message to database...');
       await sendMessageToDatabase(newMessageObj, lastMsgSummary);
       console.log('Message sent successfully');
@@ -340,11 +354,11 @@ const ChatScreen = () => {
       // Clear form after successful send
       setNewMessage('');
       removeImage();
-      
+
     } catch (err) {
       console.error("Error in handleSendMessage:", err);
       setError(err.message || "Failed to send message");
-      
+
       // Clean up on error
       if (imageFile) {
         removeImage();
@@ -370,11 +384,11 @@ const ChatScreen = () => {
       <div className="message-content">
         {msg.imageUrl && (
           <a href={msg.imageUrl} target="_blank" rel="noopener noreferrer" className="image-link">
-            <img 
-                src={msg.imageUrl} 
-                alt="Uploaded by user" 
-                className="uploaded-image" 
-                onLoad={() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })}
+            <img
+              src={msg.imageUrl}
+              alt="Uploaded by user"
+              className="uploaded-image"
+              onLoad={() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })}
             />
           </a>
         )}
@@ -479,31 +493,31 @@ const ChatScreen = () => {
                 <div className="webcam-content">
                   <div className="webcam-header">
                     <h3>Take a Photo</h3>
-                    <button 
-                      type="button" 
-                      className="close-webcam-btn" 
+                    <button
+                      type="button"
+                      className="close-webcam-btn"
                       onClick={stopWebcam}
                     >
                       <FaTimes />
                     </button>
                   </div>
-                  <video 
-                    ref={webcamVideoRef} 
-                    autoPlay 
+                  <video
+                    ref={webcamVideoRef}
+                    autoPlay
                     playsInline
                     className="webcam-video"
                   />
                   <canvas ref={canvasRef} style={{ display: 'none' }} />
                   <div className="webcam-controls">
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       className="capture-btn"
                       onClick={captureImage}
                     >
                       Capture Photo
                     </button>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       className="cancel-webcam-btn"
                       onClick={stopWebcam}
                     >
@@ -518,9 +532,9 @@ const ChatScreen = () => {
             {error && (
               <div className="image-preview-area error-message">
                 <span style={{ color: '#d32f2f' }}>Error: {error}</span>
-                <button 
-                  type="button" 
-                  className="remove-image-btn" 
+                <button
+                  type="button"
+                  className="remove-image-btn"
                   onClick={() => setError(null)}
                 >
                   <FaTimes />
@@ -530,19 +544,19 @@ const ChatScreen = () => {
 
             {/* Image Preview Area */}
             {imagePreviewUrl && (
-                <div className="image-preview-area">
-                    <img src={imagePreviewUrl} alt="Preview" className="image-preview" />
-                    <button 
-                      type="button" 
-                      className="remove-image-btn" 
-                      onClick={removeImage}
-                      disabled={isSending}
-                    >
-                      <FaTimes />
-                    </button>
-                </div>
+              <div className="image-preview-area">
+                <img src={imagePreviewUrl} alt="Preview" className="image-preview" />
+                <button
+                  type="button"
+                  className="remove-image-btn"
+                  onClick={removeImage}
+                  disabled={isSending}
+                >
+                  <FaTimes />
+                </button>
+              </div>
             )}
-            
+
             <form className="message-input-form" onSubmit={handleSendMessage}>
               <div className="attachment-buttons">
                 <input
